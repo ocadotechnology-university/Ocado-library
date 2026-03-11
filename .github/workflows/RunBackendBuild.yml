@@ -31,4 +31,4 @@ jobs:
         uses: advanced-security/maven-dependency-submission-action@v4
         with:
           maven-project-file: pom.xml
-        working-directory: backend/ocado-library-backend
+          directory: backend/ocado-library-backend
