@@ -26,5 +26,4 @@ jobs:
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@v4
         with:
-          directory: backend/ocado-library-backend
-          # albo: maven-project-file: backend/ocado-library-backend/pom.xml
+          maven-project-file: backend/ocado-library-backend/pom.xml
