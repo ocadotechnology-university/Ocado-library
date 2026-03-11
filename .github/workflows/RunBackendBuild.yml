@@ -25,7 +25,7 @@ jobs:
           cache: maven
 
       - name: Build backend with Maven
-        run: mvn -B package --file pom.xml
+        run: mvn -B package --file backend/ocado-library-backend/pom.xml
 
       - name: Update dependency graph
         uses: advanced-security/maven-dependency-submission-action@v4
