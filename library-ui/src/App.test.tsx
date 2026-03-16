@@ -8,9 +8,7 @@ describe("App", () => {
     render(<App />);
 
     // Tekst z HomePage.tsx, linie 34–36
-    const heading = screen.getByText(
-      "Welcome to the Ocado Technology Library"
-    );
+    const heading = screen.getByText("Welcome to the Ocado Technology Library");
 
     expect(heading).toBeDefined();
   });
@@ -19,7 +17,7 @@ describe("App", () => {
     render(<App />);
 
     const searchInput = screen.getByPlaceholderText(
-      "Search by title, author, or ISBN..."
+      "Search by title, author, or ISBN...",
     );
 
     expect(searchInput).toBeDefined();
