@@ -1,0 +1,32 @@
+name: Frontend Lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.event.head_commit.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+          cache-dependency-path: library-ui/package-lock.json
+      - run: npm ci
+        working-directory: library-ui
+      - run: npm run format
+        working-directory: library-ui
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 🤖 Apply format code changes
+          branch: ${{ github.event.pull_request.head.ref || github.event.head_commit.ref }}
