@@ -18,8 +18,9 @@ import java.time.LocalDate;
 public class BoardGame {
 
     @Id
-    private String id;
+    private int id;
     private String name;
+    private String description;
     @Column(name = "link_board_game_geek")
     private String linkBoardGameGeek;
     @Column(name = "number_of_players")

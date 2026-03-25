@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 public class PS5Game {
 
     @Id
-    private String id;
+    private int id;
     private String name;
+    private String description;
     private String status;
 }

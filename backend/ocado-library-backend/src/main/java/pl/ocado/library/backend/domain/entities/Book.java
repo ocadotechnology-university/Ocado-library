@@ -18,7 +18,8 @@ import java.time.LocalDate;
 public class Book {
 
     @Id
-    private String id;
+    private int id;
+    private String description;
 
     private String title;
     private String author;
