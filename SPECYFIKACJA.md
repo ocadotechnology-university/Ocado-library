@@ -26,7 +26,7 @@ Nowa aplikacja ma zautomatyzować procesy, zwiększyć przejrzystość zasobów 
 ### Backend
 
 - **Framework:** Java + Spring Boot
-- **Build tool:** Gradle
+- **Build tool:** Maven
 - **Baza danych:** PostgreSQL
 - **Dokumentacja:** OpenAPI (Swagger)
 
