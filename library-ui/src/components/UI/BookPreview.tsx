@@ -1,18 +1,12 @@
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import {
+  BOOK_STATUS_COVER_CLASS,
+  BOOK_STATUS_COVER_LABEL,
+  NEW_ARRIVAL_COVER_CLASS,
+  type BookStatus,
+} from "./bookStatusCover";
 
-export type BookStatus = "free" | "borrowed" | "borrowed-by-me";
-
-const statusLabel: Record<BookStatus, string> = {
-  free: "Free",
-  borrowed: "Borrowed",
-  "borrowed-by-me": "Borrowed by me",
-};
-
-const statusBadgeClass: Record<BookStatus, string> = {
-  free: "border-[#9e9eae]/80 bg-[#eeeef0] text-[#43485e]",
-  borrowed: "border-[#6b6d78]/90 bg-[#8f919c] text-[#f4f4f6]",
-  "borrowed-by-me": "border-[#43485e]/50 bg-[#43485e] text-[#eeeef0]",
-};
+export type { BookStatus };
 
 /** Card shell: background + default border (overridden when `newArrival`). */
 const cardShellByStatus: Record<BookStatus, string> = {
@@ -37,6 +31,8 @@ export type BookPreviewProps = {
   status: BookStatus;
   /** High-contrast frame + “New arrival” label on the cover (bottom-left; status stays top-right). */
   newArrival?: boolean;
+  /** Opens full book view when set. */
+  onOpen?: () => void;
   className?: string;
   /** Optional footer slot (e.g. actions). */
   footer?: ReactNode;
@@ -48,6 +44,7 @@ const BookPreview = ({
   author,
   status,
   newArrival = false,
+  onOpen,
   className,
   footer,
 }: BookPreviewProps) => {
@@ -56,11 +53,25 @@ const BookPreview = ({
     ? "border-[3px] border-[#43485e] shadow-[0_0_0_1px_rgb(67_72_94_/0.25),0_8px_24px_-8px_rgb(0_0_0_/0.25)]"
     : "border";
 
+  const interactive = onOpen != null;
+  const keyActivate = (e: KeyboardEvent) => {
+    if (!interactive) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onOpen();
+    }
+  };
+
   return (
     <article
-      className={`flex w-full max-w-[272px] flex-col overflow-hidden rounded-xl ${borderClass} ${shell} ${className ?? ""}`.trim()}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? `Open details: ${title}` : undefined}
+      onClick={interactive ? onOpen : undefined}
+      onKeyDown={interactive ? keyActivate : undefined}
+      className={`flex w-full max-w-[272px] flex-col overflow-hidden rounded-xl ${borderClass} ${shell} ${interactive ? "cursor-pointer transition hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]" : ""} ${className ?? ""}`.trim()}
     >
-      {/* Wider, shorter cover than portrait 2/3 — status top-right, new arrival bottom-left */}
+      {/* Cover: same status / new-arrival chips as BookFullView (top-left / top-right). */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#dcdfe6]">
         <img
           src={coverSrc}
@@ -71,16 +82,18 @@ const BookPreview = ({
           decoding="async"
           className={`h-full w-full object-cover ${coverFilterByStatus[status]}`}
         />
-        <span
-          className={`absolute top-2 right-2 max-w-[min(58%,11rem)] rounded-md border px-1.5 py-0.5 text-left text-[10px] font-semibold uppercase leading-tight tracking-wide shadow-sm sm:max-w-[65%] ${statusBadgeClass[status]}`}
-        >
-          {statusLabel[status]}
-        </span>
         {newArrival && (
-          <span className="absolute top-2 left-2 rounded-md border-2 border-[#43485e] bg-[#eeeef0] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#43485e] shadow-sm">
+          <span
+            className={`absolute top-2 left-2 z-10 max-w-[calc(100%-5.5rem)] ${NEW_ARRIVAL_COVER_CLASS}`}
+          >
             New arrival
           </span>
         )}
+        <span
+          className={`absolute top-2 right-2 z-10 max-w-[min(58%,11rem)] rounded-lg px-2.5 py-1.5 text-center text-[10px] font-extrabold uppercase leading-tight tracking-wide sm:max-w-[65%] ${BOOK_STATUS_COVER_CLASS[status]}`}
+        >
+          {BOOK_STATUS_COVER_LABEL[status]}
+        </span>
       </div>
       <div className="flex flex-1 flex-col gap-0.5 p-2.5">
         <h2 className="line-clamp-2 text-sm font-semibold leading-snug text-[#43485e]">{title}</h2>
