@@ -1,12 +1,16 @@
-import React from 'react';
+import type { ReactNode } from "react";
 
-const Layout = ({ topBar, 
-    leftSidebar, 
-    rightSidebar, 
-    children }) => {
+type LayoutProps = {
+  topBar: ReactNode;
+  leftSidebar: ReactNode;
+  rightSidebar: ReactNode;
+  children: ReactNode;
+};
+
+const Layout = ({ topBar, leftSidebar, rightSidebar, children }: LayoutProps) => {
   return (
     <div className="layout">
-      <header className="top-bar">{topBar}</header>
+      <header className="layout-header">{topBar}</header>
       <div className="main-content">
         <aside className="left-sidebar">{leftSidebar}</aside>
         <main className="content">{children}</main>

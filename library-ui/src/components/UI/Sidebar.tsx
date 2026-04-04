@@ -1,7 +1,11 @@
-import React from 'react';
-import './Sidebar.css'; // Assuming you will style it in a CSS file
+import type { ReactNode } from "react";
+import "./Sidebar.css";
 
-const Sidebar = ({ children }) => {
+type SidebarProps = {
+  children?: ReactNode;
+};
+
+const Sidebar = ({ children }: SidebarProps) => {
   return <div className="sidebar">{children}</div>;
 };
 
