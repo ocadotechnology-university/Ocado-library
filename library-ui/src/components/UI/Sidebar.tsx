@@ -1,12 +1,11 @@
 import type { ReactNode } from "react";
-import "./Sidebar.css";
 
 type SidebarProps = {
   children?: ReactNode;
 };
 
 const Sidebar = ({ children }: SidebarProps) => {
-  return <div className="sidebar">{children}</div>;
+  return <div className="min-w-40 p-4">{children}</div>;
 };
 
 export default Sidebar;
