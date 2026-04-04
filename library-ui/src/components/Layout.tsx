@@ -22,9 +22,13 @@ const Layout = ({ topBar, leftSidebar, rightSidebar, children }: LayoutProps) =>
       <div className={`${TOP_BAR_HEIGHT} shrink-0`} aria-hidden />
 
       <div className="flex min-h-0 min-w-0 flex-1">
-        <aside className="shrink-0 border-r border-[#b1b2b5]/60 bg-[#eeeef0]">{leftSidebar}</aside>
+        <aside className="flex min-h-0 shrink-0 flex-col border-r border-[#9e9eae]/70 bg-[#b8bac7]">
+          {leftSidebar}
+        </aside>
         <main className="min-h-0 min-w-0 flex-1 overflow-auto p-6 lg:p-8">{children}</main>
-        <aside className="shrink-0 border-l border-[#b1b2b5]/60 bg-[#eeeef0]">{rightSidebar}</aside>
+        <aside className="relative flex min-h-0 shrink-0 flex-col border-l border-[#9e9eae]/70 bg-[#b8bac7]">
+          {rightSidebar}
+        </aside>
       </div>
     </div>
   );

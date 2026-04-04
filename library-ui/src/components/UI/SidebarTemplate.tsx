@@ -1,0 +1,153 @@
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+const shellInner = [
+  "relative flex min-h-0 w-full min-w-[300px] max-w-[380px] flex-1 flex-col gap-3 overflow-y-auto p-4",
+  "text-[#43485e]",
+].join(" ");
+
+function ChevronDown({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  );
+}
+
+export type SidebarTemplateProps = {
+  children: ReactNode;
+  /** `right` shows a small collapse affordance on the inner edge (slide-over later). */
+  side?: "left" | "right";
+  className?: string;
+};
+
+/**
+ * Reusable sidebar shell (same for left column, right column, or a future drawer).
+ * Background and outer border come from `Layout` / drawer wrapper.
+ */
+export function SidebarTemplate({ children, side = "left", className }: SidebarTemplateProps) {
+  return (
+    <div
+      className={`flex min-h-0 w-full flex-1 flex-col ${side === "right" ? "relative" : ""} ${className ?? ""}`.trim()}
+    >
+      {side === "right" && (
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-0 items-center justify-center">
+          <button
+            type="button"
+            className="pointer-events-auto -translate-x-1/2 select-none rounded-l border border-[#9e9eae]/80 border-r-0 bg-[#b8bac7] px-1 py-4 text-sm font-semibold leading-none text-[#43485e] shadow-md transition hover:bg-[#a8aab7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+            aria-label="Collapse sidebar"
+          >
+            ›
+          </button>
+        </div>
+      )}
+      <div className={`${shellInner} ${side === "right" ? "pl-5" : ""}`.trim()}>{children}</div>
+    </div>
+  );
+}
+
+export type SidebarAccentTitleProps = {
+  children: ReactNode;
+  className?: string;
+};
+
+/** Dark strip with lime accent — e.g. “Categories”. */
+export function SidebarAccentTitle({ children, className }: SidebarAccentTitleProps) {
+  return (
+    <div
+      className={`rounded-lg bg-[#43485e] px-3 py-2.5 text-center shadow-sm ${className ?? ""}`.trim()}
+    >
+      <span className="text-sm font-semibold tracking-wide text-[#d4e157]">{children}</span>
+    </div>
+  );
+}
+
+export type SidebarFilterRowProps = {
+  label: string;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
+
+/** Category / filter row: light pill, chevron, # chip (left sidebar). */
+export function SidebarFilterRow({ label, className, type = "button", ...props }: SidebarFilterRowProps) {
+  return (
+    <button
+      type={type}
+      className={[
+        "flex w-full items-center justify-between gap-2 rounded-lg border border-[#b1b2b5]/80",
+        "bg-[#dcdfe6] px-3 py-2.5 text-left text-sm font-medium text-[#43485e]",
+        "shadow-sm transition hover:bg-[#e8eaf0]",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]",
+        className ?? "",
+      ]
+        .join(" ")
+        .trim()}
+      {...props}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      <span className="flex shrink-0 items-center gap-2">
+        <ChevronDown className="text-[#43485e] opacity-80" />
+        <span
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-[#43485e] text-[11px] font-semibold text-[#eeeef0]"
+          aria-hidden
+        >
+          #
+        </span>
+      </span>
+    </button>
+  );
+}
+
+export type SidebarUserBlockProps = {
+  /** Shown to the right of “User:” (e.g. work email as display name). */
+  email: string;
+  className?: string;
+};
+
+/** Single row: “User:” + email — light strip on sidebar for readable contrast. */
+export function SidebarUserBlock({ email, className }: SidebarUserBlockProps) {
+  return (
+    <div
+      className={`rounded-lg border border-[#43485e]/35 bg-[#eeeef0] px-2.5 py-2 shadow-[inset_0_1px_0_0_rgb(255_255_255_/0.65)] ${className ?? ""}`.trim()}
+    >
+      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
+        <span className="shrink-0 font-semibold text-[#43485e]">User:</span>
+        <span className="min-w-0 break-all font-medium leading-snug text-[#1a1f2e]">{email}</span>
+      </div>
+    </div>
+  );
+}
+
+export type SidebarMenuRowProps = {
+  label: string;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
+
+/** Large light rows with chevron (right sidebar: In use, Waiting list, …). */
+export function SidebarMenuRow({ label, className, type = "button", ...props }: SidebarMenuRowProps) {
+  return (
+    <button
+      type={type}
+      className={[
+        "flex w-full items-center justify-between gap-2 rounded-lg border border-[#b1b2b5]/80",
+        "bg-[#dcdfe6] px-3 py-3.5 text-left text-sm font-medium text-[#43485e]",
+        "shadow-sm transition hover:bg-[#e8eaf0]",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]",
+        className ?? "",
+      ]
+        .join(" ")
+        .trim()}
+      {...props}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      <ChevronDown className="shrink-0 text-[#43485e] opacity-80" />
+    </button>
+  );
+}
