@@ -6,32 +6,16 @@ import type { BookStatus } from "../components/UI/BookPreview";
 import CatalogHomeHeader from "../components/UI/CatalogHomeHeader";
 import type { MediaSection } from "../components/UI/CatalogHomeHeader";
 import TopBar from "../components/UI/TopBar";
-import {
-  SidebarAccentTitle,
-  SidebarFilterRow,
-  SidebarMenuRow,
-  SidebarTemplate,
-  SidebarUserBlock,
-} from "../components/UI/SidebarTemplate";
+import UserInfoPanel from "../components/UI/UserInfoPanel";
+import { SidebarAccentTitle, SidebarFilterRow, SidebarTemplate } from "../components/UI/SidebarTemplate";
 
 const leftSidebar = (
-  <SidebarTemplate side="left">
+  <SidebarTemplate>
     <SidebarAccentTitle>Categories</SidebarAccentTitle>
     <div className="flex flex-col gap-2">
       <SidebarFilterRow label="Fiction literature" />
       <SidebarFilterRow label="Genre literature" />
       <SidebarFilterRow label="Non-fiction" />
-    </div>
-  </SidebarTemplate>
-);
-
-const rightSidebar = (
-  <SidebarTemplate side="right">
-    <SidebarUserBlock email="jane.smith@ocado.com" />
-    <div className="flex flex-col gap-2 pt-1">
-      <SidebarMenuRow label="In use" />
-      <SidebarMenuRow label="Waiting list" />
-      <SidebarMenuRow label="History" />
     </div>
   </SidebarTemplate>
 );
@@ -118,6 +102,7 @@ function matchesCategory(row: BookRow, cat: string): boolean {
 }
 
 const Home = () => {
+  const [userPanelOpen, setUserPanelOpen] = useState(false);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -140,8 +125,17 @@ const Home = () => {
   }, [activeCategory, tagFilter]);
 
   return (
-    <Layout topBar={<TopBar />} leftSidebar={leftSidebar} rightSidebar={rightSidebar}>
-      <div className="flex w-full flex-col gap-8">
+    <>
+      <Layout
+        topBar={
+          <TopBar
+            accountPanelOpen={userPanelOpen}
+            onAccountClick={() => setUserPanelOpen((open) => !open)}
+          />
+        }
+        leftSidebar={leftSidebar}
+      >
+        <div className="flex w-full flex-col gap-8">
         {selected != null && (
           <BookFullView
             coverSrc={`https://picsum.photos/seed/${selected.seed}/272/181`}
@@ -180,7 +174,7 @@ const Home = () => {
                 No items match these filters. Try another category or clear the tag filter.
               </p>
             ) : (
-              <ul className="grid list-none grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              <ul className="grid list-none grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredRows.map((row) => (
                   <li key={row.key} className="flex flex-col gap-2">
                     <BookPreview
@@ -207,8 +201,10 @@ const Home = () => {
             </p>
           </div>
         )}
-      </div>
-    </Layout>
+        </div>
+      </Layout>
+      <UserInfoPanel open={userPanelOpen} onClose={() => setUserPanelOpen(false)} />
+    </>
   );
 };
 

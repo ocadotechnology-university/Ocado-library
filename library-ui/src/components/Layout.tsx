@@ -1,23 +1,24 @@
 import type { ReactNode } from "react";
 
 /** Matches fixed header height (Tailwind spacing scale). */
-const TOP_BAR_HEIGHT = "h-28";
+const TOP_BAR_HEIGHT = "h-24";
 
 type LayoutProps = {
   topBar: ReactNode;
   leftSidebar: ReactNode;
-  rightSidebar: ReactNode;
+  /** Omit or pass null to use full width for main content (e.g. user panel is a slide-over). */
+  rightSidebar?: ReactNode | null;
   children: ReactNode;
 };
 
 const asideClass =
-  "flex h-full min-h-0 w-[min(24vw,380px)] min-w-[240px] max-w-[380px] shrink-0 flex-col overflow-hidden border-[#9e9eae]/70 bg-[#b8bac7]";
+  "flex h-full min-h-0 w-[min(18vw,280px)] min-w-[200px] max-w-[280px] shrink-0 flex-col overflow-hidden border-[#9e9eae]/70 bg-[#b8bac7]";
 
 /**
  * Three-pane layout: fixed top bar, then left / main / right each scroll independently
  * (marketplace-style), no full-page scroll.
  */
-const Layout = ({ topBar, leftSidebar, rightSidebar, children }: LayoutProps) => {
+const Layout = ({ topBar, leftSidebar, rightSidebar = null, children }: LayoutProps) => {
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#eeeef0]">
       <header
@@ -35,7 +36,9 @@ const Layout = ({ topBar, leftSidebar, rightSidebar, children }: LayoutProps) =>
           {children}
         </main>
 
-        <aside className={`relative ${asideClass} border-l`}>{rightSidebar}</aside>
+        {rightSidebar != null ? (
+          <aside className={`relative ${asideClass} border-l`}>{rightSidebar}</aside>
+        ) : null}
       </div>
     </div>
   );

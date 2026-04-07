@@ -27,32 +27,17 @@ function ChevronDown({ className }: { className?: string }) {
 
 export type SidebarTemplateProps = {
   children: ReactNode;
-  /** `right` shows a small collapse affordance on the inner edge (slide-over later). */
-  side?: "left" | "right";
   className?: string;
 };
 
 /**
- * Reusable sidebar shell (same for left column, right column, or a future drawer).
- * Background and outer border come from `Layout` / drawer wrapper.
+ * Reusable sidebar shell for the left column.
+ * Background and outer border come from `Layout`.
  */
-export function SidebarTemplate({ children, side = "left", className }: SidebarTemplateProps) {
+export function SidebarTemplate({ children, className }: SidebarTemplateProps) {
   return (
-    <div
-      className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${side === "right" ? "relative" : ""} ${className ?? ""}`.trim()}
-    >
-      {side === "right" && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-0 items-center justify-center">
-          <button
-            type="button"
-            className="pointer-events-auto -translate-x-1/2 select-none rounded-l border border-[#9e9eae]/80 border-r-0 bg-[#b8bac7] px-1 py-4 text-sm font-semibold leading-none text-[#43485e] shadow-md transition hover:bg-[#a8aab7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
-            aria-label="Collapse sidebar"
-          >
-            ›
-          </button>
-        </div>
-      )}
-      <div className={`${shellInner} ${side === "right" ? "pl-5" : ""}`.trim()}>{children}</div>
+    <div className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${className ?? ""}`.trim()}>
+      <div className={shellInner}>{children}</div>
     </div>
   );
 }
