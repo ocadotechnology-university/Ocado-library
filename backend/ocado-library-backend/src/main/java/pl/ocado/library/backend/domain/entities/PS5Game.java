@@ -16,7 +16,8 @@ public class PS5Game {
 
     @Id
     private int id;
+
     private String name;
-    private String description;
+    
     private String status;
 }
