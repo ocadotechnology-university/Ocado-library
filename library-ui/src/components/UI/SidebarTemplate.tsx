@@ -1,8 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+/** Scrolls inside the column only (marketplace-style side panel). */
 const shellInner = [
-  "relative flex min-h-0 w-full min-w-[300px] max-w-[380px] flex-1 flex-col gap-3 overflow-y-auto p-4",
-  "text-[#43485e]",
+  "relative flex min-h-0 w-full flex-1 flex-col gap-3 overflow-y-auto overscroll-y-contain p-4",
+  "scroll-smooth text-[#43485e]",
 ].join(" ");
 
 function ChevronDown({ className }: { className?: string }) {
@@ -38,7 +39,7 @@ export type SidebarTemplateProps = {
 export function SidebarTemplate({ children, side = "left", className }: SidebarTemplateProps) {
   return (
     <div
-      className={`flex min-h-0 w-full flex-1 flex-col ${side === "right" ? "relative" : ""} ${className ?? ""}`.trim()}
+      className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${side === "right" ? "relative" : ""} ${className ?? ""}`.trim()}
     >
       {side === "right" && (
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex w-0 items-center justify-center">
@@ -60,6 +61,17 @@ export type SidebarAccentTitleProps = {
   children: ReactNode;
   className?: string;
 };
+
+/** Section heading inside a scrolling sidebar (filters / sort groups). */
+export function SidebarSectionLabel({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <h3
+      className={`text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060] ${className ?? ""}`.trim()}
+    >
+      {children}
+    </h3>
+  );
+}
 
 /** Dark strip with lime accent — e.g. “Categories”. */
 export function SidebarAccentTitle({ children, className }: SidebarAccentTitleProps) {
@@ -102,6 +114,32 @@ export function SidebarFilterRow({ label, className, type = "button", ...props }
           #
         </span>
       </span>
+    </button>
+  );
+}
+
+export type SidebarSortRowProps = {
+  label: string;
+} & ButtonHTMLAttributes<HTMLButtonElement>;
+
+/** Sort / single-choice row (chevron only, no # chip). */
+export function SidebarSortRow({ label, className, type = "button", ...props }: SidebarSortRowProps) {
+  return (
+    <button
+      type={type}
+      className={[
+        "flex w-full items-center justify-between gap-2 rounded-lg border border-[#b1b2b5]/80",
+        "bg-[#e8eaf4] px-3 py-2 text-left text-sm font-medium text-[#43485e]",
+        "shadow-sm transition hover:bg-[#f0f2f8]",
+        "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]",
+        className ?? "",
+      ]
+        .join(" ")
+        .trim()}
+      {...props}
+    >
+      <span className="min-w-0 truncate">{label}</span>
+      <ChevronDown className="shrink-0 text-[#43485e] opacity-80" />
     </button>
   );
 }

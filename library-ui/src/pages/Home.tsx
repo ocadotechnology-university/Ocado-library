@@ -1,8 +1,10 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Layout from "../components/Layout";
 import BookFullView from "../components/UI/BookFullView";
 import BookPreview from "../components/UI/BookPreview";
 import type { BookStatus } from "../components/UI/BookPreview";
+import CatalogHomeHeader from "../components/UI/CatalogHomeHeader";
+import type { MediaSection } from "../components/UI/CatalogHomeHeader";
 import TopBar from "../components/UI/TopBar";
 import {
   SidebarAccentTitle,
@@ -104,11 +106,38 @@ const previewVariants: BookRow[] = [
   },
 ];
 
+function matchesCategory(row: BookRow, cat: string): boolean {
+  if (cat === "All") return true;
+  if (cat === "New arrivals") return row.newArrival;
+  if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
+  if (cat === "Bestsellers") return row.tags.some((t) => /best/i.test(t));
+  if (cat === "Fiction") return row.tags.some((t) => /^fiction$/i.test(t));
+  if (cat === "Non-fiction") return row.tags.some((t) => /non-?fiction/i.test(t));
+  if (cat === "Prizes") return row.tags.some((t) => /prize/i.test(t));
+  return true;
+}
+
 const Home = () => {
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [section, setSection] = useState<MediaSection>("books");
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+
   const selected = openKey != null ? previewVariants.find((b) => b.key === openKey) : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
+
+  const allTags = useMemo(
+    () => Array.from(new Set(previewVariants.flatMap((b) => b.tags))).sort((a, b) => a.localeCompare(b)),
+    [],
+  );
+
+  const filteredRows = useMemo(() => {
+    return previewVariants.filter((row) => {
+      if (tagFilter != null && !row.tags.includes(tagFilter)) return false;
+      return matchesCategory(row, activeCategory);
+    });
+  }, [activeCategory, tagFilter]);
 
   return (
     <Layout topBar={<TopBar />} leftSidebar={leftSidebar} rightSidebar={rightSidebar}>
@@ -133,24 +162,51 @@ const Home = () => {
           />
         )}
 
-        <div className="flex flex-col gap-6">
-          <h2 className="text-lg font-semibold text-[#43485e]">Book preview variants</h2>
-          <ul className="grid list-none grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {previewVariants.map((row) => (
-              <li key={row.key} className="flex flex-col gap-2">
-                <BookPreview
-                  coverSrc={`https://picsum.photos/seed/${row.seed}/272/181`}
-                  title="The Midnight Library"
-                  author="Matt Haig"
-                  status={row.status}
-                  newArrival={row.newArrival}
-                  onOpen={() => setOpenKey(row.key)}
-                />
-                <p className="text-xs text-[#9e9eae]">{row.caption}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <CatalogHomeHeader
+          allTags={allTags}
+          section={section}
+          onSectionChange={setSection}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          activeTagFilter={tagFilter}
+          onTagFilterChange={setTagFilter}
+        />
+
+        {section === "books" ? (
+          <div className="flex flex-col gap-4">
+            <h2 className="text-lg font-semibold text-[#43485e]">Browse</h2>
+            {filteredRows.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
+                No items match these filters. Try another category or clear the tag filter.
+              </p>
+            ) : (
+              <ul className="grid list-none grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredRows.map((row) => (
+                  <li key={row.key} className="flex flex-col gap-2">
+                    <BookPreview
+                      coverSrc={`https://picsum.photos/seed/${row.seed}/272/181`}
+                      title="The Midnight Library"
+                      author="Matt Haig"
+                      status={row.status}
+                      newArrival={row.newArrival}
+                      onOpen={() => setOpenKey(row.key)}
+                    />
+                    <p className="text-xs text-[#9e9eae]">{row.caption}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#f3f4f8] px-4 py-10 text-center">
+            <p className="text-base font-medium text-[#43485e]">
+              {section === "board" ? "Board games" : "PS games"} catalogue
+            </p>
+            <p className="mt-2 text-sm text-[#6b7289]">
+              This section is ready for your inventory — the demo list below is under <strong>Books</strong>.
+            </p>
+          </div>
+        )}
       </div>
     </Layout>
   );
