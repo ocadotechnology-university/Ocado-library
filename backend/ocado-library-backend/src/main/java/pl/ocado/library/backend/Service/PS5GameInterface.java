@@ -17,10 +17,6 @@ public interface PS5GameInterface {
 
     public void updatePS5Game(PS5Game ps5Game);
 
-    public List<PS5Game> getPS5GamesByBorrower(String borrower);
-
-    public List<PS5Game> getPS5GamesByBorrowingDate(LocalDate borrowingDate);
-
     public void deletePS5GameById(int id);
 
 }

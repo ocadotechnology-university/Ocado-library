@@ -61,11 +61,4 @@ public class PS5GameService implements PS5GameInterface {
         ps5GameRepository.deleteById(id);
     }
 
-    public List<PS5Game> getPS5GamesByBorrower(String borrower) {
-        return ps5GameRepository.findByBorrower(borrower);
-    }
-
-    public List<PS5Game> getPS5GamesByBorrowingDate(LocalDate borrowingDate) {
-        return ps5GameRepository.findByBorrowingDate(borrowingDate);
-    }
 }
