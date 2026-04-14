@@ -14,6 +14,8 @@ const actionButtonClass = [
 ].join(" ");
 
 type TopBarProps = {
+  /** Return to catalogue home: closes book overlay, account workspace, and notifications. */
+  onLogoClick?: () => void;
   onNotificationsClick?: () => void;
   notificationsPanelOpen?: boolean;
   onAccountClick?: () => void;
@@ -21,6 +23,7 @@ type TopBarProps = {
 };
 
 const TopBar = ({
+  onLogoClick,
   onNotificationsClick,
   notificationsPanelOpen = false,
   onAccountClick,
@@ -28,7 +31,12 @@ const TopBar = ({
 }: TopBarProps) => {
   return (
     <div className="flex h-full w-full items-center justify-between gap-3 px-5 py-2 sm:px-8 lg:px-10">
-      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+      <button
+        type="button"
+        onClick={() => onLogoClick?.()}
+        className="flex min-w-0 items-center gap-3 rounded-lg text-left transition hover:bg-white/5 sm:gap-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#eeeef0]"
+        aria-label="Ocado Library — back to catalogue"
+      >
         <img
           src={logo}
           alt=""
@@ -37,12 +45,12 @@ const TopBar = ({
           height={56}
         />
         <div className="min-w-0">
-          <h1 className="truncate text-lg font-semibold tracking-tight text-[#eeeef0] sm:text-xl">
+          <span className="block truncate text-lg font-semibold tracking-tight text-[#eeeef0] sm:text-xl">
             Ocado Library
-          </h1>
-          <p className="hidden text-xs text-[#9e9eae] sm:block">Browse and manage resources</p>
+          </span>
+          <span className="hidden text-xs text-[#9e9eae] sm:block">Browse and manage resources</span>
         </div>
-      </div>
+      </button>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <button

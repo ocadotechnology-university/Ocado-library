@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
+  BOOK_FULL_CARD_OUTER_CLASS,
+  BOOK_FULL_CARD_RADIAL_CLASS,
+  BOOK_FULL_COVER_INNER_WRAP_CLASS,
+} from "./bookFullViewCardShell";
+import {
   BOOK_STATUS_COVER_CLASS,
   BOOK_STATUS_COVER_LABEL,
   NEW_ARRIVAL_COVER_CLASS,
@@ -129,12 +134,7 @@ const BookFullView = ({
         willChange: panelIn ? "auto" : "transform, opacity",
       }}
       className={[
-        "relative w-full overflow-hidden rounded-[1.35rem]",
-        "border border-white/70",
-        "bg-gradient-to-br from-[#fafbfd] via-[#f3f5fa] to-[#e9edf6]",
-        /* Static shadow — do not animate box-shadow (causes jank / visible stepped frames). */
-        "shadow-[0_4px_6px_-1px_rgb(67_72_94_/0.06),0_22px_45px_-12px_rgb(67_72_94_/0.22),inset_0_1px_0_0_rgb(255_255_255_/0.9)]",
-        "ring-1 ring-[#43485e]/[0.07]",
+        BOOK_FULL_CARD_OUTER_CLASS,
         "translate-z-0 transform-gpu backface-hidden",
         panelIn
           ? "translate-y-0 scale-100 opacity-100"
@@ -144,11 +144,11 @@ const BookFullView = ({
         .join(" ")
         .trim()}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_85%_60%_at_100%_-10%,rgb(147_160_190_/0.12),transparent_55%)]" />
+      <div className={BOOK_FULL_CARD_RADIAL_CLASS} />
 
-      <div className="relative flex min-h-[min(72vh,36rem)] flex-col gap-6 p-5 sm:p-7 lg:flex-row lg:items-stretch lg:gap-10 lg:p-9">
-        <div className="relative mx-auto w-full max-w-[200px] shrink-0 sm:max-w-[240px] lg:mx-0 lg:max-w-[min(38%,300px)]">
-          <div className="overflow-hidden rounded-[1.05rem] bg-gradient-to-b from-white/50 to-[#dce1eb]/80 shadow-[0_12px_28px_-8px_rgb(67_72_94_/0.35)] ring-2 ring-white/90">
+      <div className="relative flex min-h-[min(72vh,36rem)] flex-col gap-5 p-4 sm:p-5 lg:flex-row lg:items-stretch lg:gap-8 lg:p-6">
+        <div className="relative mx-auto w-full max-w-[min(92vw,260px)] shrink-0 sm:max-w-[min(88vw,300px)] lg:mx-0 lg:max-w-[min(44%,380px)]">
+          <div className={BOOK_FULL_COVER_INNER_WRAP_CLASS}>
             <img
               src={largeSrc}
               alt=""
@@ -186,6 +186,7 @@ const BookFullView = ({
               <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
                 {bookId}
               </p>
+              <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">{description}</p>
             </div>
             <button
               type="button"
@@ -194,15 +195,6 @@ const BookFullView = ({
             >
               Close
             </button>
-          </div>
-
-          <div className="mt-5 rounded-2xl border border-white/60 bg-white/55 p-4 shadow-[inset_0_1px_0_0_rgb(255_255_255_/0.8)] backdrop-blur-[2px] sm:p-5">
-            <h3 className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8b92a8]">
-              Description
-            </h3>
-            <p className="max-h-44 overflow-y-auto text-sm leading-relaxed text-[#3d4659] sm:max-h-none sm:overflow-visible">
-              {description}
-            </p>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">

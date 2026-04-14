@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
 /** Matches fixed header height (Tailwind spacing scale). */
-const TOP_BAR_HEIGHT = "h-24";
+export const TOP_BAR_HEIGHT = "h-24";
+
+/** Shell for the app header (same chrome for Layout and full-screen shells below the bar). */
+export const TOP_BAR_HEADER_CLASS = `fixed top-0 right-0 left-0 z-50 shrink-0 ${TOP_BAR_HEIGHT} border-b border-[#b1b2b5]/50 bg-[#43485e] shadow-[0_4px_20px_-2px_rgb(0_0_0_/0.25)]`;
 
 type LayoutProps = {
   topBar: ReactNode;
@@ -21,9 +24,7 @@ const asideClass =
 const Layout = ({ topBar, leftSidebar, rightSidebar = null, children }: LayoutProps) => {
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#eeeef0]">
-      <header
-        className={`fixed top-0 right-0 left-0 z-50 shrink-0 ${TOP_BAR_HEIGHT} border-b border-[#b1b2b5]/50 bg-[#43485e] shadow-[0_4px_20px_-2px_rgb(0_0_0_/0.25)]`}
-      >
+      <header className={TOP_BAR_HEADER_CLASS}>
         {topBar}
       </header>
 

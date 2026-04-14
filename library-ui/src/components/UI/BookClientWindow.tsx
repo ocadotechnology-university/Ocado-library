@@ -22,7 +22,7 @@ export default function BookClientWindow({ children, onBackdropClick }: BookClie
         aria-label="Close book details"
         onClick={onBackdropClick}
       />
-      <div className="relative z-10 mx-auto min-h-0 w-full max-w-5xl flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8">
+      <div className="relative z-10 mx-auto min-h-0 w-full max-w-6xl flex-1 overflow-y-auto overscroll-contain bg-[#eeeef0] px-2 py-3 sm:px-3 sm:py-4 lg:px-4 lg:py-5">
         {children}
       </div>
     </div>

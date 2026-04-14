@@ -10,7 +10,7 @@ import CatalogHomeHeader from "../components/UI/CatalogHomeHeader";
 import type { MediaSection } from "../components/UI/CatalogHomeHeader";
 import TopBar from "../components/UI/TopBar";
 import NotificationPanel from "../components/UI/NotificationPanel";
-import UserInfoPanel from "../components/UI/UserInfoPanel";
+import UserAccountWindow from "../components/UI/UserAccountWindow";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
 import { SidebarAccentTitle, SidebarFilterRow, SidebarTemplate } from "../components/UI/SidebarTemplate";
 
@@ -125,6 +125,12 @@ const Home = () => {
     setOpenKey(key);
   }, []);
 
+  /** Keeps account workspace open underneath so closing the book returns there, not the catalogue. */
+  const openBookFromAccount = useCallback((key: string) => {
+    setNotificationsPanelOpen(false);
+    setOpenKey(key);
+  }, []);
+
   const allTags = useMemo(
     () => Array.from(new Set(previewVariants.flatMap((b) => b.tags))).sort((a, b) => a.localeCompare(b)),
     [],
@@ -142,6 +148,11 @@ const Home = () => {
       <Layout
         topBar={
           <TopBar
+            onLogoClick={() => {
+              setOpenKey(null);
+              setUserPanelOpen(false);
+              setNotificationsPanelOpen(false);
+            }}
             notificationsPanelOpen={notificationsPanelOpen}
             onNotificationsClick={() => {
               setUserPanelOpen(false);
@@ -150,6 +161,7 @@ const Home = () => {
             accountPanelOpen={userPanelOpen}
             onAccountClick={() => {
               setNotificationsPanelOpen(false);
+              setOpenKey(null);
               setUserPanelOpen((open) => !open);
             }}
           />
@@ -205,7 +217,7 @@ const Home = () => {
                       author="Matt Haig"
                       status={row.status}
                       newArrival={row.newArrival}
-                      caption={row.caption}
+                      bookId={row.bookId}
                       description={DESCRIPTION}
                       onOpen={() => openBook(row.key)}
                     />
@@ -251,7 +263,11 @@ const Home = () => {
         open={notificationsPanelOpen}
         onClose={() => setNotificationsPanelOpen(false)}
       />
-      <UserInfoPanel open={userPanelOpen} onClose={() => setUserPanelOpen(false)} />
+      <UserAccountWindow
+        open={userPanelOpen}
+        onClose={() => setUserPanelOpen(false)}
+        onOpenBookDetail={openBookFromAccount}
+      />
     </>
   );
 };
