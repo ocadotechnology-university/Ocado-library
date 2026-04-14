@@ -18,7 +18,7 @@ export const CATEGORY_CHIPS = [
   "Prizes",
 ] as const;
 
-/** Demo corpus for partial-match search suggestions. */
+/** Demo corpus for partial-match suggestions. */
 const SEARCH_CORPUS: { id: string; text: string; hint: string }[] = [
   { id: "1", text: "The Midnight Library", hint: "Book · Matt Haig" },
   { id: "2", text: "Atomic Habits", hint: "Book · James Clear" },
@@ -134,7 +134,7 @@ const CatalogHomeHeader = ({
           })}
         </div>
 
-        <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:min-w-0 lg:max-w-none lg:flex-1 lg:pl-6">
+        <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:max-w-xl">
           <div className="relative min-w-0 flex-1" ref={searchRef}>
             <label htmlFor={searchId} className="sr-only">
               Search catalogue
@@ -150,7 +150,7 @@ const CatalogHomeHeader = ({
               onFocus={() => setSearchOpen(true)}
               placeholder="Search titles, authors…"
               autoComplete="off"
-              className="w-full rounded-xl border border-[#b1b2b5] bg-white/90 px-4 py-2.5 text-base text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 transition placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
+              className="w-full rounded-xl border border-[#b1b2b5] bg-white/90 px-4 py-2.5 text-sm text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 transition placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
             />
             {searchOpen && query.trim().length > 0 && suggestions.length > 0 && (
               <ul

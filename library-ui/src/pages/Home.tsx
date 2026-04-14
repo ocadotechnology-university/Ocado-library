@@ -1,12 +1,17 @@
 import { useCallback, useMemo, useState } from "react";
 import Layout from "../components/Layout";
+import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
 import BookPreview from "../components/UI/BookPreview";
+import CatalogViewToggle from "../components/UI/CatalogViewToggle";
+import type { CatalogViewMode } from "../components/UI/CatalogViewToggle";
 import type { BookStatus } from "../components/UI/BookPreview";
 import CatalogHomeHeader from "../components/UI/CatalogHomeHeader";
 import type { MediaSection } from "../components/UI/CatalogHomeHeader";
 import TopBar from "../components/UI/TopBar";
+import NotificationPanel from "../components/UI/NotificationPanel";
 import UserInfoPanel from "../components/UI/UserInfoPanel";
+import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
 import { SidebarAccentTitle, SidebarFilterRow, SidebarTemplate } from "../components/UI/SidebarTemplate";
 
 const leftSidebar = (
@@ -102,15 +107,23 @@ function matchesCategory(row: BookRow, cat: string): boolean {
 }
 
 const Home = () => {
+  const [notificationsPanelOpen, setNotificationsPanelOpen] = useState(false);
   const [userPanelOpen, setUserPanelOpen] = useState(false);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
   const [activeCategory, setActiveCategory] = useState("All");
   const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [catalogView, setCatalogView] = useState<CatalogViewMode>("cards");
 
   const selected = openKey != null ? previewVariants.find((b) => b.key === openKey) : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
+
+  const openBook = useCallback((key: string) => {
+    setUserPanelOpen(false);
+    setNotificationsPanelOpen(false);
+    setOpenKey(key);
+  }, []);
 
   const allTags = useMemo(
     () => Array.from(new Set(previewVariants.flatMap((b) => b.tags))).sort((a, b) => a.localeCompare(b)),
@@ -129,33 +142,22 @@ const Home = () => {
       <Layout
         topBar={
           <TopBar
+            notificationsPanelOpen={notificationsPanelOpen}
+            onNotificationsClick={() => {
+              setUserPanelOpen(false);
+              setNotificationsPanelOpen((open) => !open);
+            }}
             accountPanelOpen={userPanelOpen}
-            onAccountClick={() => setUserPanelOpen((open) => !open)}
+            onAccountClick={() => {
+              setNotificationsPanelOpen(false);
+              setUserPanelOpen((open) => !open);
+            }}
           />
         }
         leftSidebar={leftSidebar}
+        rightSidebar={<LayoutRightStaticPanel />}
       >
         <div className="flex w-full flex-col gap-8">
-        {selected != null && (
-          <BookFullView
-            coverSrc={`https://picsum.photos/seed/${selected.seed}/272/181`}
-            coverSrcLarge={`https://picsum.photos/seed/${selected.seed}/640/960`}
-            title="The Midnight Library"
-            author="Matt Haig"
-            description={DESCRIPTION}
-            bookId={selected.bookId}
-            tags={selected.tags}
-            status={selected.status}
-            newArrival={selected.newArrival}
-            onClose={close}
-            onBorrow={() => {}}
-            onPing={() => {}}
-            onReturn={() => {}}
-            onEditTags={() => {}}
-            className="w-full"
-          />
-        )}
-
         <CatalogHomeHeader
           allTags={allTags}
           section={section}
@@ -168,24 +170,45 @@ const Home = () => {
 
         {section === "books" ? (
           <div className="flex flex-col gap-4">
-            <h2 className="text-lg font-semibold text-[#43485e]">Browse</h2>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-[#43485e]">Browse</h2>
+              <CatalogViewToggle mode={catalogView} onModeChange={setCatalogView} />
+            </div>
             {filteredRows.length === 0 ? (
               <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
                 No items match these filters. Try another category or clear the tag filter.
               </p>
-            ) : (
-              <ul className="grid list-none grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            ) : catalogView === "cards" ? (
+              <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
                 {filteredRows.map((row) => (
-                  <li key={row.key} className="flex flex-col gap-2">
+                  <li key={row.key} className="flex justify-center">
                     <BookPreview
+                      variant="card"
                       coverSrc={`https://picsum.photos/seed/${row.seed}/272/181`}
                       title="The Midnight Library"
                       author="Matt Haig"
                       status={row.status}
                       newArrival={row.newArrival}
-                      onOpen={() => setOpenKey(row.key)}
+                      onOpen={() => openBook(row.key)}
                     />
-                    <p className="text-xs text-[#9e9eae]">{row.caption}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <ul className="flex list-none flex-col gap-4">
+                {filteredRows.map((row) => (
+                  <li key={row.key} className="w-full">
+                    <BookPreview
+                      variant="list"
+                      coverSrc={`https://picsum.photos/seed/${row.seed}/272/181`}
+                      title="The Midnight Library"
+                      author="Matt Haig"
+                      status={row.status}
+                      newArrival={row.newArrival}
+                      caption={row.caption}
+                      description={DESCRIPTION}
+                      onOpen={() => openBook(row.key)}
+                    />
                   </li>
                 ))}
               </ul>
@@ -203,6 +226,31 @@ const Home = () => {
         )}
         </div>
       </Layout>
+      {selected != null && (
+        <BookClientWindow onBackdropClick={close}>
+          <BookFullView
+            coverSrc={`https://picsum.photos/seed/${selected.seed}/272/181`}
+            coverSrcLarge={`https://picsum.photos/seed/${selected.seed}/640/960`}
+            title="The Midnight Library"
+            author="Matt Haig"
+            description={DESCRIPTION}
+            bookId={selected.bookId}
+            tags={selected.tags}
+            status={selected.status}
+            newArrival={selected.newArrival}
+            onClose={close}
+            onBorrow={() => {}}
+            onPing={() => {}}
+            onReturn={() => {}}
+            onEditTags={() => {}}
+            className="w-full"
+          />
+        </BookClientWindow>
+      )}
+      <NotificationPanel
+        open={notificationsPanelOpen}
+        onClose={() => setNotificationsPanelOpen(false)}
+      />
       <UserInfoPanel open={userPanelOpen} onClose={() => setUserPanelOpen(false)} />
     </>
   );

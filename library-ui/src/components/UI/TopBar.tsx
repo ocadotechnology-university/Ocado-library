@@ -14,11 +14,18 @@ const actionButtonClass = [
 ].join(" ");
 
 type TopBarProps = {
+  onNotificationsClick?: () => void;
+  notificationsPanelOpen?: boolean;
   onAccountClick?: () => void;
   accountPanelOpen?: boolean;
 };
 
-const TopBar = ({ onAccountClick, accountPanelOpen = false }: TopBarProps) => {
+const TopBar = ({
+  onNotificationsClick,
+  notificationsPanelOpen = false,
+  onAccountClick,
+  accountPanelOpen = false,
+}: TopBarProps) => {
   return (
     <div className="flex h-full w-full items-center justify-between gap-3 px-5 py-2 sm:px-8 lg:px-10">
       <div className="flex min-w-0 items-center gap-3 sm:gap-4">
@@ -38,7 +45,14 @@ const TopBar = ({ onAccountClick, accountPanelOpen = false }: TopBarProps) => {
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-        <button type="button" className={actionButtonClass} aria-label="Notifications">
+        <button
+          type="button"
+          className={actionButtonClass}
+          aria-label="Notifications"
+          aria-expanded={notificationsPanelOpen}
+          aria-haspopup="dialog"
+          onClick={() => onNotificationsClick?.()}
+        >
           🔔
         </button>
         <button
