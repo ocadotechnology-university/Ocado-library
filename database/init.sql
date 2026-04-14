@@ -29,3 +29,9 @@ CREATE TABLE ps5_games (
     name VARCHAR(255) NOT NULL,
     status VARCHAR(50)
 );
+
+-- Tabela dla tagów
+CREATE TABLE tags (
+    id INT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+)
