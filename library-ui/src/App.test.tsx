@@ -6,6 +6,7 @@ describe("App", () => {
   it("renders the home template", () => {
     render(<App />);
     expect(screen.getByText("Ocado Library")).toBeInTheDocument();
-    expect(screen.getAllByText("The Midnight Library")).toHaveLength(6);
+    expect(screen.getByText("Filters")).toBeInTheDocument();
+    expect(screen.getByText("TypeScript Deep Dive")).toBeInTheDocument();
   });
 });

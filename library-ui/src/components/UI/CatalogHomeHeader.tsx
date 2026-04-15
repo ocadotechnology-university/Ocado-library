@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { CatalogTagPoolButton } from "./CatalogTagPoolButton";
 
 export type MediaSection = "books" | "board" | "ps";
 
@@ -22,61 +23,41 @@ export const CATEGORY_CHIPS = [
 const SEARCH_CORPUS: { id: string; text: string; hint: string }[] = [
   { id: "1", text: "The Midnight Library", hint: "Book · Matt Haig" },
   { id: "2", text: "Atomic Habits", hint: "Book · James Clear" },
-  { id: "3", text: "Pandemic Legacy Season 1", hint: "Board game" },
-  { id: "4", text: "Wingspan", hint: "Board game" },
-  { id: "5", text: "God of War Ragnarök", hint: "PS game" },
-  { id: "6", text: "Hollow Knight", hint: "PS / multi" },
-  { id: "7", text: "The Thursday Murder Club", hint: "Book · Richard Osman" },
+  { id: "3", text: "You Don't Know JS Yet", hint: "Book · Kyle Simpson · JavaScript" },
+  { id: "4", text: "Fluent Python", hint: "Book · Luciano Ramalho" },
+  { id: "5", text: "Designing Data-Intensive Applications", hint: "Book · Martin Kleppmann" },
+  { id: "6", text: "Pandemic Legacy Season 1", hint: "Board game" },
+  { id: "7", text: "Wingspan", hint: "Board game" },
+  { id: "8", text: "God of War Ragnarök", hint: "PS game" },
+  { id: "9", text: "Hollow Knight", hint: "PS / multi" },
 ];
-
-function TagIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M12 2H2v10l9.29 9.29a1 1 0 001.41 0l6.59-6.59a1 1 0 000-1.41L12 2z" />
-      <path d="M7 7h.01" />
-    </svg>
-  );
-}
 
 export type CatalogHomeHeaderProps = {
   allTags: string[];
+  selectedTags: string[];
+  onToggleFilterTag: (tag: string) => void;
   section: MediaSection;
   onSectionChange: (s: MediaSection) => void;
   activeCategory: string;
   onCategoryChange: (c: string) => void;
-  activeTagFilter: string | null;
-  onTagFilterChange: (tag: string | null) => void;
   className?: string;
 };
 
 const CatalogHomeHeader = ({
   allTags,
+  selectedTags,
+  onToggleFilterTag,
   section,
   onSectionChange,
   activeCategory,
   onCategoryChange,
-  activeTagFilter,
-  onTagFilterChange,
   className,
 }: CatalogHomeHeaderProps) => {
   const searchId = useId();
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const [tagPoolOpen, setTagPoolOpen] = useState(false);
 
   const searchRef = useRef<HTMLDivElement>(null);
-  const tagRef = useRef<HTMLDivElement>(null);
 
   const suggestions = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,18 +72,17 @@ const CatalogHomeHeader = ({
     const close = (e: MouseEvent) => {
       const t = e.target as Node;
       if (searchRef.current && !searchRef.current.contains(t)) setSearchOpen(false);
-      if (tagRef.current && !tagRef.current.contains(t)) setTagPoolOpen(false);
     };
     document.addEventListener("mousedown", close);
     return () => document.removeEventListener("mousedown", close);
   }, []);
 
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
+
   const pickSuggestion = useCallback((text: string) => {
     setQuery(text);
     setSearchOpen(false);
   }, []);
-
-  const sortedTags = useMemo(() => [...new Set(allTags)].sort((a, b) => a.localeCompare(b)), [allTags]);
 
   return (
     <div className={`flex w-full flex-col gap-5 ${className ?? ""}`.trim()}>
@@ -135,7 +115,7 @@ const CatalogHomeHeader = ({
         </div>
 
         <div className="flex w-full min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-end lg:max-w-xl">
-          <div className="relative min-w-0 flex-1" ref={searchRef}>
+          <div className="relative min-w-0 flex-1 sm:max-w-md lg:max-w-xl" ref={searchRef}>
             <label htmlFor={searchId} className="sr-only">
               Search catalogue
             </label>
@@ -179,66 +159,14 @@ const CatalogHomeHeader = ({
             )}
           </div>
 
-          <div className="relative shrink-0" ref={tagRef}>
-            <button
-              type="button"
-              aria-expanded={tagPoolOpen}
-              aria-haspopup="dialog"
-              aria-label="Browse all tags"
-              onClick={() => {
-                setTagPoolOpen((o) => !o);
-                setSearchOpen(false);
-              }}
-              className={[
-                "inline-flex h-11 w-11 items-center justify-center rounded-xl border shadow-sm transition",
-                tagPoolOpen || activeTagFilter
-                  ? "border-[#43485e] bg-[#43485e] text-[#eeeef0]"
-                  : "border-[#b1b2b5] bg-white text-[#43485e] hover:bg-[#eeeef0]",
-              ].join(" ")}
-            >
-              <TagIcon className="h-[18px] w-[18px]" />
-            </button>
-            {tagPoolOpen && (
-              <div
-                className="absolute top-full right-0 z-40 mt-1.5 w-[min(calc(100vw-2rem),18rem)] rounded-xl border border-[#d8dce8] bg-white p-2 shadow-[0_12px_32px_-8px_rgb(67_72_94_/0.28)]"
-                role="dialog"
-                aria-label="All tags"
-              >
-                <p className="border-b border-[#eeeef0] px-2 pb-2 text-[11px] font-bold uppercase tracking-wide text-[#9e9eae]">
-                  All tags
-                </p>
-                <div className="max-h-52 overflow-y-auto py-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    {sortedTags.map((tag) => {
-                      const on = activeTagFilter === tag;
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => {
-                            onTagFilterChange(on ? null : tag);
-                          }}
-                          className={[
-                            "rounded-full border px-2.5 py-1 text-xs font-medium transition",
-                            on
-                              ? "border-[#43485e] bg-[#43485e] text-[#eeeef0]"
-                              : "border-[#b1b2b5] bg-[#eeeef0] text-[#43485e] hover:border-[#43485e]/40",
-                          ].join(" ")}
-                        >
-                          {tag}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                {activeTagFilter && (
-                  <p className="border-t border-[#eeeef0] px-2 pt-2 text-xs text-[#6b7289]">
-                    Filtering by: <span className="font-semibold text-[#43485e]">{activeTagFilter}</span>
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          <CatalogTagPoolButton
+            allTags={allTags}
+            selectedTags={selectedTags}
+            onToggleTag={onToggleFilterTag}
+            variant="icon"
+            popoverAlign="end"
+            onPopoverOpen={closeSearch}
+          />
         </div>
       </div>
 
