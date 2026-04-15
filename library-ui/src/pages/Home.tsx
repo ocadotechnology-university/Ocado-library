@@ -8,30 +8,16 @@ import type { CatalogViewMode } from "../components/UI/CatalogViewToggle";
 import type { BookStatus } from "../components/UI/BookPreview";
 import CatalogHomeHeader, { type MediaSection } from "../components/UI/CatalogHomeHeader";
 import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
-import TopBar from "../components/UI/TopBar";
-import NotificationPanel from "../components/UI/NotificationPanel";
-import UserAccountWindow from "../components/UI/UserAccountWindow";
+import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
 import { SidebarAccentTitle, SidebarSectionLabel, SidebarTemplate } from "../components/UI/SidebarTemplate";
-
-type ContentLevel = "junior" | "middle" | "senior";
-
-type BookRow = {
-  key: string;
-  title: string;
-  author: string;
-  language: string;
-  level: ContentLevel;
-  status: BookStatus;
-  newArrival: boolean;
-  caption: string;
-  seed: string;
-  bookId: string;
-  tags: string[];
-};
-
-const BOOK_DESCRIPTION =
-  "Between life and death there is a library, and within that library, the shelves go on for ever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices. Would you have done anything differently, if you had the chance to undo your regrets?";
+import {
+  BOOK_DESCRIPTION,
+  type BookRow,
+  type ContentLevel,
+  previewVariants,
+} from "../catalogue/demoCatalog";
+import { useAppChrome } from "../context/AppChromeContext";
 
 const LEVEL_OPTIONS: { id: ContentLevel; label: string }[] = [
   { id: "junior", label: "Junior" },
@@ -97,116 +83,8 @@ function pillClass(active: boolean): string {
   ].join(" ");
 }
 
-const previewVariants: BookRow[] = [
-  {
-    key: "ts-senior",
-    title: "TypeScript Deep Dive",
-    author: "Basarat Ali Syed",
-    language: "TypeScript",
-    level: "senior",
-    status: "free",
-    newArrival: false,
-    caption: "Free",
-    seed: "ts-senior",
-    bookId: "OC-WRO-B-0101",
-    tags: ["typescript", "types", "Popular", "web"],
-  },
-  {
-    key: "py-middle",
-    title: "Fluent Python",
-    author: "Luciano Ramalho",
-    language: "Python",
-    level: "middle",
-    status: "free",
-    newArrival: true,
-    caption: "Free · New arrival",
-    seed: "py-middle",
-    bookId: "OC-WRO-B-0102",
-    tags: ["python", "idioms", "New", "Popular"],
-  },
-  {
-    key: "go-junior",
-    title: "The Go Programming Language",
-    author: "Alan Donovan",
-    language: "Go",
-    level: "junior",
-    status: "borrowed",
-    newArrival: false,
-    caption: "Borrowed",
-    seed: "go-junior",
-    bookId: "OC-WRO-B-0103",
-    tags: ["go", "systems", "reference"],
-  },
-  {
-    key: "java-middle",
-    title: "Effective Java",
-    author: "Joshua Bloch",
-    language: "Java",
-    level: "middle",
-    status: "borrowed",
-    newArrival: true,
-    caption: "Borrowed · New arrival",
-    seed: "java-middle",
-    bookId: "OC-WRO-B-0104",
-    tags: ["java", "patterns", "New", "Waitlist"],
-  },
-  {
-    key: "rust-senior",
-    title: "The Rust Programming Language",
-    author: "Steve Klabnik",
-    language: "Rust",
-    level: "senior",
-    status: "borrowed-by-me",
-    newArrival: false,
-    caption: "Borrowed by me",
-    seed: "rust-senior",
-    bookId: "OC-WRO-B-0105",
-    tags: ["rust", "ownership", "Due soon"],
-  },
-  {
-    key: "js-junior",
-    title: "You Don't Know JS Yet",
-    author: "Kyle Simpson",
-    language: "JavaScript",
-    level: "junior",
-    status: "borrowed-by-me",
-    newArrival: true,
-    caption: "Borrowed by me · New arrival",
-    seed: "js-junior",
-    bookId: "OC-WRO-B-0106",
-    tags: ["javascript", "New", "Checked out", "Popular"],
-  },
-  {
-    key: "ddia-senior",
-    title: "Designing Data-Intensive Applications",
-    author: "Martin Kleppmann",
-    language: "Mixed",
-    level: "senior",
-    status: "free",
-    newArrival: false,
-    caption: "Free",
-    seed: "ddia-senior",
-    bookId: "OC-WRO-B-0107",
-    tags: ["distributed", "databases", "architecture"],
-  },
-  {
-    key: "c-junior",
-    title: "Modern C",
-    author: "Jens Gustedt",
-    language: "C",
-    level: "junior",
-    status: "borrowed",
-    newArrival: false,
-    caption: "Borrowed",
-    seed: "c-junior",
-    bookId: "OC-WRO-B-0108",
-    tags: ["c", "systems", "Non-fiction"],
-  },
-];
-
 const Home = () => {
-  const [notificationsPanelOpen, setNotificationsPanelOpen] = useState(false);
-  const [userPanelOpen, setUserPanelOpen] = useState(false);
+  const { setNotificationsOpen } = useAppChrome();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -223,16 +101,13 @@ const Home = () => {
 
   const close = useCallback(() => setOpenKey(null), []);
 
-  const openBook = useCallback((key: string) => {
-    setUserPanelOpen(false);
-    setNotificationsPanelOpen(false);
-    setOpenKey(key);
-  }, []);
-
-  const openBookFromAccount = useCallback((key: string) => {
-    setNotificationsPanelOpen(false);
-    setOpenKey(key);
-  }, []);
+  const openBook = useCallback(
+    (key: string) => {
+      setNotificationsOpen(false);
+      setOpenKey(key);
+    },
+    [setNotificationsOpen],
+  );
 
   const catalogLanguages = useMemo(
     () => [...new Set(previewVariants.map((b) => b.language))].sort((a, b) => a.localeCompare(b)),
@@ -494,22 +369,9 @@ const Home = () => {
     <>
       <Layout
         topBar={
-          <TopBar
+          <CatalogAppTopBar
             onLogoClick={() => {
               setOpenKey(null);
-              setUserPanelOpen(false);
-              setNotificationsPanelOpen(false);
-            }}
-            notificationsPanelOpen={notificationsPanelOpen}
-            onNotificationsClick={() => {
-              setUserPanelOpen(false);
-              setNotificationsPanelOpen((open) => !open);
-            }}
-            accountPanelOpen={userPanelOpen}
-            onAccountClick={() => {
-              setNotificationsPanelOpen(false);
-              setOpenKey(null);
-              setUserPanelOpen((open) => !open);
             }}
           />
         }
@@ -606,15 +468,6 @@ const Home = () => {
           />
         </BookClientWindow>
       )}
-      <NotificationPanel
-        open={notificationsPanelOpen}
-        onClose={() => setNotificationsPanelOpen(false)}
-      />
-      <UserAccountWindow
-        open={userPanelOpen}
-        onClose={() => setUserPanelOpen(false)}
-        onOpenBookDetail={openBookFromAccount}
-      />
     </>
   );
 };

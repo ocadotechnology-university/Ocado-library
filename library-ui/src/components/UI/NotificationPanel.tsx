@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useId, useState } from "react";
+import { useCallback, useId, useState } from "react";
+import RightSlideInPanel from "../shell/RightSlideInPanel";
 
 export type NotificationItem = {
   id: string;
   title: string;
   body: string;
   time: string;
-  /** When true, shows a dot until the user clicks the notification (mark as read). */
   unread?: boolean;
 };
 
@@ -69,8 +69,7 @@ const DEMO_NOTIFICATIONS: NotificationItem[] = [
 ];
 
 /**
- * Same slide-over shell as the account panel: from the right, below the header, ‹ to close.
- * Body is a single scrollable list of notification blocks.
+ * Notifications “page” as a global right slide-in — mounted once in the app shell so it behaves the same on every route.
  */
 export default function NotificationPanel({
   open,
@@ -78,7 +77,6 @@ export default function NotificationPanel({
   items = DEMO_NOTIFICATIONS,
 }: NotificationPanelProps) {
   const titleId = useId();
-  /** IDs the user has opened — unread dot and ring are hidden for these. */
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
 
   const markAsRead = useCallback((id: string) => {
@@ -90,88 +88,37 @@ export default function NotificationPanel({
     });
   }, []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   return (
-    <>
-      <button
-        type="button"
-        className={`fixed top-24 right-0 bottom-0 left-0 z-40 cursor-default border-0 bg-[#1a1f2e]/35 p-0 transition-opacity duration-300 ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        aria-hidden={!open}
-        tabIndex={open ? 0 : -1}
-        onClick={onClose}
-      />
-
-      <div
-        className={`fixed top-24 right-0 bottom-0 z-[45] w-[min(92vw,380px)] max-w-full transition-transform duration-300 ease-out will-change-transform ${
-          open ? "translate-x-0" : "translate-x-full pointer-events-none"
-        }`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-hidden={!open}
+    <RightSlideInPanel open={open} onClose={onClose} title="Notifications" titleId={titleId}>
+      <ul
+        className="flex min-h-0 flex-1 list-none flex-col gap-3 overflow-y-auto overscroll-contain pr-0.5"
+        aria-label="Notification list"
       >
-        <div className="relative flex h-full flex-col border-l border-[#9e9eae]/80 bg-[#b8bac7] shadow-[-12px_0_28px_-8px_rgb(0_0_0_/0.35)]">
-          <button
-            type="button"
-            className="absolute top-1/2 left-0 z-10 flex -translate-x-full -translate-y-1/2 items-center justify-center rounded-l-lg border border-r-0 border-[#9e9eae]/80 bg-[#b8bac7] px-1.5 py-5 text-lg font-semibold leading-none text-[#43485e] shadow-md transition hover:bg-[#a8aab7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
-            aria-label="Close notifications"
-            onClick={onClose}
-          >
-            ‹
-          </button>
-
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4 pt-5">
-            <div className="shrink-0 rounded-lg bg-[#43485e] px-3 py-2.5 text-center shadow-sm">
-              <h2 id={titleId} className="text-sm font-semibold tracking-wide text-[#d4e157]">
-                Notifications
-              </h2>
-            </div>
-
-            <ul
-              className="flex min-h-0 flex-1 list-none flex-col gap-3 overflow-y-auto overscroll-contain pr-0.5"
-              aria-label="Notification list"
-            >
-              {items.map((n) => {
-                const unread = n.unread === true;
-                const showUnreadDot = unread && !readIds.has(n.id);
-                return (
-                  <li key={n.id}>
-                    <button
-                      type="button"
-                      onClick={() => markAsRead(n.id)}
-                      className={`w-full rounded-lg border border-[#b1b2b5]/80 bg-[#eeeef0]/95 px-3 py-3 text-left shadow-sm transition hover:bg-[#eeeef0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e] ${
-                        showUnreadDot ? "ring-2 ring-[#43485e]/25" : ""
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-semibold text-[#43485e]">{n.title}</span>
-                        {showUnreadDot ? (
-                          <span
-                            className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#43485e]"
-                            aria-label="Unread"
-                          />
-                        ) : null}
-                      </div>
-                      <p className="mt-2 text-sm leading-snug text-[#1a1f2e]">{n.body}</p>
-                      <p className="mt-2 text-xs font-medium text-[#9e9eae]">{n.time}</p>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </>
+        {items.map((n) => {
+          const unread = n.unread === true;
+          const showUnreadDot = unread && !readIds.has(n.id);
+          return (
+            <li key={n.id}>
+              <button
+                type="button"
+                onClick={() => markAsRead(n.id)}
+                className={`w-full rounded-lg border border-[#b1b2b5]/80 bg-[#eeeef0]/95 px-3 py-3 text-left shadow-sm transition hover:bg-[#eeeef0] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e] ${
+                  showUnreadDot ? "ring-2 ring-[#43485e]/25" : ""
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-semibold text-[#43485e]">{n.title}</span>
+                  {showUnreadDot ? (
+                    <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#43485e]" aria-label="Unread" />
+                  ) : null}
+                </div>
+                <p className="mt-2 text-sm leading-snug text-[#1a1f2e]">{n.body}</p>
+                <p className="mt-2 text-xs font-medium text-[#9e9eae]">{n.time}</p>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </RightSlideInPanel>
   );
 }

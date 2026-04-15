@@ -14,7 +14,7 @@ const actionButtonClass = [
 ].join(" ");
 
 type TopBarProps = {
-  /** Return to catalogue home: closes book overlay, account workspace, and notifications. */
+  /** Return to catalogue home (`/`) — parent may also close overlays. */
   onLogoClick?: () => void;
   onNotificationsClick?: () => void;
   notificationsPanelOpen?: boolean;

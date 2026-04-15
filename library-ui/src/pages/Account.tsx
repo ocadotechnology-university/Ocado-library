@@ -1,24 +1,17 @@
-import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { BOOK_LIST_COVER_FRAME_CLASS, BOOK_LIST_TEXT_CELL_CLASS } from "./bookListLayout";
-import { SidebarUserBlock } from "./SidebarTemplate";
-
-/** Demo copy aligned with the main catalogue book detail. */
-const ORDER_BOOK_DESCRIPTION =
-  "Between life and death there is a library, and within that library, the shelves go on for ever. Every book provides a chance to try another life you could have lived. To see how things would be if you had made other choices. Would you have done anything differently, if you had the chance to undo your regrets?";
-
-export type UserAccountWindowProps = {
-  open: boolean;
-  onClose: () => void;
-  /** Opens the same book detail overlay as the main catalogue (`BookFullView`). */
-  onOpenBookDetail?: (catalogKey: string) => void;
-  email?: string;
-};
+import { useCallback, useId, useMemo, useState } from "react";
+import Layout from "../components/Layout";
+import BookClientWindow from "../components/UI/BookClientWindow";
+import BookFullView from "../components/UI/BookFullView";
+import { BOOK_DESCRIPTION, findCatalogBook } from "../catalogue/demoCatalog";
+import { BOOK_LIST_COVER_FRAME_CLASS, BOOK_LIST_TEXT_CELL_CLASS } from "../components/UI/bookListLayout";
+import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
+import { SidebarAccentTitle, SidebarUserBlock, SidebarTemplate } from "../components/UI/SidebarTemplate";
+import { useAppChrome } from "../context/AppChromeContext";
 
 export type AccountSectionId = "history" | "borrowed" | "waiting";
 
 export type UserOrderRow = {
   id: string;
-  /** Key into the main catalogue (`BookRow.key`) for opening `BookFullView`. */
   catalogKey: string;
   title: string;
   author: string;
@@ -45,7 +38,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "The Rust Programming Language",
       author: "Steve Klabnik",
       seed: "rust-senior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "12 Mar 2026",
       dueOn: "18 Apr 2026",
     },
@@ -55,7 +48,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "You Don't Know JS Yet",
       author: "Kyle Simpson",
       seed: "js-junior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "28 Feb 2026",
       dueOn: "2 May 2026",
     },
@@ -67,7 +60,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "The Go Programming Language",
       author: "Alan Donovan",
       seed: "go-junior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "",
       requestedOn: "20 Feb 2026",
       queuePosition: 3,
@@ -78,7 +71,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "Effective Java",
       author: "Joshua Bloch",
       seed: "java-middle",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "",
       requestedOn: "8 Mar 2026",
       queuePosition: 7,
@@ -89,7 +82,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "Modern C",
       author: "Jens Gustedt",
       seed: "c-junior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "",
       requestedOn: "15 Mar 2026",
       queuePosition: 12,
@@ -102,7 +95,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "The Go Programming Language",
       author: "Alan Donovan",
       seed: "go-junior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "3 Jan 2026",
       returnedOn: "1 Mar 2026",
     },
@@ -112,7 +105,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "TypeScript Deep Dive",
       author: "Basarat Ali Syed",
       seed: "ts-senior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "12 Dec 2025",
       returnedOn: "14 Feb 2026",
     },
@@ -122,7 +115,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "Fluent Python",
       author: "Luciano Ramalho",
       seed: "py-middle",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "2 Nov 2025",
       returnedOn: "8 Jan 2026",
     },
@@ -132,7 +125,7 @@ const DEMO_ORDERS: Record<AccountSectionId, UserOrderRow[]> = {
       title: "The Rust Programming Language",
       author: "Steve Klabnik",
       seed: "rust-senior",
-      description: ORDER_BOOK_DESCRIPTION,
+      description: BOOK_DESCRIPTION,
       borrowedOn: "18 Oct 2025",
       returnedOn: "20 Dec 2025",
     },
@@ -231,46 +224,37 @@ function OrderListRow({
   );
 }
 
-function AccountStatsPanel({ counts }: { counts: Record<AccountSectionId, number> }) {
+function AccountStatsSidebar({ counts }: { counts: Record<AccountSectionId, number> }) {
   const items: { id: AccountSectionId; label: string; sub: string }[] = [
     { id: "borrowed", label: String(counts.borrowed), sub: "Borrowed now" },
     { id: "waiting", label: String(counts.waiting), sub: "Waiting for" },
     { id: "history", label: String(counts.history), sub: "In history" },
   ];
   return (
-    <aside className="flex w-[min(92vw,280px)] min-w-[200px] shrink-0 flex-col overflow-y-auto border-l border-[#9e9eae]/70 bg-[#b8bac7]">
-      <div className="flex flex-col gap-4 p-4">
-        <p className="text-center text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">Your totals</p>
-        <div className="flex flex-col gap-3">
-          {items.map(({ id, label, sub }) => (
-            <div
-              key={id}
-              className="rounded-xl border border-[#b1b2b5]/80 bg-[#eeeef0]/95 px-4 py-4 text-center shadow-sm"
-            >
-              <p className="text-3xl font-bold tabular-nums text-[#43485e] sm:text-4xl">{label}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#6b7289]">{sub}</p>
-            </div>
-          ))}
-        </div>
+    <SidebarTemplate>
+      <SidebarAccentTitle>Your totals</SidebarAccentTitle>
+      <div className="flex flex-col gap-3 pt-1">
+        {items.map(({ id, label, sub }) => (
+          <div
+            key={id}
+            className="rounded-xl border border-[#b1b2b5]/80 bg-[#eeeef0]/95 px-4 py-4 text-center shadow-sm"
+          >
+            <p className="text-3xl font-bold tabular-nums text-[#43485e] sm:text-4xl">{label}</p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#6b7289]">{sub}</p>
+          </div>
+        ))}
       </div>
-    </aside>
+    </SidebarTemplate>
   );
 }
 
-/**
- * Account workspace below the app top bar — same chrome as the rest of the app (Layout header stays visible).
- * Left nav + orders list + stats; order rows use the same list cover frame as the catalogue list view.
- */
-export default function UserAccountWindow({
-  open,
-  onClose,
-  onOpenBookDetail,
-  email = "jane.smith@ocado.com",
-}: UserAccountWindowProps) {
+const Account = ({ email = "jane.smith@ocado.com" }: { email?: string }) => {
   const titleId = useId();
   const searchId = useId();
+  const { setNotificationsOpen } = useAppChrome();
   const [section, setSection] = useState<AccountSectionId>("borrowed");
   const [findQuery, setFindQuery] = useState("");
+  const [openKey, setOpenKey] = useState<string | null>(null);
 
   const counts = useMemo(
     () => ({
@@ -293,104 +277,117 @@ export default function UserAccountWindow({
     );
   }, [section, findQuery]);
 
-  useEffect(() => {
-    if (!open) setFindQuery("");
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
-
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
 
-  if (!open) return null;
+  const openBookDetail = useCallback(
+    (catalogKey: string) => {
+      setNotificationsOpen(false);
+      setOpenKey(catalogKey);
+    },
+    [setNotificationsOpen],
+  );
+
+  const closeBook = useCallback(() => setOpenKey(null), []);
+  const selected = openKey != null ? findCatalogBook(openKey) : undefined;
+
+  const leftSidebar = useMemo(
+    () => (
+      <SidebarTemplate>
+        <div className="flex flex-col gap-3">
+          <SidebarUserBlock email={email} />
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">Categories</p>
+          <nav className="flex flex-col gap-2.5" aria-label="Account sections">
+            {NAV.map(({ id, label }) => {
+              const on = section === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => onNav(id)}
+                  className={[
+                    "rounded-xl border px-4 py-3.5 text-left text-base font-semibold transition sm:py-4",
+                    on
+                      ? "border-[#43485e] bg-[#43485e] text-[#eeeef0] shadow-md"
+                      : "border-[#b1b2b5]/80 bg-[#dcdfe6] text-[#43485e] shadow-sm hover:bg-[#e8eaf0]",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+      </SidebarTemplate>
+    ),
+    [email, section, onNav],
+  );
 
   return (
-    <div
-      className="fixed top-24 right-0 bottom-0 left-0 z-[40] flex flex-col bg-[#eeeef0]"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-    >
-      <h2 id={titleId} className="sr-only">
-        My loans and holds
-      </h2>
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <aside className="flex w-[min(92vw,280px)] min-w-[200px] shrink-0 flex-col overflow-y-auto border-r border-[#9e9eae]/70 bg-[#b8bac7]">
-          <div className="flex flex-col gap-3 p-4">
-            <SidebarUserBlock email={email} />
-            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">Categories</p>
-            <nav className="flex flex-col gap-2.5" aria-label="Account sections">
-              {NAV.map(({ id, label }) => {
-                const on = section === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => onNav(id)}
-                    className={[
-                      "rounded-xl border px-4 py-3.5 text-left text-base font-semibold transition sm:py-4",
-                      on
-                        ? "border-[#43485e] bg-[#43485e] text-[#eeeef0] shadow-md"
-                        : "border-[#b1b2b5]/80 bg-[#dcdfe6] text-[#43485e] shadow-sm hover:bg-[#e8eaf0]",
-                    ].join(" ")}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain px-2 py-3 sm:px-3 sm:py-4 lg:px-4 lg:py-5">
-          <div className="mx-auto max-w-4xl">
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
-                {NAV.find((n) => n.id === section)?.label}
-              </p>
-              <div className="w-full sm:max-w-md sm:flex-1 sm:pl-4 lg:max-w-lg">
-                <label htmlFor={searchId} className="sr-only">
-                  Find in this list
-                </label>
-                <input
-                  id={searchId}
-                  type="search"
-                  value={findQuery}
-                  onChange={(e) => setFindQuery(e.target.value)}
-                  placeholder="Find title or author…"
-                  autoComplete="off"
-                  className="w-full rounded-xl border border-[#b1b2b5] bg-white px-4 py-3 text-base text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
-                />
-              </div>
+    <>
+      <Layout
+        topBar={<CatalogAppTopBar />}
+        leftSidebar={leftSidebar}
+        rightSidebar={<AccountStatsSidebar counts={counts} />}
+      >
+        <h1 id={titleId} className="sr-only">
+          My loans and holds
+        </h1>
+        <div className="flex w-full flex-col gap-6">
+          <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
+              {NAV.find((n) => n.id === section)?.label}
+            </p>
+            <div className="w-full sm:max-w-md sm:flex-1 sm:pl-4 lg:max-w-lg">
+              <label htmlFor={searchId} className="sr-only">
+                Find in this list
+              </label>
+              <input
+                id={searchId}
+                type="search"
+                value={findQuery}
+                onChange={(e) => setFindQuery(e.target.value)}
+                placeholder="Find title or author…"
+                autoComplete="off"
+                className="w-full rounded-xl border border-[#b1b2b5] bg-white px-4 py-3 text-base text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
+              />
             </div>
-            {rows.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-[#b1b2b5] bg-white/60 px-4 py-14 text-center text-base text-[#6b7289]">
-                {findQuery.trim().length > 0 ? "No matches — try another word." : "Nothing here yet."}
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {rows.map((row) => (
-                  <OrderListRow
-                    key={row.id}
-                    row={row}
-                    section={section}
-                    onOpenBookDetail={onOpenBookDetail}
-                  />
-                ))}
-              </ul>
-            )}
           </div>
-        </main>
-
-        <AccountStatsPanel counts={counts} />
-      </div>
-    </div>
+          {rows.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-[#b1b2b5] bg-white/60 px-4 py-14 text-center text-base text-[#6b7289]">
+              {findQuery.trim().length > 0 ? "No matches — try another word." : "Nothing here yet."}
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {rows.map((row) => (
+                <OrderListRow key={row.id} row={row} section={section} onOpenBookDetail={openBookDetail} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </Layout>
+      {selected != null && (
+        <BookClientWindow onBackdropClick={closeBook}>
+          <BookFullView
+            coverSrc={`https://picsum.photos/seed/${selected.seed}/272/181`}
+            coverSrcLarge={`https://picsum.photos/seed/${selected.seed}/640/960`}
+            title={selected.title}
+            author={selected.author}
+            description={BOOK_DESCRIPTION}
+            bookId={selected.bookId}
+            tags={selected.tags}
+            status={selected.status}
+            newArrival={selected.newArrival}
+            onClose={closeBook}
+            onBorrow={() => {}}
+            onPing={() => {}}
+            onReturn={() => {}}
+            onEditTags={() => {}}
+            className="w-full"
+          />
+        </BookClientWindow>
+      )}
+    </>
   );
-}
+};
+
+export default Account;
