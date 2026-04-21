@@ -303,6 +303,25 @@ const Home = () => {
     setBooks((prev) => prev.filter((b) => b.key !== key));
   }, []);
 
+  const setBookStatus = useCallback((key: string, status: BookStatus) => {
+    setBooks((prev) =>
+      prev.map((b) =>
+        b.key === key
+          ? {
+              ...b,
+              status,
+              caption:
+                status === "free"
+                  ? "Free"
+                  : status === "borrowed"
+                    ? "Borrowed"
+                    : "Borrowed by me",
+            }
+          : b,
+      ),
+    );
+  }, []);
+
   const addInstance = useCallback(() => {
     const value = instanceInput.trim().toUpperCase();
     if (!/^OC-WRO-B-[A-Z0-9]+$/.test(value) || !instanceTargetKey) return;
@@ -774,9 +793,19 @@ const Home = () => {
               onPing={() => {}}
               onReturn={() => {}}
               onEditTags={() => {}}
+              showPrimaryAction={!isAdmin}
               footerExtraActions={
                 isAdmin ? (
                   <>
+                    <select
+                      value={selected.status}
+                      onChange={(e) => setBookStatus(selected.key, e.target.value as BookStatus)}
+                      className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-4 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm"
+                    >
+                      <option value="free">Available</option>
+                      <option value="borrowed">Borrowed</option>
+                      <option value="borrowed-by-me">Borrowed by me</option>
+                    </select>
                     <button
                       type="button"
                       onClick={() => startEditBook(selected)}

@@ -34,6 +34,7 @@ export type BookFullViewProps = {
   onEditTags?: () => void;
   onContextMenu?: (e: import("react").MouseEvent<HTMLElement>) => void;
   footerExtraActions?: ReactNode;
+  showPrimaryAction?: boolean;
   className?: string;
 };
 
@@ -60,6 +61,7 @@ const BookFullView = ({
   onEditTags,
   onContextMenu,
   footerExtraActions,
+  showPrimaryAction = true,
   className,
 }: BookFullViewProps) => {
   const largeSrc = coverSrcLarge ?? coverSrc;
@@ -248,24 +250,26 @@ const BookFullView = ({
 
           <div className="mt-auto flex min-h-[7.5rem] flex-1 flex-col justify-center sm:min-h-[9rem]">
             <div className="flex flex-col items-center gap-2 px-2 pt-6 pb-1">
-              <button
-                type="button"
-                disabled={!primaryAction}
-                onClick={() => primaryAction?.()}
-                className={[
-                  "min-w-[min(100%,16rem)] rounded-2xl px-12 py-4 text-lg font-semibold tracking-wide",
-                  "bg-gradient-to-b from-[#4f566d] to-[#3a4154] text-[#f4f5f8]",
-                  "shadow-[0_4px_14px_-2px_rgb(67_72_94_/0.45),inset_0_1px_0_0_rgb(255_255_255_/0.12)]",
-                  "ring-1 ring-[#43485e]/40",
-                  "transition-[transform,box-shadow,filter] duration-200 ease-out",
-                  "hover:-translate-y-0.5 hover:shadow-[0_8px_22px_-4px_rgb(67_72_94_/0.4)] hover:brightness-[1.03]",
-                  "active:translate-y-0 active:brightness-95",
-                  "enabled:focus-visible:outline enabled:focus-visible:outline-2 enabled:focus-visible:outline-offset-2 enabled:focus-visible:outline-[#43485e]",
-                  "disabled:cursor-not-allowed disabled:opacity-45",
-                ].join(" ")}
-              >
-                {actionLabel[status]}
-              </button>
+              {showPrimaryAction && (
+                <button
+                  type="button"
+                  disabled={!primaryAction}
+                  onClick={() => primaryAction?.()}
+                  className={[
+                    "min-w-[min(100%,16rem)] rounded-2xl px-12 py-4 text-lg font-semibold tracking-wide",
+                    "bg-gradient-to-b from-[#4f566d] to-[#3a4154] text-[#f4f5f8]",
+                    "shadow-[0_4px_14px_-2px_rgb(67_72_94_/0.45),inset_0_1px_0_0_rgb(255_255_255_/0.12)]",
+                    "ring-1 ring-[#43485e]/40",
+                    "transition-[transform,box-shadow,filter] duration-200 ease-out",
+                    "hover:-translate-y-0.5 hover:shadow-[0_8px_22px_-4px_rgb(67_72_94_/0.4)] hover:brightness-[1.03]",
+                    "active:translate-y-0 active:brightness-95",
+                    "enabled:focus-visible:outline enabled:focus-visible:outline-2 enabled:focus-visible:outline-offset-2 enabled:focus-visible:outline-[#43485e]",
+                    "disabled:cursor-not-allowed disabled:opacity-45",
+                  ].join(" ")}
+                >
+                  {actionLabel[status]}
+                </button>
+              )}
               {footerExtraActions ? <div className="flex flex-wrap justify-center gap-2">{footerExtraActions}</div> : null}
             </div>
           </div>
