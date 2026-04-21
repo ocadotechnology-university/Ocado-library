@@ -14,23 +14,17 @@ import { SidebarAccentTitle, SidebarSectionLabel, SidebarTemplate } from "../com
 import {
   BOOK_DESCRIPTION,
   type BookRow,
-  type ContentLevel,
   previewVariants,
 } from "../catalogue/demoCatalog";
 import { useAppChrome } from "../context/AppChromeContext";
 import { useAuth } from "../context/AuthContext";
-
-const LEVEL_OPTIONS: { id: ContentLevel; label: string }[] = [
-  { id: "junior", label: "Junior" },
-  { id: "middle", label: "Middle" },
-  { id: "senior", label: "Senior" },
-];
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
   { status: "borrowed", label: "Borrowed" },
   { status: "borrowed-by-me", label: "Borrowed by me" },
 ];
+const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
 
 type AdminBook = BookRow & {
   isbn: string;
@@ -44,7 +38,6 @@ type AdminDraft = {
   title: string;
   author: string;
   language: string;
-  level: ContentLevel;
   status: BookStatus;
   newArrival: boolean;
   bookId: string;
@@ -78,11 +71,6 @@ function rowMatchesLanguages(row: BookRow, selected: string[]): boolean {
 function rowMatchesAuthors(row: BookRow, selected: string[]): boolean {
   if (selected.length === 0) return true;
   return selected.includes(row.author);
-}
-
-function rowMatchesLevels(row: BookRow, selected: ContentLevel[]): boolean {
-  if (selected.length === 0) return true;
-  return selected.includes(row.level);
 }
 
 function rowMatchesChosenTags(row: BookRow, chosen: string[]): boolean {
@@ -126,6 +114,7 @@ const Home = () => {
   const [books, setBooks] = useState<AdminBook[]>(
     previewVariants.map((b, i) => ({
       ...b,
+      language: i % 2 === 0 ? "English" : "Polish",
       isbn: `97800000000${i + 1}`,
       instances: [b.bookId],
       imageUrl: "",
@@ -142,7 +131,6 @@ const Home = () => {
   const [selectedStatuses, setSelectedStatuses] = useState<BookStatus[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
-  const [selectedLevels, setSelectedLevels] = useState<ContentLevel[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [authorQuery, setAuthorQuery] = useState("");
   const [adminDraft, setAdminDraft] = useState<AdminDraft>({
@@ -151,7 +139,6 @@ const Home = () => {
     title: "",
     author: "",
     language: "",
-    level: "junior",
     status: "free",
     newArrival: false,
     bookId: "",
@@ -170,11 +157,6 @@ const Home = () => {
       setOpenKey(key);
     },
     [setNotificationsOpen],
-  );
-
-  const catalogLanguages = useMemo(
-    () => [...new Set(books.map((b) => b.language))].sort((a, b) => a.localeCompare(b)),
-    [books],
   );
 
   const catalogAuthors = useMemo(
@@ -199,7 +181,6 @@ const Home = () => {
       if (!rowMatchesStatuses(row, selectedStatuses)) return false;
       if (!rowMatchesLanguages(row, selectedLanguages)) return false;
       if (!rowMatchesAuthors(row, selectedAuthors)) return false;
-      if (!rowMatchesLevels(row, selectedLevels)) return false;
       if (!rowMatchesChosenTags(row, filterTags)) return false;
       return true;
     });
@@ -208,7 +189,6 @@ const Home = () => {
     selectedStatuses,
     selectedLanguages,
     selectedAuthors,
-    selectedLevels,
     filterTags,
     books,
   ]);
@@ -220,7 +200,6 @@ const Home = () => {
       title: "",
       author: "",
       language: "",
-      level: "junior",
       status: "free",
       newArrival: false,
       bookId: "",
@@ -242,7 +221,6 @@ const Home = () => {
       title: row.title,
       author: row.author,
       language: row.language,
-      level: row.level,
       status: row.status,
       newArrival: row.newArrival,
       bookId: row.bookId,
@@ -283,7 +261,7 @@ const Home = () => {
                 title: adminDraft.title.trim(),
                 author: adminDraft.author.trim(),
                 language: adminDraft.language.trim(),
-                level: adminDraft.level,
+                level: row.level,
                 status: adminDraft.status,
                 newArrival: adminDraft.newArrival,
                 bookId: adminDraft.bookId.trim(),
@@ -304,7 +282,7 @@ const Home = () => {
           title: adminDraft.title.trim(),
           author: adminDraft.author.trim(),
           language: adminDraft.language.trim(),
-          level: adminDraft.level,
+          level: "middle",
           status: adminDraft.status,
           newArrival: adminDraft.newArrival,
           caption: adminDraft.status === "free" ? "Free" : "Borrowed",
@@ -365,7 +343,6 @@ const Home = () => {
     selectedStatuses.length > 0 ||
     selectedLanguages.length > 0 ||
     selectedAuthors.length > 0 ||
-    selectedLevels.length > 0 ||
     filterTags.length > 0;
 
   const toggleFilterTag = useCallback((tag: string) => {
@@ -384,7 +361,6 @@ const Home = () => {
     setSelectedStatuses([]);
     setSelectedLanguages([]);
     setSelectedAuthors([]);
-    setSelectedLevels([]);
     setFilterTags([]);
     setAuthorQuery("");
   }, []);
@@ -474,9 +450,9 @@ const Home = () => {
           </div>
 
           <div>
-            <SidebarSectionLabel>Programming language</SidebarSectionLabel>
+            <SidebarSectionLabel>Language</SidebarSectionLabel>
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {catalogLanguages.map((lang) => {
+              {LANGUAGE_FILTER_OPTIONS.map((lang) => {
                 const on = selectedLanguages.includes(lang);
                 return (
                   <button
@@ -486,25 +462,6 @@ const Home = () => {
                     className={pillClass(on)}
                   >
                     {lang}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
-            <SidebarSectionLabel>Level</SidebarSectionLabel>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {LEVEL_OPTIONS.map(({ id, label }) => {
-                const on = selectedLevels.includes(id);
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => setSelectedLevels((s) => toggleInList(s, id))}
-                    className={pillClass(on)}
-                  >
-                    {label}
                   </button>
                 );
               })}
@@ -586,9 +543,7 @@ const Home = () => {
       selectedStatuses,
       selectedLanguages,
       selectedAuthors,
-      selectedLevels,
       filterTags,
-      catalogLanguages,
       catalogAuthors,
       catalogAllTags,
       authorQuery,
@@ -679,20 +634,6 @@ const Home = () => {
                         placeholder="https://..."
                         className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                       />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">Level</label>
-                      <select
-                        value={adminDraft.level}
-                        onChange={(e) => setAdminDraft((d) => ({ ...d, level: e.target.value as ContentLevel }))}
-                        className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                      >
-                        {LEVEL_OPTIONS.map((l) => (
-                          <option key={l.id} value={l.id}>
-                            {l.label}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium text-[#43485e]">Status</label>
