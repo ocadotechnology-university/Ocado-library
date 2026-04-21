@@ -3,7 +3,9 @@ CREATE TABLE book_descriptions (
     id SERIAL PRIMARY KEY, -- ID łączące opis książki z fizycznym obiektem
     isbn VARCHAR(20) UNIQUE,
     title VARCHAR(255) NOT NULL,
-    author VARCHAR(255) NOT NULL
+    author VARCHAR(255) NOT NULL,
+    desc TEXT,
+    image BYTEA -- Obraz przechowywany w bitach, będzie zabierał bardzo dużo pamięci
 );
 
 -- Tabela dla książek (jako obiekty)
@@ -40,6 +42,13 @@ CREATE TABLE book_waitlist (
     waiter_name VARCHAR(255) NOT NULL, -- Kto oczekuje
     joined_queue_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Kto wcześniej zaczął czekać
     FOREIGN KEY (book_description_id) REFERENCES book_descriptions(id) ON DELETE CASCADE -- Integralność przy usuwaniu
+);
+
+-- Tabela dla historii zdarzeń
+CREATE TABLE journal (
+    id SERIAL PRIMARY KEY,
+    who_did VARCHAR(255), -- Kto wprowadził zmianę
+    change_desc TEXT -- Opis zmiany w tekście (ktoś coś wypożyczył, ktoś coś zwrócił, itd...)
 );
 
 -- Tabela dla gier planszowych
