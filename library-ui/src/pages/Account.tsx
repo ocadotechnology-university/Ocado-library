@@ -7,6 +7,7 @@ import { BOOK_LIST_COVER_FRAME_CLASS, BOOK_LIST_TEXT_CELL_CLASS } from "../compo
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import { SidebarAccentTitle, SidebarUserBlock, SidebarTemplate } from "../components/UI/SidebarTemplate";
 import { useAppChrome } from "../context/AppChromeContext";
+import { useAuth } from "../context/AuthContext";
 
 export type AccountSectionId = "history" | "borrowed" | "waiting";
 
@@ -248,10 +249,11 @@ function AccountStatsSidebar({ counts }: { counts: Record<AccountSectionId, numb
   );
 }
 
-const Account = ({ email = "jane.smith@ocado.com" }: { email?: string }) => {
+const Account = () => {
   const titleId = useId();
   const searchId = useId();
   const { setNotificationsOpen } = useAppChrome();
+  const { user, logout } = useAuth();
   const [section, setSection] = useState<AccountSectionId>("borrowed");
   const [findQuery, setFindQuery] = useState("");
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -294,7 +296,17 @@ const Account = ({ email = "jane.smith@ocado.com" }: { email?: string }) => {
     () => (
       <SidebarTemplate>
         <div className="flex flex-col gap-3">
-          <SidebarUserBlock email={email} />
+          <SidebarUserBlock email={user?.email ?? "unknown@ocado.com"} />
+          <button
+            type="button"
+            onClick={() => {
+              setNotificationsOpen(false);
+              logout();
+            }}
+            className="rounded-lg border border-[#43485e]/35 bg-[#eeeef0] px-3 py-2 text-sm font-semibold text-[#43485e] shadow-sm transition hover:bg-white"
+          >
+            Log out
+          </button>
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">Categories</p>
           <nav className="flex flex-col gap-2.5" aria-label="Account sections">
             {NAV.map(({ id, label }) => {
@@ -319,7 +331,7 @@ const Account = ({ email = "jane.smith@ocado.com" }: { email?: string }) => {
         </div>
       </SidebarTemplate>
     ),
-    [email, section, onNav],
+    [user?.email, section, onNav, setNotificationsOpen, logout],
   );
 
   return (
