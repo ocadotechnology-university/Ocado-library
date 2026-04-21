@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppChrome } from "../../context/AppChromeContext";
+import { useAuth } from "../../context/AuthContext";
 import TopBar from "./TopBar";
 
 export type CatalogAppTopBarProps = {
@@ -13,6 +14,7 @@ export type CatalogAppTopBarProps = {
 export default function CatalogAppTopBar({ onLogoClick }: CatalogAppTopBarProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { isAdmin } = useAuth();
   const { notificationsOpen, setNotificationsOpen, toggleNotifications } = useAppChrome();
 
   return (
@@ -25,6 +27,7 @@ export default function CatalogAppTopBar({ onLogoClick }: CatalogAppTopBarProps)
       notificationsPanelOpen={notificationsOpen}
       onNotificationsClick={() => toggleNotifications()}
       accountPanelOpen={pathname === "/account"}
+      roleBadgeText={isAdmin ? "Admin account" : null}
       onAccountClick={() => {
         setNotificationsOpen(false);
         navigate("/account");

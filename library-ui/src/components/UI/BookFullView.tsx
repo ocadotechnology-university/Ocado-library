@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   BOOK_FULL_CARD_OUTER_CLASS,
   BOOK_FULL_CARD_RADIAL_CLASS,
@@ -32,6 +32,8 @@ export type BookFullViewProps = {
   onReturn?: () => void;
   /** Three-dots menu — e.g. open tag editor. */
   onEditTags?: () => void;
+  onContextMenu?: (e: import("react").MouseEvent<HTMLElement>) => void;
+  footerExtraActions?: ReactNode;
   className?: string;
 };
 
@@ -56,6 +58,8 @@ const BookFullView = ({
   onPing,
   onReturn,
   onEditTags,
+  onContextMenu,
+  footerExtraActions,
   className,
 }: BookFullViewProps) => {
   const largeSrc = coverSrcLarge ?? coverSrc;
@@ -127,6 +131,7 @@ const BookFullView = ({
   return (
     <section
       aria-labelledby={`${menuId}-title`}
+      onContextMenu={onContextMenu}
       style={{
         transitionDuration: `${ANIM_MS}ms`,
         transitionProperty: "opacity, transform",
@@ -242,7 +247,7 @@ const BookFullView = ({
           </div>
 
           <div className="mt-auto flex min-h-[7.5rem] flex-1 flex-col justify-center sm:min-h-[9rem]">
-            <div className="flex justify-center px-2 pt-6 pb-1">
+            <div className="flex flex-col items-center gap-2 px-2 pt-6 pb-1">
               <button
                 type="button"
                 disabled={!primaryAction}
@@ -261,6 +266,7 @@ const BookFullView = ({
               >
                 {actionLabel[status]}
               </button>
+              {footerExtraActions ? <div className="flex flex-wrap justify-center gap-2">{footerExtraActions}</div> : null}
             </div>
           </div>
         </div>

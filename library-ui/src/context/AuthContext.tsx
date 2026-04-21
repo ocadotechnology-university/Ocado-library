@@ -11,6 +11,7 @@ type LoginOptions = {
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
   login: (email: string, options: LoginOptions) => void;
   logout: () => void;
   isAllowedCompanyEmail: (email: string) => boolean;
@@ -18,6 +19,7 @@ type AuthContextValue = {
 
 const SESSION_KEY = "ocado.library.auth.session";
 const PERSISTENT_KEY = "ocado.library.auth.persistent";
+const ADMIN_EMAIL = "admin@ocado.com";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -67,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isAuthenticated: user != null,
+      isAdmin: user?.email === ADMIN_EMAIL,
       login,
       logout,
       isAllowedCompanyEmail,

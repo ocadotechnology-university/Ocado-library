@@ -20,6 +20,7 @@ type TopBarProps = {
   notificationsPanelOpen?: boolean;
   onAccountClick?: () => void;
   accountPanelOpen?: boolean;
+  roleBadgeText?: string | null;
 };
 
 const TopBar = ({
@@ -28,6 +29,7 @@ const TopBar = ({
   notificationsPanelOpen = false,
   onAccountClick,
   accountPanelOpen = false,
+  roleBadgeText = null,
 }: TopBarProps) => {
   return (
     <div className="flex h-full w-full items-center justify-between gap-3 px-5 py-2 sm:px-8 lg:px-10">
@@ -48,7 +50,14 @@ const TopBar = ({
           <span className="block truncate text-lg font-semibold tracking-tight text-[#eeeef0] sm:text-xl">
             Ocado Library
           </span>
-          <span className="hidden text-xs text-[#9e9eae] sm:block">Browse and manage resources</span>
+          <span className="hidden items-center gap-2 text-xs text-[#9e9eae] sm:flex">
+            <span>Browse and manage resources</span>
+            {roleBadgeText ? (
+              <span className="rounded-full border border-[#d4e157]/60 bg-[#d4e157]/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#d4e157]">
+                {roleBadgeText}
+              </span>
+            ) : null}
+          </span>
         </div>
       </button>
 
