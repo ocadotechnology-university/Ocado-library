@@ -36,7 +36,9 @@ export type SidebarTemplateProps = {
  */
 export function SidebarTemplate({ children, className }: SidebarTemplateProps) {
   return (
-    <div className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${className ?? ""}`.trim()}>
+    <div
+      className={`flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden ${className ?? ""}`.trim()}
+    >
       <div className={shellInner}>{children}</div>
     </div>
   );
@@ -48,7 +50,13 @@ export type SidebarAccentTitleProps = {
 };
 
 /** Section heading inside a scrolling sidebar (filters / sort groups). */
-export function SidebarSectionLabel({ children, className }: { children: ReactNode; className?: string }) {
+export function SidebarSectionLabel({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <h3
       className={`text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060] ${className ?? ""}`.trim()}
@@ -59,12 +67,17 @@ export function SidebarSectionLabel({ children, className }: { children: ReactNo
 }
 
 /** Dark strip with lime accent — e.g. “Categories”. */
-export function SidebarAccentTitle({ children, className }: SidebarAccentTitleProps) {
+export function SidebarAccentTitle({
+  children,
+  className,
+}: SidebarAccentTitleProps) {
   return (
     <div
       className={`rounded-lg bg-[#43485e] px-3 py-2.5 text-center shadow-sm ${className ?? ""}`.trim()}
     >
-      <span className="text-sm font-semibold tracking-wide text-[#d4e157]">{children}</span>
+      <span className="text-sm font-semibold tracking-wide text-[#d4e157]">
+        {children}
+      </span>
     </div>
   );
 }
@@ -74,7 +87,12 @@ export type SidebarFilterRowProps = {
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 /** Category / filter row: light pill, chevron, # chip (left sidebar). */
-export function SidebarFilterRow({ label, className, type = "button", ...props }: SidebarFilterRowProps) {
+export function SidebarFilterRow({
+  label,
+  className,
+  type = "button",
+  ...props
+}: SidebarFilterRowProps) {
   return (
     <button
       type={type}
@@ -108,7 +126,12 @@ export type SidebarSortRowProps = {
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 /** Sort / single-choice row (chevron only, no # chip). */
-export function SidebarSortRow({ label, className, type = "button", ...props }: SidebarSortRowProps) {
+export function SidebarSortRow({
+  label,
+  className,
+  type = "button",
+  ...props
+}: SidebarSortRowProps) {
   return (
     <button
       type={type}
@@ -143,7 +166,9 @@ export function SidebarUserBlock({ email, className }: SidebarUserBlockProps) {
     >
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">
         <span className="shrink-0 font-semibold text-[#43485e]">User:</span>
-        <span className="min-w-0 break-all font-medium leading-snug text-[#1a1f2e]">{email}</span>
+        <span className="min-w-0 break-all font-medium leading-snug text-[#1a1f2e]">
+          {email}
+        </span>
       </div>
     </div>
   );
@@ -154,7 +179,12 @@ export type SidebarMenuRowProps = {
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
 /** Large light rows with chevron (right sidebar: In use, Waiting list, …). */
-export function SidebarMenuRow({ label, className, type = "button", ...props }: SidebarMenuRowProps) {
+export function SidebarMenuRow({
+  label,
+  className,
+  type = "button",
+  ...props
+}: SidebarMenuRowProps) {
   return (
     <button
       type={type}

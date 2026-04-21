@@ -22,7 +22,10 @@ export default function Login() {
   }
 
   const state = location.state as LocationState | null;
-  const target = state?.from?.pathname && state.from.pathname !== "/login" ? state.from.pathname : "/";
+  const target =
+    state?.from?.pathname && state.from.pathname !== "/login"
+      ? state.from.pathname
+      : "/";
 
   const handleLogin = () => {
     const normalized = email.trim().toLowerCase();
@@ -55,7 +58,9 @@ export default function Login() {
               <span className="block truncate text-lg font-semibold tracking-tight text-[#eeeef0] sm:text-xl">
                 Ocado Library
               </span>
-              <span className="hidden text-xs text-[#9e9eae] sm:block">Sign in</span>
+              <span className="hidden text-xs text-[#9e9eae] sm:block">
+                Sign in
+              </span>
             </div>
           </div>
         </div>
@@ -69,13 +74,20 @@ export default function Login() {
 
         <div className="relative mx-auto w-full max-w-md">
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-semibold tracking-tight text-[#43485e] sm:text-4xl">Sign in to Ocado Library</h1>
-            <p className="mt-1 text-base text-[#6b7289] sm:text-lg">Borrow, reserve, and manage books in one place.</p>
+            <h1 className="text-3xl font-semibold tracking-tight text-[#43485e] sm:text-4xl">
+              Sign in to Ocado Library
+            </h1>
+            <p className="mt-1 text-base text-[#6b7289] sm:text-lg">
+              Borrow, reserve, and manage books in one place.
+            </p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="mb-1 block text-base font-medium text-[#43485e]">
+              <label
+                htmlFor="email"
+                className="mb-1 block text-base font-medium text-[#43485e]"
+              >
                 Email
               </label>
               <input
@@ -103,7 +115,9 @@ export default function Login() {
             </label>
 
             {error ? (
-              <p className="rounded-lg border border-[#dc2626]/30 bg-[#fee2e2] px-3 py-2 text-sm text-[#b91c1c]">{error}</p>
+              <p className="rounded-lg border border-[#dc2626]/30 bg-[#fee2e2] px-3 py-2 text-sm text-[#b91c1c]">
+                {error}
+              </p>
             ) : null}
 
             <button

@@ -20,7 +20,10 @@ describe("App", () => {
   });
 
   it("renders the home template", () => {
-    localStorage.setItem("ocado.library.auth.persistent", "jane.smith@ocado.com");
+    localStorage.setItem(
+      "ocado.library.auth.persistent",
+      "jane.smith@ocado.com",
+    );
     render(
       <MemoryRouter initialEntries={["/"]}>
         <AuthProvider>

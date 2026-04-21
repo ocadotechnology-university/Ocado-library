@@ -11,11 +11,14 @@ export type CatalogAppTopBarProps = {
 /**
  * Project-wide top bar: logo returns to `/`, account opens `/account`, notifications toggle the global slide panel.
  */
-export default function CatalogAppTopBar({ onLogoClick }: CatalogAppTopBarProps) {
+export default function CatalogAppTopBar({
+  onLogoClick,
+}: CatalogAppTopBarProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { isAdmin } = useAuth();
-  const { notificationsOpen, setNotificationsOpen, toggleNotifications } = useAppChrome();
+  const { notificationsOpen, setNotificationsOpen, toggleNotifications } =
+    useAppChrome();
 
   return (
     <TopBar

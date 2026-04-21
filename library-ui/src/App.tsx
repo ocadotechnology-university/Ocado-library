@@ -1,5 +1,11 @@
 import type { ReactElement } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import { AppChromeProvider, useAppChrome } from "./context/AppChromeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import NotificationPanel from "./components/UI/NotificationPanel";
@@ -53,9 +59,15 @@ export function AppRoutes() {
             </RequireAuth>
           }
         />
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />} />
+        <Route
+          path="*"
+          element={<Navigate to={isAuthenticated ? "/" : "/login"} replace />}
+        />
       </Routes>
-      <NotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+      <NotificationPanel
+        open={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </>
   );
 }

@@ -6,11 +6,17 @@ import BookPreview from "../components/UI/BookPreview";
 import CatalogViewToggle from "../components/UI/CatalogViewToggle";
 import type { CatalogViewMode } from "../components/UI/CatalogViewToggle";
 import type { BookStatus } from "../components/UI/BookPreview";
-import CatalogHomeHeader, { type MediaSection } from "../components/UI/CatalogHomeHeader";
+import CatalogHomeHeader, {
+  type MediaSection,
+} from "../components/UI/CatalogHomeHeader";
 import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
-import { SidebarAccentTitle, SidebarSectionLabel, SidebarTemplate } from "../components/UI/SidebarTemplate";
+import {
+  SidebarAccentTitle,
+  SidebarSectionLabel,
+  SidebarTemplate,
+} from "../components/UI/SidebarTemplate";
 import {
   BOOK_DESCRIPTION,
   type BookRow,
@@ -85,7 +91,8 @@ function matchesCategory(row: BookRow, cat: string): boolean {
   if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
   if (cat === "Bestsellers") return row.tags.some((t) => /best/i.test(t));
   if (cat === "Fiction") return row.tags.some((t) => /^fiction$/i.test(t));
-  if (cat === "Non-fiction") return row.tags.some((t) => /non-?fiction/i.test(t));
+  if (cat === "Non-fiction")
+    return row.tags.some((t) => /non-?fiction/i.test(t));
   if (cat === "Prizes") return row.tags.some((t) => /prize/i.test(t));
   return true;
 }
@@ -100,11 +107,15 @@ function pillClass(active: boolean): string {
 }
 
 function coverSrcFor(row: AdminBook): string {
-  return row.imageUrl?.trim() ? row.imageUrl : `https://picsum.photos/seed/${row.seed}/272/181`;
+  return row.imageUrl?.trim()
+    ? row.imageUrl
+    : `https://picsum.photos/seed/${row.seed}/272/181`;
 }
 
 function coverSrcLargeFor(row: AdminBook): string {
-  return row.imageUrl?.trim() ? row.imageUrl : `https://picsum.photos/seed/${row.seed}/640/960`;
+  return row.imageUrl?.trim()
+    ? row.imageUrl
+    : `https://picsum.photos/seed/${row.seed}/640/960`;
 }
 
 const Home = () => {
@@ -123,8 +134,12 @@ const Home = () => {
   const [section, setSection] = useState<MediaSection>("books");
   const [activeCategory, setActiveCategory] = useState("All");
   const [catalogView, setCatalogView] = useState<CatalogViewMode>("cards");
-  const [adminMode, setAdminMode] = useState<"browse" | "add" | "edit">("browse");
-  const [instanceTargetKey, setInstanceTargetKey] = useState<string | null>(null);
+  const [adminMode, setAdminMode] = useState<"browse" | "add" | "edit">(
+    "browse",
+  );
+  const [instanceTargetKey, setInstanceTargetKey] = useState<string | null>(
+    null,
+  );
   const [instanceInput, setInstanceInput] = useState("");
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
@@ -147,7 +162,8 @@ const Home = () => {
     tagsInput: "",
   });
 
-  const selected = openKey != null ? books.find((b) => b.key === openKey) : undefined;
+  const selected =
+    openKey != null ? books.find((b) => b.key === openKey) : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
 
@@ -160,12 +176,18 @@ const Home = () => {
   );
 
   const catalogAuthors = useMemo(
-    () => [...new Set(books.map((b) => b.author))].sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set(books.map((b) => b.author))].sort((a, b) =>
+        a.localeCompare(b),
+      ),
     [books],
   );
 
   const catalogAllTags = useMemo(
-    () => [...new Set(books.flatMap((b) => b.tags))].sort((a, b) => a.localeCompare(b)),
+    () =>
+      [...new Set(books.flatMap((b) => b.tags))].sort((a, b) =>
+        a.localeCompare(b),
+      ),
     [books],
   );
 
@@ -249,7 +271,12 @@ const Home = () => {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    if (!adminDraft.title.trim() || !adminDraft.author.trim() || !adminDraft.bookId.trim()) return;
+    if (
+      !adminDraft.title.trim() ||
+      !adminDraft.author.trim() ||
+      !adminDraft.bookId.trim()
+    )
+      return;
 
     if (adminMode === "edit") {
       setBooks((prev) =>
@@ -328,7 +355,12 @@ const Home = () => {
     setBooks((prev) =>
       prev.map((b) =>
         b.key === instanceTargetKey
-          ? { ...b, instances: b.instances.includes(value) ? b.instances : [...b.instances, value] }
+          ? {
+              ...b,
+              instances: b.instances.includes(value)
+                ? b.instances
+                : [...b.instances, value],
+            }
           : b,
       ),
     );
@@ -367,7 +399,8 @@ const Home = () => {
   const toggleFilterTag = useCallback((tag: string) => {
     setFilterTags((prev) => {
       const exists = prev.some((p) => p.toLowerCase() === tag.toLowerCase());
-      if (exists) return prev.filter((p) => p.toLowerCase() !== tag.toLowerCase());
+      if (exists)
+        return prev.filter((p) => p.toLowerCase() !== tag.toLowerCase());
       return [...prev, tag];
     });
   }, []);
@@ -430,7 +463,9 @@ const Home = () => {
                       key={tag}
                       className="flex items-center justify-between gap-2 rounded-lg border border-[#43485e]/25 bg-[#eeeef0] px-2.5 py-1.5 text-sm text-[#43485e]"
                     >
-                      <span className="min-w-0 truncate font-medium">{tag}</span>
+                      <span className="min-w-0 truncate font-medium">
+                        {tag}
+                      </span>
                       <button
                         type="button"
                         onClick={() => removeFilterTag(tag)}
@@ -458,7 +493,9 @@ const Home = () => {
                         type="checkbox"
                         className="h-4 w-4 shrink-0 rounded border-[#43485e]/40 text-[#43485e] focus:ring-[#43485e]"
                         checked={on}
-                        onChange={() => setSelectedStatuses((s) => toggleInList(s, status))}
+                        onChange={() =>
+                          setSelectedStatuses((s) => toggleInList(s, status))
+                        }
                       />
                       <span>{label}</span>
                     </label>
@@ -477,7 +514,9 @@ const Home = () => {
                   <button
                     key={lang}
                     type="button"
-                    onClick={() => setSelectedLanguages((s) => toggleInList(s, lang))}
+                    onClick={() =>
+                      setSelectedLanguages((s) => toggleInList(s, lang))
+                    }
                     className={pillClass(on)}
                   >
                     {lang}
@@ -505,10 +544,14 @@ const Home = () => {
                     key={author}
                     className="flex items-center justify-between gap-2 rounded-lg border border-[#43485e]/25 bg-[#eeeef0] px-2.5 py-1.5 text-sm text-[#43485e]"
                   >
-                    <span className="min-w-0 truncate font-medium">{author}</span>
+                    <span className="min-w-0 truncate font-medium">
+                      {author}
+                    </span>
                     <button
                       type="button"
-                      onClick={() => setSelectedAuthors((s) => s.filter((a) => a !== author))}
+                      onClick={() =>
+                        setSelectedAuthors((s) => s.filter((a) => a !== author))
+                      }
                       className="shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold text-[#5c6378] transition hover:bg-[#dcdfe6] hover:text-[#43485e]"
                       aria-label={`Remove author ${author}`}
                     >
@@ -531,7 +574,9 @@ const Home = () => {
                           key={author}
                           type="button"
                           title={author}
-                          onClick={() => setSelectedAuthors((s) => toggleInList(s, author))}
+                          onClick={() =>
+                            setSelectedAuthors((s) => toggleInList(s, author))
+                          }
                           className={[pillClass(on), "max-w-[13rem]"].join(" ")}
                         >
                           <span className="block truncate">{author}</span>
@@ -610,11 +655,18 @@ const Home = () => {
                   </h2>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">ISBN</label>
+                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                        ISBN
+                      </label>
                       <div className="flex gap-2">
                         <input
                           value={adminDraft.isbn}
-                          onChange={(e) => setAdminDraft((d) => ({ ...d, isbn: e.target.value }))}
+                          onChange={(e) =>
+                            setAdminDraft((d) => ({
+                              ...d,
+                              isbn: e.target.value,
+                            }))
+                          }
                           className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                         />
                         <button
@@ -636,29 +688,53 @@ const Home = () => {
                         ["Tags (comma separated)", "tagsInput"],
                       ] as const
                     ).map(([label, field]) => (
-                      <div key={field} className={field === "tagsInput" ? "sm:col-span-2" : ""}>
-                        <label className="mb-1 block text-sm font-medium text-[#43485e]">{label}</label>
+                      <div
+                        key={field}
+                        className={field === "tagsInput" ? "sm:col-span-2" : ""}
+                      >
+                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                          {label}
+                        </label>
                         <input
                           value={adminDraft[field]}
-                          onChange={(e) => setAdminDraft((d) => ({ ...d, [field]: e.target.value }))}
+                          onChange={(e) =>
+                            setAdminDraft((d) => ({
+                              ...d,
+                              [field]: e.target.value,
+                            }))
+                          }
                           className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                         />
                       </div>
                     ))}
                     <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">Image URL</label>
+                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                        Image URL
+                      </label>
                       <input
                         value={adminDraft.imageUrl}
-                        onChange={(e) => setAdminDraft((d) => ({ ...d, imageUrl: e.target.value }))}
+                        onChange={(e) =>
+                          setAdminDraft((d) => ({
+                            ...d,
+                            imageUrl: e.target.value,
+                          }))
+                        }
                         placeholder="https://..."
                         className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">Status</label>
+                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                        Status
+                      </label>
                       <select
                         value={adminDraft.status}
-                        onChange={(e) => setAdminDraft((d) => ({ ...d, status: e.target.value as BookStatus }))}
+                        onChange={(e) =>
+                          setAdminDraft((d) => ({
+                            ...d,
+                            status: e.target.value as BookStatus,
+                          }))
+                        }
                         className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                       >
                         {STATUS_OPTIONS.map((s) => (
@@ -672,7 +748,12 @@ const Home = () => {
                       <input
                         type="checkbox"
                         checked={adminDraft.newArrival}
-                        onChange={(e) => setAdminDraft((d) => ({ ...d, newArrival: e.target.checked }))}
+                        onChange={(e) =>
+                          setAdminDraft((d) => ({
+                            ...d,
+                            newArrival: e.target.checked,
+                          }))
+                        }
                         className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
                       />
                       Mark as new arrival
@@ -697,68 +778,87 @@ const Home = () => {
                 </div>
               ) : filteredRows.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
-                  No items match these filters. Try another category or clear the filters on the left.
+                  No items match these filters. Try another category or clear
+                  the filters on the left.
                 </p>
               ) : catalogView === "cards" ? (
                 <>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">Browse</h2>
-                    <CatalogViewToggle mode={catalogView} onModeChange={setCatalogView} />
+                    <h2 className="text-lg font-semibold text-[#43485e]">
+                      Browse
+                    </h2>
+                    <CatalogViewToggle
+                      mode={catalogView}
+                      onModeChange={setCatalogView}
+                    />
                   </div>
                   <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                  {filteredRows.map((row) => (
-                    <li
-                      key={row.key}
-                      className="flex flex-col items-center gap-2"
-                      onContextMenu={(e) => {
-                        if (!isAdmin) return;
-                        e.preventDefault();
-                        setContextMenu({ key: row.key, x: e.clientX, y: e.clientY });
-                      }}
-                    >
-                      <BookPreview
-                        variant="card"
-                        coverSrc={coverSrcFor(row)}
-                        title={row.title}
-                        author={row.author}
-                        status={row.status}
-                        newArrival={row.newArrival}
-                        onOpen={() => openBook(row.key)}
-                      />
-                    </li>
-                  ))}
+                    {filteredRows.map((row) => (
+                      <li
+                        key={row.key}
+                        className="flex flex-col items-center gap-2"
+                        onContextMenu={(e) => {
+                          if (!isAdmin) return;
+                          e.preventDefault();
+                          setContextMenu({
+                            key: row.key,
+                            x: e.clientX,
+                            y: e.clientY,
+                          });
+                        }}
+                      >
+                        <BookPreview
+                          variant="card"
+                          coverSrc={coverSrcFor(row)}
+                          title={row.title}
+                          author={row.author}
+                          status={row.status}
+                          newArrival={row.newArrival}
+                          onOpen={() => openBook(row.key)}
+                        />
+                      </li>
+                    ))}
                   </ul>
                 </>
               ) : (
                 <>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">Browse</h2>
-                    <CatalogViewToggle mode={catalogView} onModeChange={setCatalogView} />
+                    <h2 className="text-lg font-semibold text-[#43485e]">
+                      Browse
+                    </h2>
+                    <CatalogViewToggle
+                      mode={catalogView}
+                      onModeChange={setCatalogView}
+                    />
                   </div>
                   <ul className="flex list-none flex-col gap-4">
-                  {filteredRows.map((row) => (
-                    <li key={row.key} className="w-full">
-                      <div
-                        onContextMenu={(e) => {
-                          if (!isAdmin) return;
-                          e.preventDefault();
-                          setContextMenu({ key: row.key, x: e.clientX, y: e.clientY });
-                        }}
-                      >
-                        <BookPreview
-                        variant="list"
-                        coverSrc={coverSrcFor(row)}
-                        title={row.title}
-                        author={row.author}
-                        status={row.status}
-                        newArrival={row.newArrival}
-                        bookId={row.bookId}
-                        description={BOOK_DESCRIPTION}
-                        onOpen={() => openBook(row.key)}
-                      />
-                      </div>
-                    </li>
-                  ))}
+                    {filteredRows.map((row) => (
+                      <li key={row.key} className="w-full">
+                        <div
+                          onContextMenu={(e) => {
+                            if (!isAdmin) return;
+                            e.preventDefault();
+                            setContextMenu({
+                              key: row.key,
+                              x: e.clientX,
+                              y: e.clientY,
+                            });
+                          }}
+                        >
+                          <BookPreview
+                            variant="list"
+                            coverSrc={coverSrcFor(row)}
+                            title={row.title}
+                            author={row.author}
+                            status={row.status}
+                            newArrival={row.newArrival}
+                            bookId={row.bookId}
+                            description={BOOK_DESCRIPTION}
+                            onOpen={() => openBook(row.key)}
+                          />
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 </>
               )}
@@ -769,7 +869,8 @@ const Home = () => {
                 {section === "board" ? "Board games" : "PS games"} catalogue
               </p>
               <p className="mt-2 text-sm text-[#6b7289]">
-                This section is ready for your inventory — the demo list below is under <strong>Books</strong>.
+                This section is ready for your inventory — the demo list below
+                is under <strong>Books</strong>.
               </p>
             </div>
           )}
@@ -799,7 +900,12 @@ const Home = () => {
                   <>
                     <select
                       value={selected.status}
-                      onChange={(e) => setBookStatus(selected.key, e.target.value as BookStatus)}
+                      onChange={(e) =>
+                        setBookStatus(
+                          selected.key,
+                          e.target.value as BookStatus,
+                        )
+                      }
                       className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-4 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm"
                     >
                       <option value="free">Available</option>
@@ -874,8 +980,12 @@ const Home = () => {
       {instanceTargetKey != null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/25 px-4">
           <div className="w-full max-w-sm rounded-xl border border-[#b1b2b5]/80 bg-white p-4 shadow-lg">
-            <h3 className="text-base font-semibold text-[#43485e]">Add instance</h3>
-            <p className="mt-1 text-xs text-[#6b7289]">Use format: OC-WRO-B-num</p>
+            <h3 className="text-base font-semibold text-[#43485e]">
+              Add instance
+            </h3>
+            <p className="mt-1 text-xs text-[#6b7289]">
+              Use format: OC-WRO-B-num
+            </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}

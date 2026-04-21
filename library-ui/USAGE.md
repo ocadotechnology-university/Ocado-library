@@ -11,11 +11,13 @@ Before you begin, ensure you have the following installed on your system:
 ## Installation
 
 1. Clone the repository to your local machine:
+
    ```bash
    git clone <repository-url>
    ```
 
 2. Navigate to the `library-ui` directory:
+
    ```bash
    cd /Users/uladzislautrybukhouski/Documents/PWR/Ocado-library/library-ui
    ```
@@ -30,6 +32,7 @@ Before you begin, ensure you have the following installed on your system:
 To start the development server and run the application locally:
 
 1. Run the following command:
+
    ```bash
    npm run dev
    ```
@@ -41,6 +44,7 @@ To start the development server and run the application locally:
 To run the tests for the application:
 
 1. Use the following command:
+
    ```bash
    npm test
    ```
@@ -52,6 +56,7 @@ To run the tests for the application:
 To create a production build of the application:
 
 1. Run the following command:
+
    ```bash
    npm run build
    ```

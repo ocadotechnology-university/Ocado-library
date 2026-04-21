@@ -5,7 +5,10 @@ import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
 import type { BookStatus } from "../components/UI/BookPreview";
 import { BOOK_DESCRIPTION, findCatalogBook } from "../catalogue/demoCatalog";
-import { BOOK_LIST_COVER_FRAME_CLASS, BOOK_LIST_TEXT_CELL_CLASS } from "../components/UI/bookListLayout";
+import {
+  BOOK_LIST_COVER_FRAME_CLASS,
+  BOOK_LIST_TEXT_CELL_CLASS,
+} from "../components/UI/bookListLayout";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import {
   SidebarAccentTitle,
@@ -17,7 +20,12 @@ import { useAppChrome } from "../context/AppChromeContext";
 import { useAuth } from "../context/AuthContext";
 
 export type AccountSectionId = "history" | "borrowed" | "waiting";
-type AdminStatusFilter = "all" | "not-returned" | "returned" | "borrowed" | "waiting";
+type AdminStatusFilter =
+  | "all"
+  | "not-returned"
+  | "returned"
+  | "borrowed"
+  | "waiting";
 
 export type UserOrderRow = {
   id: string;
@@ -221,15 +229,18 @@ function parseDate(value: string | undefined): Date | null {
 }
 
 function OrderDateLines({ row }: { row: UserOrderRow }) {
-  const lineClass = "mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#5c6378] sm:mt-3 sm:gap-x-6 sm:text-sm";
+  const lineClass =
+    "mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#5c6378] sm:mt-3 sm:gap-x-6 sm:text-sm";
   if (row.kind === "history") {
     return (
       <p className={lineClass}>
         <span>
-          <span className="font-semibold text-[#43485e]">Borrowed:</span> {row.borrowedOn}
+          <span className="font-semibold text-[#43485e]">Borrowed:</span>{" "}
+          {row.borrowedOn}
         </span>
         <span>
-          <span className="font-semibold text-[#43485e]">Returned:</span> {row.returnedOn}
+          <span className="font-semibold text-[#43485e]">Returned:</span>{" "}
+          {row.returnedOn}
         </span>
       </p>
     );
@@ -238,7 +249,8 @@ function OrderDateLines({ row }: { row: UserOrderRow }) {
     return (
       <p className={lineClass}>
         <span>
-          <span className="font-semibold text-[#43485e]">Borrowed:</span> {row.borrowedOn}
+          <span className="font-semibold text-[#43485e]">Borrowed:</span>{" "}
+          {row.borrowedOn}
         </span>
         <span>
           <span className="font-semibold text-[#43485e]">Due:</span> {row.dueOn}
@@ -249,10 +261,12 @@ function OrderDateLines({ row }: { row: UserOrderRow }) {
   return (
     <p className={lineClass}>
       <span>
-        <span className="font-semibold text-[#43485e]">Reserved:</span> {row.requestedOn}
+        <span className="font-semibold text-[#43485e]">Reserved:</span>{" "}
+        {row.requestedOn}
       </span>
       <span>
-        <span className="font-semibold text-[#43485e]">Queue:</span> #{row.queuePosition}
+        <span className="font-semibold text-[#43485e]">Queue:</span> #
+        {row.queuePosition}
       </span>
     </p>
   );
@@ -273,14 +287,27 @@ function OrderListRow({
   const inner = (
     <>
       <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
-        <img src={coverSrc} alt="" className="h-full w-full object-cover" width={272} height={181} loading="lazy" />
+        <img
+          src={coverSrc}
+          alt=""
+          className="h-full w-full object-cover"
+          width={272}
+          height={181}
+          loading="lazy"
+        />
       </div>
-      <div className={`${BOOK_LIST_TEXT_CELL_CLASS} min-h-[5rem] py-0.5 sm:min-h-[6rem]`}>
-        <h3 className="line-clamp-2 text-base font-semibold text-[#43485e] sm:text-lg">{row.title}</h3>
+      <div
+        className={`${BOOK_LIST_TEXT_CELL_CLASS} min-h-[5rem] py-0.5 sm:min-h-[6rem]`}
+      >
+        <h3 className="line-clamp-2 text-base font-semibold text-[#43485e] sm:text-lg">
+          {row.title}
+        </h3>
         <p className="line-clamp-1 text-sm text-[#9e9eae]">{row.author}</p>
         {showUserMeta && (
           <p className="mt-1 text-xs text-[#5c6378]">
-            <span className="font-semibold text-[#43485e]">{row.userEmail}</span>
+            <span className="font-semibold text-[#43485e]">
+              {row.userEmail}
+            </span>
             {row.instanceId ? <> · {row.instanceId}</> : null}
           </p>
         )}
@@ -321,7 +348,12 @@ function OrderListRow({
 function AccountStatsSidebar({
   counts,
 }: {
-  counts: { borrowed: number; waiting: number; history: number; totalUsers: number };
+  counts: {
+    borrowed: number;
+    waiting: number;
+    history: number;
+    totalUsers: number;
+  };
 }) {
   const items: { id: string; label: string; sub: string }[] = [
     { id: "borrowed", label: String(counts.borrowed), sub: "Borrowed now" },
@@ -338,8 +370,12 @@ function AccountStatsSidebar({
             key={id}
             className="rounded-xl border border-[#b1b2b5]/80 bg-[#eeeef0]/95 px-4 py-4 text-center shadow-sm"
           >
-            <p className="text-3xl font-bold tabular-nums text-[#43485e] sm:text-4xl">{label}</p>
-            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#6b7289]">{sub}</p>
+            <p className="text-3xl font-bold tabular-nums text-[#43485e] sm:text-4xl">
+              {label}
+            </p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-wide text-[#6b7289]">
+              {sub}
+            </p>
           </div>
         ))}
       </div>
@@ -364,17 +400,34 @@ const Account = () => {
   const [periodFrom, setPeriodFrom] = useState("");
   const [periodTo, setPeriodTo] = useState("");
   const [adminStatus, setAdminStatus] = useState<AdminStatusFilter>("all");
-  const [adminBookStatuses, setAdminBookStatuses] = useState<Record<string, BookStatus>>({});
-  const [hiddenCatalogKeys, setHiddenCatalogKeys] = useState<Set<string>>(() => new Set());
-  const [instanceTargetKey, setInstanceTargetKey] = useState<string | null>(null);
+  const [adminBookStatuses, setAdminBookStatuses] = useState<
+    Record<string, BookStatus>
+  >({});
+  const [hiddenCatalogKeys, setHiddenCatalogKeys] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [instanceTargetKey, setInstanceTargetKey] = useState<string | null>(
+    null,
+  );
   const [instanceInput, setInstanceInput] = useState("");
 
   const allRows = useMemo(() => {
-    return [...DEMO_ORDERS.borrowed, ...DEMO_ORDERS.waiting, ...DEMO_ORDERS.history, ...ADMIN_EXTRA_ROWS];
+    return [
+      ...DEMO_ORDERS.borrowed,
+      ...DEMO_ORDERS.waiting,
+      ...DEMO_ORDERS.history,
+      ...ADMIN_EXTRA_ROWS,
+    ];
   }, []);
 
   const counts = useMemo(() => {
-    const source = isAdmin ? allRows : [...DEMO_ORDERS.borrowed, ...DEMO_ORDERS.waiting, ...DEMO_ORDERS.history];
+    const source = isAdmin
+      ? allRows
+      : [
+          ...DEMO_ORDERS.borrowed,
+          ...DEMO_ORDERS.waiting,
+          ...DEMO_ORDERS.history,
+        ];
     return {
       borrowed: source.filter((r) => r.kind === "borrowed").length,
       waiting: source.filter((r) => r.kind === "waiting").length,
@@ -399,13 +452,28 @@ const Account = () => {
     return allRows.filter((r) => {
       if (hiddenCatalogKeys.has(r.catalogKey)) return false;
       if (q.length > 0) {
-        const text = `${r.title} ${r.author} ${r.description} ${r.userEmail ?? ""} ${r.instanceId ?? ""}`.toLowerCase();
+        const text =
+          `${r.title} ${r.author} ${r.description} ${r.userEmail ?? ""} ${r.instanceId ?? ""}`.toLowerCase();
         if (!text.includes(q)) return false;
       }
-      if (personFilter.trim() && !(r.userEmail ?? "").toLowerCase().includes(personFilter.trim().toLowerCase()))
+      if (
+        personFilter.trim() &&
+        !(r.userEmail ?? "")
+          .toLowerCase()
+          .includes(personFilter.trim().toLowerCase())
+      )
         return false;
-      if (bookFilter.trim() && !r.title.toLowerCase().includes(bookFilter.trim().toLowerCase())) return false;
-      if (instanceFilter.trim() && !(r.instanceId ?? "").toLowerCase().includes(instanceFilter.trim().toLowerCase()))
+      if (
+        bookFilter.trim() &&
+        !r.title.toLowerCase().includes(bookFilter.trim().toLowerCase())
+      )
+        return false;
+      if (
+        instanceFilter.trim() &&
+        !(r.instanceId ?? "")
+          .toLowerCase()
+          .includes(instanceFilter.trim().toLowerCase())
+      )
         return false;
 
       if (adminStatus === "not-returned" && r.kind === "history") return false;
@@ -446,7 +514,9 @@ const Account = () => {
 
   const closeBook = useCallback(() => setOpenKey(null), []);
   const selected = openKey != null ? findCatalogBook(openKey) : undefined;
-  const selectedStatus = selected ? adminBookStatuses[selected.key] ?? selected.status : "free";
+  const selectedStatus = selected
+    ? (adminBookStatuses[selected.key] ?? selected.status)
+    : "free";
 
   const leftSidebar = useMemo(
     () => (
@@ -505,7 +575,9 @@ const Account = () => {
               <SidebarSectionLabel>Status</SidebarSectionLabel>
               <select
                 value={adminStatus}
-                onChange={(e) => setAdminStatus(e.target.value as AdminStatusFilter)}
+                onChange={(e) =>
+                  setAdminStatus(e.target.value as AdminStatusFilter)
+                }
                 className="rounded-lg border border-[#b1b2b5] bg-white px-2.5 py-2 text-sm"
               >
                 <option value="all">All</option>
@@ -517,8 +589,13 @@ const Account = () => {
             </>
           ) : (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">Categories</p>
-              <nav className="flex flex-col gap-2.5" aria-label="Account sections">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#4a5060]">
+                Categories
+              </p>
+              <nav
+                className="flex flex-col gap-2.5"
+                aria-label="Account sections"
+              >
                 {NAV.map(({ id, label }) => {
                   const on = section === id;
                   return (
@@ -572,7 +649,9 @@ const Account = () => {
         <div className="flex w-full flex-col gap-6">
           <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
-              {isAdmin ? "All users history" : NAV.find((n) => n.id === section)?.label}
+              {isAdmin
+                ? "All users history"
+                : NAV.find((n) => n.id === section)?.label}
             </p>
             <div className="w-full sm:max-w-md sm:flex-1 sm:pl-4 lg:max-w-lg">
               <label htmlFor={searchId} className="sr-only">
@@ -583,7 +662,11 @@ const Account = () => {
                 type="search"
                 value={findQuery}
                 onChange={(e) => setFindQuery(e.target.value)}
-                placeholder={isAdmin ? "Find user, book, instance..." : "Find title or author…"}
+                placeholder={
+                  isAdmin
+                    ? "Find user, book, instance..."
+                    : "Find title or author…"
+                }
                 autoComplete="off"
                 className="w-full rounded-xl border border-[#b1b2b5] bg-white px-4 py-3 text-base text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
               />
@@ -591,7 +674,9 @@ const Account = () => {
           </div>
           {rows.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-[#b1b2b5] bg-white/60 px-4 py-14 text-center text-base text-[#6b7289]">
-              {findQuery.trim().length > 0 ? "No matches — try another word." : "Nothing here yet."}
+              {findQuery.trim().length > 0
+                ? "No matches — try another word."
+                : "Nothing here yet."}
             </p>
           ) : (
             <ul className="flex flex-col gap-4">
@@ -631,7 +716,10 @@ const Account = () => {
                   <select
                     value={selectedStatus}
                     onChange={(e) =>
-                      setAdminBookStatuses((prev) => ({ ...prev, [selected.key]: e.target.value as BookStatus }))
+                      setAdminBookStatuses((prev) => ({
+                        ...prev,
+                        [selected.key]: e.target.value as BookStatus,
+                      }))
                     }
                     className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-4 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm"
                   >
@@ -656,8 +744,15 @@ const Account = () => {
                   <button
                     type="button"
                     onClick={() => {
-                      if (!window.confirm("Delete this book from admin history view?")) return;
-                      setHiddenCatalogKeys((prev) => new Set(prev).add(selected.key));
+                      if (
+                        !window.confirm(
+                          "Delete this book from admin history view?",
+                        )
+                      )
+                        return;
+                      setHiddenCatalogKeys((prev) =>
+                        new Set(prev).add(selected.key),
+                      );
                       setOpenKey(null);
                     }}
                     className="w-44 rounded-2xl border border-[#dc2626]/35 bg-[#fbe7e9] px-6 py-3.5 text-base font-semibold text-[#b4232a] shadow-sm transition hover:bg-[#fee2e2]"
@@ -674,8 +769,12 @@ const Account = () => {
       {instanceTargetKey != null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/25 px-4">
           <div className="w-full max-w-sm rounded-xl border border-[#b1b2b5]/80 bg-white p-4 shadow-lg">
-            <h3 className="text-base font-semibold text-[#43485e]">Add instance</h3>
-            <p className="mt-1 text-xs text-[#6b7289]">Use format: OC-WRO-B-num</p>
+            <h3 className="text-base font-semibold text-[#43485e]">
+              Add instance
+            </h3>
+            <p className="mt-1 text-xs text-[#6b7289]">
+              Use format: OC-WRO-B-num
+            </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}

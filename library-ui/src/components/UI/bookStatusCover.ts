@@ -10,7 +10,8 @@ export const BOOK_STATUS_COVER_LABEL: Record<BookStatus, string> = {
 /** High-contrast status chip on the cover — shared by BookPreview and BookFullView. */
 export const BOOK_STATUS_COVER_CLASS: Record<BookStatus, string> = {
   free: "border-2 border-emerald-800 bg-emerald-600 text-white shadow-[0_2px_12px_rgb(0_0_0_/0.35)]",
-  borrowed: "border-2 border-amber-900 bg-amber-500 text-amber-950 shadow-[0_2px_12px_rgb(0_0_0_/0.35)]",
+  borrowed:
+    "border-2 border-amber-900 bg-amber-500 text-amber-950 shadow-[0_2px_12px_rgb(0_0_0_/0.35)]",
   "borrowed-by-me":
     "border-2 border-[#1a1f2e] bg-[#43485e] text-[#eeeef0] shadow-[0_2px_12px_rgb(0_0_0_/0.35)]",
 };

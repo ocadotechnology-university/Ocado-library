@@ -8,7 +8,14 @@ export type CatalogViewToggleProps = {
 
 function GridIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z" />
     </svg>
   );
@@ -16,7 +23,14 @@ function GridIcon({ className }: { className?: string }) {
 
 function ListIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M4 6h16v2H4V6zm0 5h16v2H4v-2zm0 5h16v2H4v-2z" />
     </svg>
   );
@@ -28,7 +42,11 @@ const btnBase =
 /**
  * Switches catalogue between card grid and full-width list rows.
  */
-export default function CatalogViewToggle({ mode, onModeChange, className }: CatalogViewToggleProps) {
+export default function CatalogViewToggle({
+  mode,
+  onModeChange,
+  className,
+}: CatalogViewToggleProps) {
   return (
     <div
       className={`inline-flex rounded-xl border border-[#b1b2b5]/80 bg-white/90 p-1 shadow-sm ${className ?? ""}`.trim()}

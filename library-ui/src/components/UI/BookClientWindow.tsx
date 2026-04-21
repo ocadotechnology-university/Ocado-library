@@ -10,7 +10,10 @@ export type BookClientWindowProps = {
  * Full-viewport (below header) overlay for a single book: dimmed backdrop + scrollable content.
  * Place `BookFullView` (or similar) as children.
  */
-export default function BookClientWindow({ children, onBackdropClick }: BookClientWindowProps) {
+export default function BookClientWindow({
+  children,
+  onBackdropClick,
+}: BookClientWindowProps) {
   return (
     <div
       className="fixed top-24 right-0 bottom-0 left-0 z-[42] flex flex-col"

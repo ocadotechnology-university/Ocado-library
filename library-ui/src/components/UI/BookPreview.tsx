@@ -1,5 +1,8 @@
 import type { KeyboardEvent, ReactNode } from "react";
-import { BOOK_LIST_COVER_FRAME_CLASS, BOOK_LIST_TEXT_CELL_WITH_STATUS_CLASS } from "./bookListLayout";
+import {
+  BOOK_LIST_COVER_FRAME_CLASS,
+  BOOK_LIST_TEXT_CELL_WITH_STATUS_CLASS,
+} from "./bookListLayout";
 import {
   BOOK_FULL_CARD_OUTER_CLASS,
   BOOK_FULL_CARD_RADIAL_CLASS,
@@ -84,7 +87,9 @@ const BookPreview = ({
     "flex",
     newArrival ? "ring-2 ring-[#43485e]" : "",
     interactive ? "cursor-pointer transition hover:brightness-[1.02]" : "",
-    interactive ? "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]" : "",
+    interactive
+      ? "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+      : "",
     className ?? "",
   ]
     .join(" ")
@@ -133,7 +138,9 @@ const BookPreview = ({
             <h2 className="line-clamp-2 text-[1.15rem] font-semibold tracking-tight text-[#2a3142] sm:text-lg md:text-xl">
               {title}
             </h2>
-            <p className="mt-1 line-clamp-1 text-sm text-[#6b7289] sm:text-base">{author}</p>
+            <p className="mt-1 line-clamp-1 text-sm text-[#6b7289] sm:text-base">
+              {author}
+            </p>
             {bookId != null && bookId.length > 0 && (
               <p className="mt-2 inline-flex w-fit rounded-lg bg-[#43485e]/[0.06] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10 sm:text-xs">
                 {bookId}
@@ -150,7 +157,9 @@ const BookPreview = ({
               </div>
             )}
             {footer != null && (
-              <div className="mt-3 border-t border-[#c5c9d6]/60 pt-3">{footer}</div>
+              <div className="mt-3 border-t border-[#c5c9d6]/60 pt-3">
+                {footer}
+              </div>
             )}
           </div>
         </div>
@@ -196,7 +205,9 @@ const BookPreview = ({
         </h2>
         <p className="line-clamp-1 text-xs text-[#9e9eae]">{author}</p>
         {footer != null && (
-          <div className="mt-1.5 border-t border-[#b1b2b5]/50 pt-1.5">{footer}</div>
+          <div className="mt-1.5 border-t border-[#b1b2b5]/50 pt-1.5">
+            {footer}
+          </div>
         )}
       </div>
     </article>

@@ -142,7 +142,9 @@ export function CatalogTagPoolButton({
           </p>
           <div className="max-h-52 overflow-y-auto py-2">
             {sortedTags.length === 0 ? (
-              <p className="px-2 text-xs text-[#9e9eae]">No tags in the catalogue yet.</p>
+              <p className="px-2 text-xs text-[#9e9eae]">
+                No tags in the catalogue yet.
+              </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {sortedTags.map((tag) => {

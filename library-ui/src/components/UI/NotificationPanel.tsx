@@ -89,7 +89,12 @@ export default function NotificationPanel({
   }, []);
 
   return (
-    <RightSlideInPanel open={open} onClose={onClose} title="Notifications" titleId={titleId}>
+    <RightSlideInPanel
+      open={open}
+      onClose={onClose}
+      title="Notifications"
+      titleId={titleId}
+    >
       <ul
         className="flex min-h-0 flex-1 list-none flex-col gap-3 overflow-y-auto overscroll-contain pr-0.5"
         aria-label="Notification list"
@@ -107,13 +112,22 @@ export default function NotificationPanel({
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <span className="text-sm font-semibold text-[#43485e]">{n.title}</span>
+                  <span className="text-sm font-semibold text-[#43485e]">
+                    {n.title}
+                  </span>
                   {showUnreadDot ? (
-                    <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#43485e]" aria-label="Unread" />
+                    <span
+                      className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#43485e]"
+                      aria-label="Unread"
+                    />
                   ) : null}
                 </div>
-                <p className="mt-2 text-sm leading-snug text-[#1a1f2e]">{n.body}</p>
-                <p className="mt-2 text-xs font-medium text-[#9e9eae]">{n.time}</p>
+                <p className="mt-2 text-sm leading-snug text-[#1a1f2e]">
+                  {n.body}
+                </p>
+                <p className="mt-2 text-xs font-medium text-[#9e9eae]">
+                  {n.time}
+                </p>
               </button>
             </li>
           );

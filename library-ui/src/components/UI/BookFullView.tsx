@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   BOOK_FULL_CARD_OUTER_CLASS,
   BOOK_FULL_CARD_RADIAL_CLASS,
@@ -102,7 +109,10 @@ const BookFullView = ({
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (tagsMenuRef.current && !tagsMenuRef.current.contains(e.target as Node)) {
+      if (
+        tagsMenuRef.current &&
+        !tagsMenuRef.current.contains(e.target as Node)
+      ) {
         setTagsMenuOpen(false);
       }
     };
@@ -193,7 +203,9 @@ const BookFullView = ({
               <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
                 {bookId}
               </p>
-              <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">{description}</p>
+              <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">
+                {description}
+              </p>
             </div>
             <button
               type="button"
@@ -205,7 +217,9 @@ const BookFullView = ({
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <h3 className="w-full text-[11px] font-bold uppercase tracking-[0.12em] text-[#8b92a8]">Tags</h3>
+            <h3 className="w-full text-[11px] font-bold uppercase tracking-[0.12em] text-[#8b92a8]">
+              Tags
+            </h3>
             <div className="flex min-w-0 flex-1 flex-wrap gap-2">
               {tags.map((tag) => (
                 <span
@@ -270,7 +284,11 @@ const BookFullView = ({
                   {actionLabel[status]}
                 </button>
               )}
-              {footerExtraActions ? <div className="flex flex-wrap justify-center gap-2">{footerExtraActions}</div> : null}
+              {footerExtraActions ? (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {footerExtraActions}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

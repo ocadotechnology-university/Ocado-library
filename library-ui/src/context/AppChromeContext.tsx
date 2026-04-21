@@ -19,7 +19,10 @@ const AppChromeContext = createContext<AppChromeContextValue | null>(null);
 
 export function AppChromeProvider({ children }: { children: ReactNode }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const toggleNotifications = useCallback(() => setNotificationsOpen((o) => !o), []);
+  const toggleNotifications = useCallback(
+    () => setNotificationsOpen((o) => !o),
+    [],
+  );
 
   const value = useMemo(
     () => ({
@@ -30,7 +33,11 @@ export function AppChromeProvider({ children }: { children: ReactNode }) {
     [notificationsOpen, toggleNotifications],
   );
 
-  return <AppChromeContext.Provider value={value}>{children}</AppChromeContext.Provider>;
+  return (
+    <AppChromeContext.Provider value={value}>
+      {children}
+    </AppChromeContext.Provider>
+  );
 }
 
 export function useAppChrome() {

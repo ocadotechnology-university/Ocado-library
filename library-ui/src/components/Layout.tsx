@@ -21,12 +21,15 @@ const asideClass =
  * Three-pane layout: fixed top bar, then left / main / right each scroll independently
  * (marketplace-style), no full-page scroll.
  */
-const Layout = ({ topBar, leftSidebar, rightSidebar = null, children }: LayoutProps) => {
+const Layout = ({
+  topBar,
+  leftSidebar,
+  rightSidebar = null,
+  children,
+}: LayoutProps) => {
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#eeeef0]">
-      <header className={TOP_BAR_HEADER_CLASS}>
-        {topBar}
-      </header>
+      <header className={TOP_BAR_HEADER_CLASS}>{topBar}</header>
 
       <div className={`${TOP_BAR_HEIGHT} shrink-0`} aria-hidden />
 
@@ -38,7 +41,9 @@ const Layout = ({ topBar, leftSidebar, rightSidebar = null, children }: LayoutPr
         </main>
 
         {rightSidebar != null ? (
-          <aside className={`relative ${asideClass} border-l`}>{rightSidebar}</aside>
+          <aside className={`relative ${asideClass} border-l`}>
+            {rightSidebar}
+          </aside>
         ) : null}
       </div>
     </div>
