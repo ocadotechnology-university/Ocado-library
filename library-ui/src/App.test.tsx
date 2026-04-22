@@ -1,25 +1,41 @@
-// src/App.test.tsx
-import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import App from "./App";
+import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it } from "vitest";
+import { AppRoutes } from "./App";
+import { AppChromeProvider } from "./context/AppChromeContext";
+import { AuthProvider } from "./context/AuthContext";
 
 describe("App", () => {
-  it("renderuje nagłówek strony głównej", () => {
-    render(<App />);
-
-    // Tekst z HomePage.tsx, linie 34–36
-    const heading = screen.getByText("Welcome to the Ocado Technology Library");
-
-    expect(heading).toBeDefined();
+  it("renders login page for guests", () => {
+    render(
+      <MemoryRouter initialEntries={["/login"]}>
+        <AuthProvider>
+          <AppChromeProvider>
+            <AppRoutes />
+          </AppChromeProvider>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Sign in to Ocado Library")).toBeInTheDocument();
   });
 
-  it("renderuje pole wyszukiwania", () => {
-    render(<App />);
-
-    const searchInput = screen.getByPlaceholderText(
-      "Search by title, author, or ISBN...",
+  it("renders the home template", () => {
+    localStorage.setItem(
+      "ocado.library.auth.persistent",
+      "jane.smith@ocado.com",
     );
-
-    expect(searchInput).toBeDefined();
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <AuthProvider>
+          <AppChromeProvider>
+            <AppRoutes />
+          </AppChromeProvider>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Ocado Library")).toBeInTheDocument();
+    expect(screen.getByText("Filters")).toBeInTheDocument();
+    expect(screen.getByText("TypeScript Deep Dive")).toBeInTheDocument();
+    localStorage.removeItem("ocado.library.auth.persistent");
   });
 });
