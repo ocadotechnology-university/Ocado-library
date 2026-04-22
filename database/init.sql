@@ -48,7 +48,8 @@ CREATE TABLE book_waitlist (
 CREATE TABLE journal (
     id SERIAL PRIMARY KEY,
     who_did VARCHAR(255), -- Kto wprowadził zmianę
-    change_desc TEXT -- Opis zmiany w tekście (ktoś coś wypożyczył, ktoś coś zwrócił, itd...)
+    change_desc TEXT, -- Opis zmiany w tekście (ktoś coś wypożyczył, ktoś coś zwrócił, itd...)
+    date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Data zdarzenia
 );
 
 -- Tabela dla gier planszowych
