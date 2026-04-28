@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,32 +18,29 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "board_games")
-public class BoardGame {
+@Table(name = "books")
+public class BookInventoryItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "barcode")
-    private String barcode;
-
-    @Column(name = "name", nullable = false)
-    private String name;
-
-    @Column(name = "link_board_game_geek")
-    private String linkBoardGameGeek;
-
-    @Column(name = "number_of_players")
-    private String numberOfPlayers;
+    @Column(name = "inventory_code", nullable = false, unique = true)
+    private String inventoryCode;
 
     @Column(name = "status")
     private String status;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "book_description_id", nullable = false)
+    private BookDescription bookDescription;
+
+    @Column(name = "book_description_id", insertable = false, updatable = false)
+    private int bookDescriptionId;
 
     @Column(name = "borrower")
     private String borrower;
 
     @Column(name = "borrowing_date")
     private LocalDate borrowingDate;
-
 }

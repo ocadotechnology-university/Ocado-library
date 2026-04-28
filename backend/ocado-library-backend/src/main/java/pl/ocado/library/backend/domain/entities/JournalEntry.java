@@ -10,20 +10,25 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "ps5_games")
-public class PS5Game {
+@Table(name = "journal")
+public class JournalEntry {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-    
-    @Column(name = "status")
-    private String status;
+    @Column(name = "who_did")
+    private String whoDid;
+
+    @Column(name = "change_desc")
+    private String changeDescription;
+
+    @Column(name = "date")
+    private LocalDateTime date;
 }

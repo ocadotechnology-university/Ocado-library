@@ -14,16 +14,25 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "ps5_games")
-public class PS5Game {
+@Table(name = "book_descriptions")
+public class BookDescription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-    
-    @Column(name = "status")
-    private String status;
+    @Column(name = "isbn")
+    private String isbn;
+
+    @Column(name = "title", nullable = false)
+    private String title;
+
+    @Column(name = "author", nullable = false)
+    private String author;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "image")
+    private byte[] image;
 }

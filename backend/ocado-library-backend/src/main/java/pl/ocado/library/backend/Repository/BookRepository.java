@@ -1,21 +1,18 @@
 package pl.ocado.library.backend.Repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import pl.ocado.library.backend.domain.entities.BookInventoryItem;
 
-import pl.ocado.library.backend.domain.entities.Book;
-
-import java.util.List;
 import java.time.LocalDate;
+import java.util.List;
 
-public interface BookRepository extends JpaRepository<Book, Integer> {
+public interface BookRepository extends JpaRepository<BookInventoryItem, Integer> {
 
-    List<Book> findByTitle(String title);
-    List<Book> findByAuthor(String author);
-    List<Book> findByCategory(String category);
-    List<Book> findByEdition(String edition);
-    List<Book> findByStatus(String status);
-    List<Book> findByBorrower(String borrower);
-    List<Book> findByBorrowingDate(LocalDate borrowingDate);
-    
-   
+    List<BookInventoryItem> findByBookDescriptionIdIn(List<Integer> bookDescriptionIds);
+
+    List<BookInventoryItem> findByStatus(String status);
+
+    List<BookInventoryItem> findByBorrower(String borrower);
+
+    List<BookInventoryItem> findByBorrowingDate(LocalDate borrowingDate);
 }

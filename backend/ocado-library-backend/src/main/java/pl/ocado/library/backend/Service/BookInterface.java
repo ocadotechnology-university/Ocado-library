@@ -14,8 +14,6 @@ public interface BookInterface {
 
     public List<Book> getBooksByCategory(String category);
 
-    public List<Book> getBooksByEdition(String edition);
-
     public List<Book> getBooksByStatus(String status);
 
     public List<Book> getBooksByBorrower(String borrower);
@@ -29,3 +27,4 @@ public interface BookInterface {
 
    
 }
+
