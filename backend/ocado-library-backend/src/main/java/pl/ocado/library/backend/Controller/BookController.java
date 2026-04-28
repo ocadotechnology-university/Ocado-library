@@ -1,6 +1,5 @@
 package pl.ocado.library.backend.Controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,11 @@ import java.util.List;
 @RequestMapping("/api/books")
 public class BookController {
 
-    @Autowired
-    private BookService bookService;
+    private final BookService bookService;
+
+    public BookController(BookService bookService) {
+        this.bookService = bookService;
+    }
 
     @GetMapping
     public ResponseEntity<List<Book>> getAllBooks() {
@@ -41,11 +43,6 @@ public class BookController {
     @GetMapping("/search/category")
     public ResponseEntity<List<Book>> getBooksByCategory(@RequestParam String category) {
         return ResponseEntity.ok(bookService.getBooksByCategory(category));
-    }
-
-    @GetMapping("/search/edition")
-    public ResponseEntity<List<Book>> getBooksByEdition(@RequestParam String edition) {
-        return ResponseEntity.ok(bookService.getBooksByEdition(edition));
     }
 
     @GetMapping("/search/status")
