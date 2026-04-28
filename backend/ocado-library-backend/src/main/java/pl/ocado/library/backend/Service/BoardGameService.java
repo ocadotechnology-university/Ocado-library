@@ -9,8 +9,10 @@ import pl.ocado.library.backend.domain.entities.BoardGame;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import jakarta.transaction.Transactional;
 
 @Service
+@Transactional
 public class BoardGameService {
 
 	@Autowired
