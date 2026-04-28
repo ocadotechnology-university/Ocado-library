@@ -1,6 +1,5 @@
 package pl.ocado.library.backend.Controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,11 @@ import java.util.List;
 @RequestMapping("/api/ps5-games")
 public class PS5GameController {
 
-    @Autowired
-    private PS5GameService ps5GameService;
+    private final PS5GameService ps5GameService;
+
+    public PS5GameController(PS5GameService ps5GameService) {
+        this.ps5GameService = ps5GameService;
+    }
 
     @GetMapping
     public ResponseEntity<List<PS5Game>> getAllPS5Games() {

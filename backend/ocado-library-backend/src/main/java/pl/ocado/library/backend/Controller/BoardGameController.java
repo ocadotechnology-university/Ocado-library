@@ -1,6 +1,5 @@
 package pl.ocado.library.backend.Controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +14,11 @@ import java.util.List;
 @RequestMapping("/api/board-games")
 public class BoardGameController {
 
-    @Autowired
-    private BoardGameService boardGameService;
+    private final BoardGameService boardGameService;
+
+    public BoardGameController(BoardGameService boardGameService) {
+        this.boardGameService = boardGameService;
+    }
 
     @GetMapping
     public ResponseEntity<List<BoardGame>> getAllBoardGames() {
