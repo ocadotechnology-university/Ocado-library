@@ -4,7 +4,7 @@ CREATE TABLE book_descriptions (
     isbn VARCHAR(20) UNIQUE,
     title VARCHAR(255) NOT NULL,
     author VARCHAR(255) NOT NULL,
-    desc TEXT,
+    description TEXT,
     image BYTEA -- Obraz przechowywany w bitach, będzie zabierał bardzo dużo pamięci
 );
 
