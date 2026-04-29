@@ -16,10 +16,10 @@ Before you begin, ensure you have the following installed on your system:
    git clone <repository-url>
    ```
 
-2. Navigate to the `library-ui` directory:
+2. Navigate to the `frontend` directory:
 
    ```bash
-   cd /Users/uladzislautrybukhouski/Documents/PWR/Ocado-library/library-ui
+   cd /path/to/Ocado-library/frontend
    ```
 
 3. Install the required dependencies:
