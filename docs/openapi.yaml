@@ -1,0 +1,751 @@
+openapi: 3.0.3
+info:
+  title: Ocado Library API
+  description: |
+    REST API for the Ocado Library inventory management system.
+    Manages Books, Board Games, and PS5 Games with borrowing, returning, and audit trail.
+
+    ### Authentication
+    All endpoints require Google OAuth2 authentication via Bearer token (JWT).
+    Unauthenticated requests receive `401 Unauthorized`.
+
+    ### Roles
+    - **Employee** – read catalog, borrow/return items, view own loans
+    - **Admin** – all employee actions + CRUD on resources, physical item management, full audit log
+  version: 1.0.0
+  contact:
+    name: Ocado Library Team
+
+servers:
+  - url: /api
+    description: Backend REST API base path
+
+tags:
+  - name: Catalog
+    description: Browse and search the resource catalog
+  - name: Items
+    description: Physical item operations (borrow, return)
+  - name: Admin – Items
+    description: Admin operations on physical copies
+  - name: Admin – Resources
+    description: Admin CRUD on resource metadata
+  - name: Admin – Journal
+    description: Audit log access
+
+# ---------------------------------------------------------------------------
+# Security
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    ItemType:
+      type: string
+      enum: [Book, BoardGame, PSGame]
+      description: Polymorphic type that determines the metadata table used.
+
+    ItemStatus:
+      type: string
+      enum: [IN_OFFICE, BORROWED, LOST, FOR_OFFICE_USE_ONLY]
+
+    # ---- Description DTOs (catalog view) -----------------------------------
+
+    BookDescriptionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        internal_id:
+          type: string
+          example: OC-B-WR-001
+        type:
+          $ref: '#/components/schemas/ItemType'
+        title:
+          type: string
+        author:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: List of tags assigned to the description.
+        description_status:
+          type: string
+          enum: [AVAILABLE, BORROWED, BORROWED_BY_ME]
+          description: Resolved status from the caller's perspective.
+
+    BoardGameDescriptionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        internal_id:
+          type: string
+          example: OC-G-WR-009
+        type:
+          $ref: '#/components/schemas/ItemType'
+        title:
+          type: string
+        description:
+          type: string
+        number_of_players:
+          type: integer
+        bgg_link:
+          type: string
+          format: uri
+        tags:
+          type: array
+          items:
+            type: string
+          description: List of tags assigned to the description.
+        description_status:
+          type: string
+          enum: [AVAILABLE, BORROWED, BORROWED_BY_ME]
+
+    PSGameDescriptionDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+        internal_id:
+          type: string
+          example: OC-PS-WR-1
+        type:
+          $ref: '#/components/schemas/ItemType'
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: List of tags assigned to the description.
+
+    ItemDetail:
+      allOf:
+        - $ref: '#/components/schemas/ItemSummary'
+        - type: object
+          properties:
+            description_id:
+              type: integer
+            type:
+              $ref: '#/components/schemas/ItemType'
+            updated_at:
+              type: string
+              format: date-time
+
+    AdminCreateItemRequest:
+      type: object
+      required: [description_id]
+      properties:
+        description_id:
+          type: integer
+          description: Existing description ID to attach the new physical copy to.
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+          default: IN_OFFICE
+
+    AdminUpdateItemStatusRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+        reason:
+          type: string
+          description: Optional audit context for manual admin status updates.
+
+    TagListResponse:
+      type: object
+      properties:
+        type:
+          $ref: '#/components/schemas/ItemType'
+        tags:
+          type: array
+          items:
+            type: string
+          description: Distinct tags used by descriptions of this type.
+
+    # ---- Item (physical copy) ----------------------------------------------
+
+    ItemSummary:
+      type: object
+      properties:
+        internal_id:
+          type: string
+          example: OC-B-WR-001
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+        borrower:
+          type: string
+          nullable: true
+          description: Email of the current borrower, null if not borrowed.
+
+    # ---- Create / Update request bodies ------------------------------------
+
+    CreateBookRequest:
+      type: object
+      required: [title, author]
+      properties:
+        isbn:
+          type: string
+          description: Optional – auto-fills title, author, edition, cover when provided.
+        title:
+          type: string
+        author:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional list of tags for search and filtering.
+
+    CreateBoardGameRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        number_of_players:
+          type: integer
+        bgg_link:
+          type: string
+          format: uri
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional list of tags for search and filtering.
+
+    CreatePSGameRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: Optional list of tags for search and filtering.
+
+    UpdateBookRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+        tags:
+          type: array
+          items:
+            type: string
+          description: Replaces the full tag list when provided.
+
+    UpdateBoardGameRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        number_of_players:
+          type: integer
+        bgg_link:
+          type: string
+          format: uri
+        status:
+          $ref: '#/components/schemas/ItemStatus'
+        tags:
+          type: array
+          items:
+            type: string
+          description: Replaces the full tag list when provided.
+
+    UpdatePSGameRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          description: Replaces the full tag list when provided.
+
+    # ---- Journal -----------------------------------------------------------
+
+    JournalEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        datetime:
+          type: string
+          format: date-time
+        description:
+          type: string
+          example: Borrow item OC-B-WR-001 by user@ocado.com
+        user:
+          type: string
+          format: email
+
+    # ---- Error -------------------------------------------------------------
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+
+  # -------------------------------------------------------------------------
+  # Reusable parameters
+  # -------------------------------------------------------------------------
+  parameters:
+    typeParam:
+      name: type
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/ItemType'
+
+    internalIdParam:
+      name: internal_id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Physical item identifier (e.g. OC-B-WR-001)
+
+    descriptionIdParam:
+      name: description_id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID from the description metadata table
+
+  # -------------------------------------------------------------------------
+  # Reusable responses
+  # -------------------------------------------------------------------------
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Authenticated but insufficient role (Admin required).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: Business rule violation (e.g. item already borrowed).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+security:
+  - BearerAuth: []
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # ==========================================================================
+  # CATALOG
+  # ==========================================================================
+
+  /descriptions/{type}/all:
+    get:
+      tags: [Catalog]
+      summary: List all descriptions of a given type
+      description: |
+        Returns all metadata entries of the requested type.
+        Each item includes `description_status` resolved for the calling user:
+        - `BORROWED_BY_ME` – the caller is the current borrower
+        - `AVAILABLE` – at least one physical copy has status `IN_OFFICE`
+        - `BORROWED` – all copies are borrowed by someone else
+        
+        PS5 games do not expose a `description_status` field (catalog-only).
+        Tags are modeled as a normalized relation (`description_tags`) and returned as a list per description.
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Free-text search on title and author fields.
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+          description: Comma-separated tags filter. Returns descriptions containing any requested tag.
+      responses:
+        '200':
+          description: List of description DTOs.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                    - $ref: '#/components/schemas/BookDescriptionDTO'
+                    - $ref: '#/components/schemas/BoardGameDescriptionDTO'
+                    - $ref: '#/components/schemas/PSGameDescriptionDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /descriptions/{type}/tags:
+    get:
+      tags: [Catalog]
+      summary: List all tags used by description type
+      description: Returns distinct tags extracted from all descriptions of the requested type.
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+      responses:
+        '200':
+          description: Distinct tag list for this description type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /descriptions/{type}/{description_id}:
+    get:
+      tags: [Catalog]
+      summary: Get a single description by ID
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/descriptionIdParam'
+      responses:
+        '200':
+          description: Description DTO.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BookDescriptionDTO'
+                  - $ref: '#/components/schemas/BoardGameDescriptionDTO'
+                  - $ref: '#/components/schemas/PSGameDescriptionDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==========================================================================
+  # ITEMS (physical copies)
+  # ==========================================================================
+
+  /items/{description_id}:
+    get:
+      tags: [Items]
+      summary: List physical copies for a description
+      description: Returns all physical ITEM rows linked to a given description_id, optionally filtered by status.
+      parameters:
+        - $ref: '#/components/parameters/descriptionIdParam'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ItemStatus'
+          description: Filter copies by status (optional).
+      responses:
+        '200':
+          description: List of physical copies.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items/{internal_id}/borrow:
+    post:
+      tags: [Items]
+      summary: Borrow a physical item
+      description: |
+        Assigns the item to the calling user.
+        - Sets `status = BORROWED` and `borrower = userEmail`.
+        - Writes an audit entry to JOURNAL.
+        - Returns `409` if the item is not `IN_OFFICE`.
+      parameters:
+        - $ref: '#/components/parameters/internalIdParam'
+      responses:
+        '200':
+          description: Item borrowed successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /items/{internal_id}/return:
+    post:
+      tags: [Items]
+      summary: Return a borrowed item
+      description: |
+        Returns the item to the library.
+        - Caller must be the current borrower (or Admin).
+        - Sets `status = IN_OFFICE`, clears `borrower`.
+        - Writes an audit entry to JOURNAL.
+        - Returns `409` if the item is not in `BORROWED` state by the caller.
+      parameters:
+        - $ref: '#/components/parameters/internalIdParam'
+      responses:
+        '200':
+          description: Item returned successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # ADMIN – ITEMS
+  # ==========================================================================
+
+  /admin/items/add:
+    post:
+      tags: [Admin – Items]
+      summary: Add a physical copy (Admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateItemRequest'
+      responses:
+        '201':
+          description: Physical copy created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/items/{internal_id}:
+    get:
+      tags: [Admin – Items]
+      summary: Get physical copy by internal_id (Admin)
+      parameters:
+        - $ref: '#/components/parameters/internalIdParam'
+      responses:
+        '200':
+          description: Physical copy details.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/items/{internal_id}/status:
+    patch:
+      tags: [Admin – Items]
+      summary: Change physical copy status (Admin)
+      parameters:
+        - $ref: '#/components/parameters/internalIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUpdateItemStatusRequest'
+      responses:
+        '200':
+          description: Physical copy status updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ==========================================================================
+  # ADMIN – RESOURCES (CRUD)
+  # ==========================================================================
+
+  /descriptions/{type}/add:
+    post:
+      tags: [Admin – Resources]
+      summary: Create a new resource description (Admin)
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/CreateBookRequest'
+                - $ref: '#/components/schemas/CreateBoardGameRequest'
+                - $ref: '#/components/schemas/CreatePSGameRequest'
+      responses:
+        '201':
+          description: Description created. Returns the new resource including assigned internal_id.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BookDescriptionDTO'
+                  - $ref: '#/components/schemas/BoardGameDescriptionDTO'
+                  - $ref: '#/components/schemas/PSGameDescriptionDTO'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /descriptions/{type}/{description_id}/edit:
+    put:
+      tags: [Admin – Resources]
+      summary: Update a resource description (Admin)
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/descriptionIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/UpdateBookRequest'
+                - $ref: '#/components/schemas/UpdateBoardGameRequest'
+                - $ref: '#/components/schemas/UpdatePSGameRequest'
+      responses:
+        '200':
+          description: Description updated.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==========================================================================
+  # ADMIN – JOURNAL
+  # ==========================================================================
+
+  /admin/journal:
+    get:
+      tags: [Admin – Journal]
+      summary: Get audit log entries (Admin)
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date filter (inclusive).
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date filter (inclusive).
+        - name: user
+          in: query
+          schema:
+            type: string
+            format: email
+          description: Filter by user email.
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ItemType'
+          required: false
+          description: Optional filter by item type.
+        - name: description_id
+          in: query
+          schema:
+            type: integer
+          required: false
+          description: Optional filter by resource description ID.
+        - name: internal_id
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Optional filter by physical copy internal ID.
+      responses:
+        '200':
+          description: List of journal entries ordered by datetime descending.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JournalEntry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
