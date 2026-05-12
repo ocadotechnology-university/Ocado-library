@@ -50,12 +50,12 @@ public class CatalogService {
         if (d instanceof BookDescription bd) {
             return new BookDescriptionDTO(
                 bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getImage(),
-                bd.getDescription(), bd.getCategory(), bd.getTags(), status
+                bd.getDescription(), bd.getTags(), status
             );
         } else if (d instanceof BoardGameDescription bgd) {
             return new BoardGameDescriptionDTO(
                 bgd.getId(), null, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
-                bgd.getNumberOfPlayers(), bgd.getBggLink(), bgd.getTags(), status
+                bgd.getNumberOfPlayers(), bgd.getTags(), status
             );
         } else if (d instanceof PSGameDescription ps) {
             return new PSGameDescriptionDTO(

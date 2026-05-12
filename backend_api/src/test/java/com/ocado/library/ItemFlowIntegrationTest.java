@@ -31,7 +31,7 @@ class ItemFlowIntegrationTest {
         // 1. Admin creates a Book Description
         CreateBookRequest createBookRequest = new CreateBookRequest(
                 "Clean Code", "Robert C. Martin", "978-0132350884", 
-                "A Handbook of Agile Software Craftsmanship", "sample_image_url", "Programming", List.of("java", "best-practices"));
+                "A Handbook of Agile Software Craftsmanship", "sample_image_url", List.of("java", "best-practices"));
 
         String descResponse = mockMvc.perform(post("/api/descriptions/Book/add")
                 .header("X-User-Email", "admin@ocado.com")

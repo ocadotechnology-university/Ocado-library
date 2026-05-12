@@ -11,7 +11,6 @@ public record BookDescriptionDTO(
         String author,
         String image,
         String description,
-        String category,
         List<String> tags,
         String descriptionStatus
 ) {}

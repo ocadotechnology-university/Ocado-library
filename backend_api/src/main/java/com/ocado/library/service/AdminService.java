@@ -31,8 +31,8 @@ public class AdminService {
             bd.setTitle(req.title());
             bd.setAuthor(req.author());
             bd.setDescription(req.description());
-            bd.setCategory(req.category());
             bd.setTags(req.tags());
+            bd.setImage(req.image());
             bd.setType(ItemType.Book);
             description = bd;
         } else if (type == ItemType.BoardGame && requestBody instanceof CreateBoardGameRequest req) {
@@ -40,7 +40,6 @@ public class AdminService {
             bd.setTitle(req.title());
             bd.setDescription(req.description());
             bd.setNumberOfPlayers(req.numberOfPlayers());
-            bd.setBggLink(req.bggLink());
             bd.setTags(req.tags());
             bd.setType(ItemType.BoardGame);
             description = bd;
