@@ -92,7 +92,8 @@ CREATE TABLE description (
 CREATE TABLE book_description (
     id BIGINT PRIMARY KEY REFERENCES description(id),
     author VARCHAR(255),
-    category VARCHAR(255)
+    category VARCHAR(255),
+    image VARCHAR(255)
 );
 
 CREATE TABLE board_game_description (

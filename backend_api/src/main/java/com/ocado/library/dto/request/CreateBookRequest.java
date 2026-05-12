@@ -7,6 +7,7 @@ public record CreateBookRequest(
         String author,
         String isbn,
         String description,
+        String image,
         String category,
         List<String> tags
 ) {}

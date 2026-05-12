@@ -67,7 +67,7 @@ public class AdminService {
         Item item = new Item();
         item.setInternalId(request.internalId());
         item.setDescription(description);
-        item.setStatus(request.status() != null ? request.status() : ItemStatus.IN_OFFICE);
+        item.setStatus(request.status() != null ? request.status() : ItemStatus.AVAILABLE);
         
         itemRepository.save(item);
         journalService.logAction("Create physical copy " + item.getInternalId(), userEmail);

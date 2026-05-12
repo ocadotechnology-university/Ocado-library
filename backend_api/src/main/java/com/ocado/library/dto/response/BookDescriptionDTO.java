@@ -9,6 +9,7 @@ public record BookDescriptionDTO(
         ItemType type,
         String title,
         String author,
+        String image,
         String description,
         String category,
         List<String> tags,

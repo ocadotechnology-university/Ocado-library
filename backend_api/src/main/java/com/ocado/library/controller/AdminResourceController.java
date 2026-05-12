@@ -46,13 +46,13 @@ public class AdminResourceController {
         
         if (d instanceof BookDescription bd) {
             return ResponseEntity.status(HttpStatus.CREATED).body(new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(),
-                bd.getDescription(), bd.getCategory(), bd.getTags(), "UNAVAILABLE"
+                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getImage(),
+                bd.getDescription(), bd.getCategory(), bd.getTags(), "AVAILABLE"
             ));
         } else if (d instanceof BoardGameDescription bgd) {
             return ResponseEntity.status(HttpStatus.CREATED).body(new BoardGameDescriptionDTO(
                 bgd.getId(), null, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
-                bgd.getNumberOfPlayers(), bgd.getBggLink(), bgd.getTags(), "UNAVAILABLE"
+                bgd.getNumberOfPlayers(), bgd.getBggLink(), bgd.getTags(), "AVAILABLE"
             ));
         } else if (d instanceof PSGameDescription ps) {
             return ResponseEntity.status(HttpStatus.CREATED).body(new PSGameDescriptionDTO(

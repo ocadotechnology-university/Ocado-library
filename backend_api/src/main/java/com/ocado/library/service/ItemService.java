@@ -34,7 +34,7 @@ public class ItemService {
                 .findFirst()
                 .orElseThrow(() -> new NotFoundException("Item not found: " + internalId));
                 
-        if (item.getStatus() != ItemStatus.IN_OFFICE) {
+        if (item.getStatus() != ItemStatus.AVAILABLE) {
             throw new ConflictException("Item is not available for borrowing");
         }
         
@@ -58,7 +58,7 @@ public class ItemService {
         // Authorization skipped per requirements, ideally check if caller == borrower OR Admin
         
         String previousBorrower = item.getBorrower();
-        item.setStatus(ItemStatus.IN_OFFICE);
+        item.setStatus(ItemStatus.AVAILABLE);
         item.setBorrower(null);
         itemRepository.save(item);
         

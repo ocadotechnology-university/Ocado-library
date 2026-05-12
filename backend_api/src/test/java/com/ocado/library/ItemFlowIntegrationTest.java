@@ -31,7 +31,7 @@ class ItemFlowIntegrationTest {
         // 1. Admin creates a Book Description
         CreateBookRequest createBookRequest = new CreateBookRequest(
                 "Clean Code", "Robert C. Martin", "978-0132350884", 
-                "A Handbook of Agile Software Craftsmanship", "Programming", List.of("java", "best-practices"));
+                "A Handbook of Agile Software Craftsmanship", "sample_image_url", "Programming", List.of("java", "best-practices"));
 
         String descResponse = mockMvc.perform(post("/api/descriptions/Book/add")
                 .header("X-User-Email", "admin@ocado.com")
@@ -46,7 +46,7 @@ class ItemFlowIntegrationTest {
 
         // 2. Admin adds a Physical Copy
         AdminCreateItemRequest createItemRequest = new AdminCreateItemRequest(
-                "OC-B-WR-001", descriptionId, ItemStatus.IN_OFFICE);
+                "OC-B-WR-001", descriptionId, ItemStatus.AVAILABLE);
 
         mockMvc.perform(post("/api/admin/items/add")
                 .header("X-User-Email", "admin@ocado.com")
@@ -54,7 +54,7 @@ class ItemFlowIntegrationTest {
                 .content(objectMapper.writeValueAsString(createItemRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.internalId").value("OC-B-WR-001"))
-                .andExpect(jsonPath("$.status").value("IN_OFFICE"));
+                .andExpect(jsonPath("$.status").value("AVAILABLE"));
 
         // 3. Employee views Catalog
         mockMvc.perform(get("/api/descriptions/Book/all")

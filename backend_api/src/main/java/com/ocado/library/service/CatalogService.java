@@ -49,7 +49,7 @@ public class CatalogService {
         
         if (d instanceof BookDescription bd) {
             return new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(),
+                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getImage(),
                 bd.getDescription(), bd.getCategory(), bd.getTags(), status
             );
         } else if (d instanceof BoardGameDescription bgd) {
@@ -72,7 +72,7 @@ public class CatalogService {
         boolean borrowedByMe = items.stream().anyMatch(i -> callerEmail.equals(i.getBorrower()));
         if (borrowedByMe) return "BORROWED_BY_ME";
         
-        boolean available = items.stream().anyMatch(i -> i.getStatus() == ItemStatus.IN_OFFICE);
+        boolean available = items.stream().anyMatch(i -> i.getStatus() == ItemStatus.AVAILABLE);
         if (available) return "AVAILABLE";
         
         return "BORROWED";
