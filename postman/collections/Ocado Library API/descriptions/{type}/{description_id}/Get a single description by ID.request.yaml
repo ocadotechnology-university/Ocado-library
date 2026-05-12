@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/descriptions/:type/:description_id"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: type
+    value: Book
+  - key: description_id
+    value: "3830"
+    description: ID from the description metadata table
+examples: ./.resources/Get a single description by ID.resources/examples
+order: 3000

@@ -10,4 +10,8 @@ public interface BookDescriptionRepository extends JpaRepository<BookDescription
     List<BookDescription> findByTitle(String title);
 
     List<BookDescription> findByAuthor(String author);
+
+    List<BookDescription> findByTitleContainingIgnoreCase(String q);
+
+    List<BookDescription> findByAuthorContainingIgnoreCase(String q);
 }

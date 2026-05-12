@@ -1,0 +1,28 @@
+$kind: http-request
+description: |
+  Returns all metadata entries of the requested type.
+  Each item includes `description_status` resolved for the calling user:
+  - `BORROWED_BY_ME` – the caller is the current borrower
+  - `AVAILABLE` – at least one physical copy has status `IN_OFFICE`
+  - `BORROWED` – all copies are borrowed by someone else
+
+  PS5 games do not expose a `description_status` field (catalog-only).
+  Response DTOs may include a `tags` array (always empty in the current backend).
+url: "{{baseUrl}}/descriptions/:type/all?search=string&category=string&show_archived=false"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: search
+    value: string
+    description: Free-text search on title and author fields.
+  - key: category
+    value: string
+    description: Books only — filter by category field.
+  - key: show_archived
+    value: "false"
+    description: Admin only — include descriptions whose physical copies are all `ARCHIVED`. Employees receive 403 if true.
+pathVariables:
+  type: Book
+examples: ./.resources/List all descriptions of a given type.resources/examples
+order: 1000

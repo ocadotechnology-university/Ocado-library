@@ -1,0 +1,24 @@
+$kind: collection
+description: |-
+  REST API for the Ocado Library inventory management system.
+  Manages Books, Board Games, and PS5 Games with borrowing, returning, and audit trail.
+
+  ### Authentication
+  All endpoints require Google OAuth2 authentication via Bearer token (JWT).
+  Unauthenticated requests receive `401 Unauthorized`.
+
+  ### Roles
+  - **Employee** – read catalog, borrow/return items, view own loans
+  - **Admin** – all employee actions + CRUD on resources, physical item management, full audit log
+
+
+  Contact Support:
+   Name: Ocado Library Team
+variables:
+  baseUrl: /api
+auth:
+  - id: 186acd68-a9e4-4baf-b553-c036fe8eddbe
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{bearerToken}}"

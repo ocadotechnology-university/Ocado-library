@@ -1,0 +1,16 @@
+$kind: http-request
+description: |
+  Soft-delete for catalog: sets all linked physical copies to `ARCHIVED`.
+  Inserts a journal entry. Archived resources are hidden unless `show_archived=true` on catalog list.
+url: "{{baseUrl}}/descriptions/:type/:description_id/archive"
+method: PATCH
+headers:
+  Accept: application/json
+pathVariables:
+  - key: type
+    value: Book
+  - key: description_id
+    value: "3830"
+    description: ID from the description metadata table
+examples: ./.resources/Archive a resource (Admin).resources/examples
+order: 1000

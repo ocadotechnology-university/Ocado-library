@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/descriptions/:type/:description_id/edit"
+method: PUT
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: type
+    value: Book
+  - key: description_id
+    value: "3830"
+    description: ID from the description metadata table
+body:
+  type: json
+  content: |-
+    {
+      "title": "string",
+      "author": "string",
+      "description": "string",
+      "category": "string",
+      "status": "IN_OFFICE",
+      "tags": [
+        "string",
+        "string"
+      ]
+    }
+examples: ./.resources/Update a resource description (Admin).resources/examples
+order: 1000

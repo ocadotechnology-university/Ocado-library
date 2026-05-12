@@ -1,0 +1,38 @@
+$kind: http-example
+name: Description updated.
+request:
+  url: "{{baseUrl}}/descriptions/:type/:description_id/edit"
+  method: PUT
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: type
+      value: Book
+    - key: description_id
+      value: "3830"
+      description: ID from the description metadata table
+  body:
+    type: json
+    content: |-
+      {
+        "title": "string",
+        "author": "string",
+        "description": "string",
+        "category": "string",
+        "status": "IN_OFFICE",
+        "tags": [
+          "string",
+          "string"
+        ]
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: ""
+order: 1000

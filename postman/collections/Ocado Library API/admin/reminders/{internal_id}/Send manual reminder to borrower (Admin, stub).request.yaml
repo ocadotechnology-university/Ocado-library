@@ -1,0 +1,14 @@
+$kind: http-request
+description: |
+  Validates that the item is borrowed. Does not call Slack — returns a stub payload.
+  Returns `409` if the item is not currently borrowed.
+url: "{{baseUrl}}/admin/reminders/:internal_id"
+method: POST
+headers:
+  Accept: application/json
+pathVariables:
+  - key: internal_id
+    value: string
+    description: Physical item identifier (e.g. OC-B-WR-001)
+examples: ./.resources/Send manual reminder to borrower (Admin, stub).resources/examples
+order: 1000

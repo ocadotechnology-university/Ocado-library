@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{baseUrl}}/descriptions/:type/add"
+method: POST
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  type: Book
+body:
+  type: json
+  content: |-
+    {
+      "title": "string",
+      "author": "string",
+      "isbn": "string",
+      "description": "string",
+      "category": "string",
+      "tags": [
+        "string",
+        "string"
+      ]
+    }
+examples: ./.resources/Create a new resource description (Admin).resources/examples
+order: 1000

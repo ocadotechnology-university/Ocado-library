@@ -1,0 +1,37 @@
+$kind: http-example
+name: Missing or invalid authentication token.
+request:
+  url: "{{baseUrl}}/items/:description_id?type=Book&status=LOST"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  queryParams:
+    - key: type
+      value: Book
+      description: |
+        Which metadata table `description_id` refers to. Defaults to `Book` when omitted (legacy flow).
+    - key: status
+      value: LOST
+      description: Filter copies by status (optional).
+  pathVariables:
+    - key: description_id
+      value: "3830"
+      description: ID from the description metadata table
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": 9557,
+        "error": "string",
+        "message": "string"
+      }
+order: 3000

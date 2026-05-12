@@ -1,0 +1,22 @@
+$kind: http-example
+name: Resource archived.
+request:
+  url: "{{baseUrl}}/descriptions/:type/:description_id/archive"
+  method: PATCH
+  headers:
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: type
+      value: Book
+    - key: description_id
+      value: "3830"
+      description: ID from the description metadata table
+response:
+  statusCode: 200
+  statusText: OK
+  body:
+    type: text
+    content: ""
+order: 1000

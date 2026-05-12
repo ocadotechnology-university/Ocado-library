@@ -1,0 +1,22 @@
+$kind: http-request
+description: |
+  Returns physical `ITEM` rows for the given metadata description.
+  `type` disambiguates `description_id` across Book / BoardGame / PSGame tables.
+url: "{{baseUrl}}/items/:description_id?type=Book&status=LOST"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: type
+    value: Book
+    description: |
+      Which metadata table `description_id` refers to. Defaults to `Book` when omitted (legacy flow).
+  - key: status
+    value: LOST
+    description: Filter copies by status (optional).
+pathVariables:
+  - key: description_id
+    value: "3830"
+    description: ID from the description metadata table
+examples: ./.resources/List physical copies for a description.resources/examples
+order: 1000

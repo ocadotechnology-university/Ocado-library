@@ -1,0 +1,16 @@
+$kind: http-request
+description: |
+  Assigns the item to the calling user.
+  - Sets `status = BORROWED` and `borrower = userEmail`.
+  - Writes an audit entry to JOURNAL.
+  - Returns `409` if the item is not `IN_OFFICE`.
+url: "{{baseUrl}}/items/:internal_id/borrow"
+method: POST
+headers:
+  Accept: application/json
+pathVariables:
+  - key: internal_id
+    value: string
+    description: Physical item identifier (e.g. OC-B-WR-001)
+examples: ./.resources/Borrow a physical item.resources/examples
+order: 1000

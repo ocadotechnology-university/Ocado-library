@@ -10,29 +10,27 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/** Zgodnie z {@code database/init.sql}: tabela {@code book_description}. */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "book_descriptions")
+@Table(name = "book_description")
 public class BookDescription {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "isbn")
-    private String isbn;
-
-    @Column(name = "title", nullable = false)
+    @Column(nullable = false)
     private String title;
 
-    @Column(name = "author", nullable = false)
+    @Column(nullable = false)
     private String author;
 
-    @Column(name = "description")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "image")
-    private byte[] image;
+    @Column(length = 255)
+    private String image;
 }

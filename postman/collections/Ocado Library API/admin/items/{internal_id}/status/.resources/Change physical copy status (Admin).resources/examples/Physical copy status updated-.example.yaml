@@ -1,0 +1,41 @@
+$kind: http-example
+name: Physical copy status updated.
+request:
+  url: "{{baseUrl}}/admin/items/:internal_id/status"
+  method: PATCH
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: internal_id
+      value: string
+      description: Physical item identifier (e.g. OC-B-WR-001)
+  body:
+    type: json
+    content: |-
+      {
+        "status": "LOST",
+        "reason": "string"
+      }
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "internal_id": "OC-B-WR-001",
+        "status": "ARCHIVED",
+        "borrower": "string",
+        "description_id": 3609,
+        "type": "BoardGame",
+        "updated_at": "1970-05-30T18:05:24.902Z"
+      }
+order: 1000

@@ -1,0 +1,31 @@
+$kind: http-example
+name: Missing or invalid authentication token.
+request:
+  url: "{{baseUrl}}/descriptions/:type/:description_id/archive"
+  method: PATCH
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: type
+      value: Book
+    - key: description_id
+      value: "3830"
+      description: ID from the description metadata table
+response:
+  statusCode: 401
+  statusText: Unauthorized
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": 9557,
+        "error": "string",
+        "message": "string"
+      }
+order: 2000

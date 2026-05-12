@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/journal?from=1963-06-19&to=1963-06-19&user=eko1SM-rs19kwD@AaSZJqBpfsPRxgRq.zv&type=Book&description_id=3830&internal_id=string"
+method: GET
+headers:
+  Accept: application/json
+queryParams:
+  - key: from
+    value: 1963-06-19
+    description: Start date filter (inclusive).
+  - key: to
+    value: 1963-06-19
+    description: End date filter (inclusive).
+  - key: user
+    value: eko1SM-rs19kwD@AaSZJqBpfsPRxgRq.zv
+    description: Filter by user email.
+  - key: type
+    value: Book
+    description: Optional filter by item type.
+  - key: description_id
+    value: "3830"
+    description: Optional filter by resource description ID.
+  - key: internal_id
+    value: string
+    description: Optional filter by physical copy internal ID.
+examples: ./.resources/Get audit log entries (Admin).resources/examples
+order: 1000

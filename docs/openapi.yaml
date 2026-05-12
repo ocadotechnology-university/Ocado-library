@@ -54,7 +54,10 @@ components:
 
     ItemStatus:
       type: string
-      enum: [IN_OFFICE, BORROWED, LOST, FOR_OFFICE_USE_ONLY]
+      enum: [IN_OFFICE, BORROWED, LOST, FOR_OFFICE_USE_ONLY, ARCHIVED]
+      description: |
+        `ARCHIVED` hides resources from the default catalog. Use the archive endpoint to archive;
+        do not use generic edit for soft-delete.
 
     # ---- Description DTOs (catalog view) -----------------------------------
 
@@ -149,8 +152,10 @@ components:
 
     AdminCreateItemRequest:
       type: object
-      required: [description_id]
+      required: [type, description_id]
       properties:
+        type:
+          $ref: '#/components/schemas/ItemType'
         description_id:
           type: integer
           description: Existing description ID to attach the new physical copy to.
@@ -167,17 +172,6 @@ components:
         reason:
           type: string
           description: Optional audit context for manual admin status updates.
-
-    TagListResponse:
-      type: object
-      properties:
-        type:
-          $ref: '#/components/schemas/ItemType'
-        tags:
-          type: array
-          items:
-            type: string
-          description: Distinct tags used by descriptions of this type.
 
     # ---- Item (physical copy) ----------------------------------------------
 
@@ -319,6 +313,17 @@ components:
           type: string
           format: email
 
+    ReminderStubResponse:
+      type: object
+      description: Stub response — no Slack integration; reserved for future delivery metadata.
+      properties:
+        ok:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Reminder queued (stub)
+
     # ---- Error -------------------------------------------------------------
 
     ErrorResponse:
@@ -358,10 +363,26 @@ components:
         type: integer
       description: ID from the description metadata table
 
+    typeQueryParam:
+      name: type
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/ItemType'
+        default: Book
+      description: |
+        Which metadata table `description_id` refers to. Defaults to `Book` when omitted (legacy flow).
+
   # -------------------------------------------------------------------------
   # Reusable responses
   # -------------------------------------------------------------------------
   responses:
+    BadRequest:
+      description: Malformed request body or invalid parameter.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
     Unauthorized:
       description: Missing or invalid authentication token.
       content:
@@ -411,7 +432,7 @@ paths:
         - `BORROWED` – all copies are borrowed by someone else
         
         PS5 games do not expose a `description_status` field (catalog-only).
-        Tags are modeled as a normalized relation (`description_tags`) and returned as a list per description.
+        Response DTOs may include a `tags` array (always empty in the current backend).
       parameters:
         - $ref: '#/components/parameters/typeParam'
         - name: search
@@ -419,15 +440,17 @@ paths:
           schema:
             type: string
           description: Free-text search on title and author fields.
-        - name: tags
+        - name: category
           in: query
           schema:
-            type: array
-            items:
-              type: string
-          style: form
-          explode: false
-          description: Comma-separated tags filter. Returns descriptions containing any requested tag.
+            type: string
+          description: Books only — filter by category field.
+        - name: show_archived
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Admin only — include descriptions whose physical copies are all `ARCHIVED`. Employees receive 403 if true.
       responses:
         '200':
           description: List of description DTOs.
@@ -442,23 +465,8 @@ paths:
                     - $ref: '#/components/schemas/PSGameDescriptionDTO'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  /descriptions/{type}/tags:
-    get:
-      tags: [Catalog]
-      summary: List all tags used by description type
-      description: Returns distinct tags extracted from all descriptions of the requested type.
-      parameters:
-        - $ref: '#/components/parameters/typeParam'
-      responses:
-        '200':
-          description: Distinct tag list for this description type.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TagListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /descriptions/{type}/{description_id}:
     get:
@@ -490,9 +498,12 @@ paths:
     get:
       tags: [Items]
       summary: List physical copies for a description
-      description: Returns all physical ITEM rows linked to a given description_id, optionally filtered by status.
+      description: |
+        Returns physical `ITEM` rows for the given metadata description.
+        `type` disambiguates `description_id` across Book / BoardGame / PSGame tables.
       parameters:
         - $ref: '#/components/parameters/descriptionIdParam'
+        - $ref: '#/components/parameters/typeQueryParam'
         - name: status
           in: query
           schema:
@@ -507,8 +518,12 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ItemSummary'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
   /items/{internal_id}/borrow:
     post:
@@ -691,6 +706,26 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /descriptions/{type}/{description_id}/archive:
+    patch:
+      tags: [Admin – Resources]
+      summary: Archive a resource (Admin)
+      description: |
+        Soft-delete for catalog: sets all linked physical copies to `ARCHIVED`.
+        Inserts a journal entry. Archived resources are hidden unless `show_archived=true` on catalog list.
+      parameters:
+        - $ref: '#/components/parameters/typeParam'
+        - $ref: '#/components/parameters/descriptionIdParam'
+      responses:
+        '200':
+          description: Resource archived.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   # ==========================================================================
   # ADMIN – JOURNAL
   # ==========================================================================
@@ -749,3 +784,28 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '403':
           $ref: '#/components/responses/Forbidden'
+
+  /admin/reminders/{internal_id}:
+    post:
+      tags: [Admin – Journal]
+      summary: Send manual reminder to borrower (Admin, stub)
+      description: |
+        Validates that the item is borrowed. Does not call Slack — returns a stub payload.
+        Returns `409` if the item is not currently borrowed.
+      parameters:
+        - $ref: '#/components/parameters/internalIdParam'
+      responses:
+        '200':
+          description: Stub success — no external notification sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReminderStubResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'

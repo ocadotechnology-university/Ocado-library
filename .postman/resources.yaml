@@ -1,0 +1,11 @@
+# Use this workspace to collaborate
+workspace:
+  id: daa95b21-de0c-442c-8f8c-c80f31543609
+
+localResources:
+  specs:
+    - ..\docs\openapi.yaml
+
+cloudResources:
+  collections:
+    ..\postman\collections\Ocado Library API: ab893e63-2daf-42ad-a349-98a0e21e8560

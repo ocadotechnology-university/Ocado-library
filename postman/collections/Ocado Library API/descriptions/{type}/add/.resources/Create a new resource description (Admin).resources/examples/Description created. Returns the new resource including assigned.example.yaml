@@ -1,0 +1,52 @@
+$kind: http-example
+name: Description created. Returns the new resource including assigned internal_id.
+request:
+  url: "{{baseUrl}}/descriptions/:type/add"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    type: Book
+  body:
+    type: json
+    content: |-
+      {
+        "title": "string",
+        "author": "string",
+        "isbn": "string",
+        "description": "string",
+        "category": "string",
+        "tags": [
+          "string",
+          "string"
+        ]
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 5665,
+        "internal_id": "OC-B-WR-001",
+        "type": "PSGame",
+        "title": "string",
+        "author": "string",
+        "description": "string",
+        "category": "string",
+        "tags": [
+          "string",
+          "string"
+        ],
+        "description_status": "BORROWED_BY_ME"
+      }
+order: 1000

@@ -1,0 +1,62 @@
+$kind: http-example
+name: List of description DTOs.
+request:
+  url: "{{baseUrl}}/descriptions/:type/all?search=string&category=string&show_archived=false"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  queryParams:
+    - key: search
+      value: string
+      description: Free-text search on title and author fields.
+    - key: category
+      value: string
+      description: Books only — filter by category field.
+    - key: show_archived
+      value: "false"
+      description: Admin only — include descriptions whose physical copies are all `ARCHIVED`. Employees receive 403 if true.
+  pathVariables:
+    type: Book
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "id": 2280,
+          "internal_id": "OC-B-WR-001",
+          "type": "PSGame",
+          "title": "string",
+          "author": "string",
+          "description": "string",
+          "category": "string",
+          "tags": [
+            "string",
+            "string"
+          ],
+          "description_status": "AVAILABLE"
+        },
+        {
+          "id": 7280,
+          "internal_id": "OC-B-WR-001",
+          "type": "Book",
+          "title": "string",
+          "author": "string",
+          "description": "string",
+          "category": "string",
+          "tags": [
+            "string",
+            "string"
+          ],
+          "description_status": "BORROWED_BY_ME"
+        }
+      ]
+order: 1000

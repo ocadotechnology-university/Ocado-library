@@ -29,9 +29,8 @@ CREATE TABLE items (
     status VARCHAR(50) DEFAULT  'AVAILABLE', -- Status domyślny jako AVAILABLE
     type VARCHAR(50) NOT NULL,
     description_id INT NOT NULL, -- Referencja do metadanych książki (autor, opis, kategoria, itd...)
-    borrower VARCHAR(255)
-
-    FOREIGN KEY (book_description_id) REFERENCES book_descriptions(id)
+    borrower VARCHAR(255),
+    FOREIGN KEY (description_id) REFERENCES book_description(id)
 );
 
 -- Tabela dla tagów
@@ -48,13 +47,13 @@ CREATE TABLE book_waitlist (
     book_description_id INT NOT NULL, -- Na jaką książkę oczekujemy
     waiter_name VARCHAR(255) NOT NULL, -- Kto oczekuje
     joined_queue_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Kto wcześniej zaczął czekać
-    FOREIGN KEY (book_description_id) REFERENCES book_descriptions(id) ON DELETE CASCADE -- Integralność przy usuwaniu
+    FOREIGN KEY (book_description_id) REFERENCES book_description(id) ON DELETE CASCADE -- Integralność przy usuwaniu
 );
 
 -- Tabela dla historii zdarzeń
 CREATE TABLE journal (
     id SERIAL PRIMARY KEY,
-    user VARCHAR(255), -- Kto wprowadził zmianę
+    "user" VARCHAR(255), -- Kto wprowadził zmianę
     description TEXT, -- Opis zmiany w tekście (ktoś coś wypożyczył, ktoś coś zwrócił, itd...)
     date TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- Data zdarzenia
 );

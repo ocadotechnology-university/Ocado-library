@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/items/:internal_id/status"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Accept: application/json
+pathVariables:
+  - key: internal_id
+    value: string
+    description: Physical item identifier (e.g. OC-B-WR-001)
+body:
+  type: json
+  content: |-
+    {
+      "status": "LOST",
+      "reason": "string"
+    }
+examples: ./.resources/Change physical copy status (Admin).resources/examples
+order: 1000

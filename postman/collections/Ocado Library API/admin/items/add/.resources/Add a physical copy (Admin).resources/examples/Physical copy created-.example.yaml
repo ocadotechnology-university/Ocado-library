@@ -1,0 +1,38 @@
+$kind: http-example
+name: Physical copy created.
+request:
+  url: "{{baseUrl}}/admin/items/add"
+  method: POST
+  headers:
+    - key: Content-Type
+      value: application/json
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  body:
+    type: json
+    content: |-
+      {
+        "type": "BoardGame",
+        "description_id": 8357,
+        "status": "ARCHIVED"
+      }
+response:
+  statusCode: 201
+  statusText: Created
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "internal_id": "OC-B-WR-001",
+        "status": "ARCHIVED",
+        "borrower": "string",
+        "description_id": 3609,
+        "type": "BoardGame",
+        "updated_at": "1970-05-30T18:05:24.902Z"
+      }
+order: 1000

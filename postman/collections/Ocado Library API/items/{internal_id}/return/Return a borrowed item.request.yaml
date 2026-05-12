@@ -1,0 +1,17 @@
+$kind: http-request
+description: |
+  Returns the item to the library.
+  - Caller must be the current borrower (or Admin).
+  - Sets `status = IN_OFFICE`, clears `borrower`.
+  - Writes an audit entry to JOURNAL.
+  - Returns `409` if the item is not in `BORROWED` state by the caller.
+url: "{{baseUrl}}/items/:internal_id/return"
+method: POST
+headers:
+  Accept: application/json
+pathVariables:
+  - key: internal_id
+    value: string
+    description: Physical item identifier (e.g. OC-B-WR-001)
+examples: ./.resources/Return a borrowed item.resources/examples
+order: 1000

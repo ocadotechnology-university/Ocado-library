@@ -1,0 +1,29 @@
+$kind: http-example
+name: Authenticated but insufficient role (Admin required).
+request:
+  url: "{{baseUrl}}/items/:internal_id/return"
+  method: POST
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: internal_id
+      value: string
+      description: Physical item identifier (e.g. OC-B-WR-001)
+response:
+  statusCode: 403
+  statusText: Forbidden
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "status": 9557,
+        "error": "string",
+        "message": "string"
+      }
+order: 3000

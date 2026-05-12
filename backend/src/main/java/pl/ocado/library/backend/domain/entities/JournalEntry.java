@@ -12,6 +12,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Tabela {@code journal}; kolumna {@code user} w PostgreSQL jest zarezerwowana — mapowanie przez cytowanie.
+ * W JSON API pole nadal jako {@code user} (mapowanie w serwisie).
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,11 +27,11 @@ public class JournalEntry {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @Column(name = "who_did")
-    private String whoDid;
+    @Column(name = "\"user\"")
+    private String actor;
 
-    @Column(name = "change_desc")
-    private String changeDescription;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(name = "date")
     private LocalDateTime date;

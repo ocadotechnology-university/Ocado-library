@@ -1,0 +1,40 @@
+$kind: http-example
+name: Description DTO.
+request:
+  url: "{{baseUrl}}/descriptions/:type/:description_id"
+  method: GET
+  headers:
+    - key: Accept
+      value: application/json
+    - key: Authorization
+      value: Bearer <token>
+      description: "Added as a part of security scheme: bearer"
+  pathVariables:
+    - key: type
+      value: Book
+    - key: description_id
+      value: "3830"
+      description: ID from the description metadata table
+response:
+  statusCode: 200
+  statusText: OK
+  headers:
+    Content-Type: application/json
+  body:
+    type: json
+    content: |-
+      {
+        "id": 5665,
+        "internal_id": "OC-B-WR-001",
+        "type": "PSGame",
+        "title": "string",
+        "author": "string",
+        "description": "string",
+        "category": "string",
+        "tags": [
+          "string",
+          "string"
+        ],
+        "description_status": "BORROWED_BY_ME"
+      }
+order: 1000

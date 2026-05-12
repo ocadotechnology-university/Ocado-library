@@ -1,0 +1,11 @@
+$kind: http-request
+url: "{{baseUrl}}/admin/items/:internal_id"
+method: GET
+headers:
+  Accept: application/json
+pathVariables:
+  - key: internal_id
+    value: string
+    description: Physical item identifier (e.g. OC-B-WR-001)
+examples: ./.resources/Get physical copy by internal_id (Admin).resources/examples
+order: 2000
