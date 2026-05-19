@@ -2,6 +2,7 @@ package com.ocado.library.controller;
 
 import com.ocado.library.dto.response.ItemSummary;
 import com.ocado.library.model.enums.ItemStatus;
+import com.ocado.library.security.CurrentUser;
 import com.ocado.library.service.ItemService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,20 +33,14 @@ public class ItemController {
     }
 
     @PostMapping("/{internal_id}/borrow")
-    public ResponseEntity<Void> borrowItem(
-            @PathVariable("internal_id") String internalId,
-            @RequestHeader(value = "X-User-Email", defaultValue = "testuser@ocado.com") String userEmail) {
-            
-        itemService.borrowItem(internalId, userEmail);
+    public ResponseEntity<Void> borrowItem(@PathVariable("internal_id") String internalId) {
+        itemService.borrowItem(internalId, CurrentUser.email());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{internal_id}/return")
-    public ResponseEntity<Void> returnItem(
-            @PathVariable("internal_id") String internalId,
-            @RequestHeader(value = "X-User-Email", defaultValue = "testuser@ocado.com") String userEmail) {
-            
-        itemService.returnItem(internalId, userEmail);
+    public ResponseEntity<Void> returnItem(@PathVariable("internal_id") String internalId) {
+        itemService.returnItem(internalId, CurrentUser.email());
         return ResponseEntity.ok().build();
     }
 }

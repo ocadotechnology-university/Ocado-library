@@ -1,6 +1,7 @@
 package com.ocado.library.controller;
 
 import com.ocado.library.model.enums.ItemType;
+import com.ocado.library.security.CurrentUser;
 import com.ocado.library.service.CatalogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,10 +23,9 @@ public class CatalogController {
     public ResponseEntity<List<Object>> getAllDescriptions(
             @PathVariable ItemType type,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) List<String> tags,
-            @RequestHeader(value = "X-User-Email", defaultValue = "testuser@ocado.com") String userEmail) {
-        
-        List<Object> result = catalogService.getAllDescriptions(type, search, tags, userEmail);
+            @RequestParam(required = false) List<String> tags) {
+
+        List<Object> result = catalogService.getAllDescriptions(type, search, tags, CurrentUser.email());
         return ResponseEntity.ok(result);
     }
 

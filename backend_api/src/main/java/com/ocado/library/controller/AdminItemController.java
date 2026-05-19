@@ -2,6 +2,7 @@ package com.ocado.library.controller;
 
 import com.ocado.library.dto.request.AdminCreateItemRequest;
 import com.ocado.library.dto.response.ItemDetail;
+import com.ocado.library.security.CurrentUser;
 import com.ocado.library.model.Item;
 import com.ocado.library.service.AdminService;
 import org.springframework.http.HttpStatus;
@@ -19,11 +20,8 @@ public class AdminItemController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<ItemDetail> addPhysicalCopy(
-            @RequestBody AdminCreateItemRequest request,
-            @RequestHeader(value = "X-User-Email", defaultValue = "admin@ocado.com") String userEmail) {
-            
-        Item item = adminService.addPhysicalCopy(request, userEmail);
+    public ResponseEntity<ItemDetail> addPhysicalCopy(@RequestBody AdminCreateItemRequest request) {
+        Item item = adminService.addPhysicalCopy(request, CurrentUser.email());
         ItemDetail detail = new ItemDetail(
             item.getInternalId(), item.getStatus(), item.getBorrower(),
             item.getDescription().getId(), item.getDescription().getType()
