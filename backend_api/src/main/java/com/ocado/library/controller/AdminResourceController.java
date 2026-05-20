@@ -12,6 +12,7 @@ import com.ocado.library.model.BookDescription;
 import com.ocado.library.model.Description;
 import com.ocado.library.model.PSGameDescription;
 import com.ocado.library.model.enums.ItemType;
+import com.ocado.library.security.CurrentUser;
 import com.ocado.library.service.AdminService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,15 +35,14 @@ public class AdminResourceController {
     @PostMapping("/{type}/add")
     public ResponseEntity<Object> createDescription(
             @PathVariable ItemType type,
-            @RequestBody Map<String, Object> body,
-            @RequestHeader(value = "X-User-Email", defaultValue = "admin@ocado.com") String userEmail) {
+            @RequestBody Map<String, Object> body) {
             
         Object requestDto = null;
         if (type == ItemType.Book) requestDto = objectMapper.convertValue(body, CreateBookRequest.class);
         if (type == ItemType.BoardGame) requestDto = objectMapper.convertValue(body, CreateBoardGameRequest.class);
         if (type == ItemType.PSGame) requestDto = objectMapper.convertValue(body, CreatePSGameRequest.class);
         
-        Description d = adminService.createDescription(type, requestDto, userEmail);
+        Description d = adminService.createDescription(type, requestDto, CurrentUser.email());
         
         if (d instanceof BookDescription bd) {
             return ResponseEntity.status(HttpStatus.CREATED).body(new BookDescriptionDTO(
