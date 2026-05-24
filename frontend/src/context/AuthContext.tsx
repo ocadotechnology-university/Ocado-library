@@ -1,73 +1,82 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { ApiError, fetchMe, hasRole } from "../lib/api";
+import {
+  clearStoredToken,
+  readStoredToken,
+  storeToken,
+} from "../lib/authStorage";
 
 type AuthUser = {
   email: string;
-};
-
-type LoginOptions = {
-  remember: boolean;
+  roles: string[];
 };
 
 type AuthContextValue = {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  login: (email: string, options: LoginOptions) => void;
+  authLoading: boolean;
+  loginWithGoogle: () => void;
+  completeLogin: (accessToken: string, remember: boolean) => Promise<void>;
   logout: () => void;
-  isAllowedCompanyEmail: (email: string) => boolean;
 };
-
-const SESSION_KEY = "ocado.library.auth.session";
-const PERSISTENT_KEY = "ocado.library.auth.persistent";
-const ADMIN_EMAIL = "admin@ocado.com";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredEmail(): string | null {
-  const persistent = localStorage.getItem(PERSISTENT_KEY);
-  if (persistent != null) return persistent;
-  return sessionStorage.getItem(SESSION_KEY);
-}
-
-function normalizeEmail(raw: string): string {
-  return raw.trim().toLowerCase();
-}
-
-function isAllowedCompanyEmail(email: string): boolean {
-  return normalizeEmail(email).endsWith("@ocado.com");
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => {
-    const stored = readStoredEmail();
-    return stored ? { email: stored } : null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  const login = (email: string, options: LoginOptions) => {
-    const normalized = normalizeEmail(email);
-    if (!isAllowedCompanyEmail(normalized)) {
-      throw new Error("Only @ocado.com accounts are allowed");
+  const loadProfile = useCallback(async () => {
+    const stored = readStoredToken();
+    if (stored == null) {
+      setUser(null);
+      return;
     }
+    const me = await fetchMe();
+    setUser({ email: me.email, roles: me.roles });
+  }, []);
 
-    if (options.remember) {
-      localStorage.setItem(PERSISTENT_KEY, normalized);
-      sessionStorage.removeItem(SESSION_KEY);
-    } else {
-      sessionStorage.setItem(SESSION_KEY, normalized);
-      localStorage.removeItem(PERSISTENT_KEY);
-    }
-    setUser({ email: normalized });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        if (readStoredToken() != null) {
+          await loadProfile();
+        }
+      } catch (error) {
+        if (!cancelled && error instanceof ApiError && error.status === 401) {
+          clearStoredToken();
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) setAuthLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loadProfile]);
+
+  const loginWithGoogle = () => {
+    window.location.href = "/oauth2/authorization/google";
+  };
+
+  const completeLogin = async (accessToken: string, remember: boolean) => {
+    storeToken(accessToken, remember);
+    await loadProfile();
   };
 
   const logout = () => {
-    localStorage.removeItem(PERSISTENT_KEY);
-    sessionStorage.removeItem(SESSION_KEY);
+    clearStoredToken();
     setUser(null);
   };
 
@@ -75,12 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     () => ({
       user,
       isAuthenticated: user != null,
-      isAdmin: user?.email === ADMIN_EMAIL,
-      login,
+      isAdmin: user != null && hasRole(user.roles, "ADMIN"),
+      authLoading,
+      loginWithGoogle,
+      completeLogin,
       logout,
-      isAllowedCompanyEmail,
     }),
-    [user],
+    [user, authLoading, loadProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

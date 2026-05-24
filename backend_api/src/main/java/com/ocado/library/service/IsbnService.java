@@ -46,7 +46,7 @@ public class IsbnService {
                 } else if (bookNode.has("notes")) {
                     description = bookNode.get("notes").asText();
                 }
-
+                
                 return new IsbnResponseDTO(title, author, image, description);
             }
         } catch (Exception e) {

@@ -11,11 +11,19 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import NotificationPanel from "./components/UI/NotificationPanel";
 import Account from "./pages/Account";
 import Home from "./pages/Home";
+import AuthCallback from "./pages/AuthCallback";
 import Login from "./pages/Login";
 
 function RequireAuth({ children }: { children: ReactElement }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authLoading } = useAuth();
   const location = useLocation();
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f6fb]">
+        <p className="text-[#43485e]">Loading…</p>
+      </div>
+    );
+  }
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
@@ -23,7 +31,14 @@ function RequireAuth({ children }: { children: ReactElement }) {
 }
 
 function PublicOnly({ children }: { children: ReactElement }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, authLoading } = useAuth();
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#f5f6fb]">
+        <p className="text-[#43485e]">Loading…</p>
+      </div>
+    );
+  }
   if (isAuthenticated) return <Navigate to="/" replace />;
   return children;
 }
@@ -35,6 +50,7 @@ export function AppRoutes() {
   return (
     <>
       <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/login"
           element={

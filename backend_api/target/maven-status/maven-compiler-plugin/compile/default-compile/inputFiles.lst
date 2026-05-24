@@ -2,6 +2,7 @@ C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\controller\AdminJournalController.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\controller\AdminResourceController.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\controller\CatalogController.java
+C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\controller\IsbnController.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\controller\ItemController.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\request\AdminCreateItemRequest.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\request\AdminUpdateItemStatusRequest.java
@@ -10,6 +11,7 @@ C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\request\CreatePSGameRequest.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\BoardGameDescriptionDTO.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\BookDescriptionDTO.java
+C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\IsbnResponseDTO.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\ItemDetail.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\ItemSummary.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\dto\response\JournalEntry.java
@@ -37,5 +39,6 @@ C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\security\SecurityConfig.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\service\AdminService.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\service\CatalogService.java
+C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\service\IsbnService.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\service\ItemService.java
 C:\Users\mikha\Desktop\Ocado-library\backend_api\src\main\java\com\ocado\library\service\JournalService.java

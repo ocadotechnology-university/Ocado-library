@@ -1,14 +1,11 @@
 package com.ocado.library.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -26,10 +23,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -39,11 +38,13 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     private final LibraryOidcUserService libraryOidcUserService;
-    private final ObjectMapper objectMapper;
+    private final String frontendUrl;
 
-    public SecurityConfig(LibraryOidcUserService libraryOidcUserService, ObjectMapper objectMapper) {
+    public SecurityConfig(
+            LibraryOidcUserService libraryOidcUserService,
+            @Value("${app.oauth2.frontend-url:http://localhost:5173}") String frontendUrl) {
         this.libraryOidcUserService = libraryOidcUserService;
-        this.objectMapper = objectMapper;
+        this.frontendUrl = frontendUrl.replaceAll("/$", "");
     }
 
     @Bean
@@ -67,7 +68,7 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtAuth jwtAuth,
             JwtDecoder jwtDecoder,
-            @Value("${app.oauth2.login-failure-url:http://localhost:8080/swagger-ui/index.html}") String loginFailureUrl)
+            @Value("${app.oauth2.login-failure-url:http://localhost:5173/login?error=oauth_failed}") String loginFailureUrl)
             throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -92,9 +93,14 @@ public class SecurityConfig {
                                 .oidcUserService(libraryOidcUserService)
                                 .userAuthoritiesMapper(SecurityConfig::mapOidcAuthorities))
                         .successHandler((request, response, authentication) -> {
-                            response.setStatus(HttpServletResponse.SC_OK);
-                            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-                            objectMapper.writeValue(response.getOutputStream(), jwtAuth.tokenResponse(authentication));
+                            Map<String, Object> tokenBody = jwtAuth.tokenResponse(authentication);
+                            String accessToken = (String) tokenBody.get("accessToken");
+                            long expiresIn = ((Number) tokenBody.get("expiresIn")).longValue();
+                            String redirect = frontendUrl + "/auth/callback"
+                                    + "#access_token=" + URLEncoder.encode(accessToken, StandardCharsets.UTF_8)
+                                    + "&token_type=Bearer"
+                                    + "&expires_in=" + expiresIn;
+                            response.sendRedirect(redirect);
                         })
                         .failureUrl(loginFailureUrl))
                 .oauth2ResourceServer(oauth2 -> oauth2

@@ -1,15 +1,18 @@
 # Logowanie przez Google i JWT
 
-Dokument opisuje konfigurację i test logowania w `backend_api/` (port 8080). Frontend na `5173` nie jest jeszcze podłączony do Google — logowanie testuje się w przeglądarce.
+Dokument opisuje konfigurację logowania Google OAuth2 + JWT w `backend_api/` (port 8080) i integrację z frontendem Vite (port 5173).
 
 ---
 
-## Jak to działa
+## Jak to działa (frontend)
 
-1. Otwierasz `http://localhost:8080/oauth2/authorization/google`.
-2. Logujesz się w Google.
-3. Backend zwraca JSON z polem `accessToken` — to JWT ważny 24 h.
-4. Przy wywołaniach API klient wysyła nagłówek `Authorization: Bearer <accessToken>`.
+1. Użytkownik otwiera `http://localhost:5173/login` i klika **Continue with Google**.
+2. Przeglądarka przechodzi przez proxy Vite na `http://localhost:8080/oauth2/authorization/google`.
+3. Po logowaniu w Google backend przekierowuje na `http://localhost:5173/auth/callback#access_token=...`.
+4. Frontend zapisuje JWT i woła `GET /api/me` z nagłówkiem `Authorization: Bearer <token>`.
+5. Kolejne requesty do API używają tego samego nagłówka Bearer.
+
+**Plan B (test API bez frontu):** po OAuth w tej samej przeglądarce otwórz `http://localhost:8080/api/auth/token` — JSON z `accessToken` (sesja cookie).
 
 Serwer nie przechowuje listy tokenów. Weryfikuje podpis i datę ważności przy każdym requeście. W JWT są m.in. `email` i `roles` (`USER` / `ADMIN`).
 
@@ -34,7 +37,7 @@ Serwer nie przechowuje listy tokenów. Weryfikuje podpis i datę ważności przy
 |---------|------|
 | [Google Cloud Console](https://console.cloud.google.com/) | Client ID, Client Secret, redirect URI |
 | `backend_api/` | OAuth, wystawianie JWT, ochrona API |
-| `frontend/` | Mock logowania — integracja z Google później |
+| `frontend/` | Logowanie Google, przechowywanie JWT, `GET /api/me` |
 
 ---
 
@@ -77,6 +80,8 @@ Zapisz **Client ID** i **Client secret** — poza repozytorium (`.env`).
 ```properties
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
+JWT_SECRET=...   # min. 32 znaków
+FRONTEND_URL=http://localhost:5173
 POSTGRES_USER=...
 POSTGRES_PASSWORD=...
 POSTGRES_DB=...

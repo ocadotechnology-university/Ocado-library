@@ -24,6 +24,7 @@ import {
 } from "../catalogue/demoCatalog";
 import { useAppChrome } from "../context/AppChromeContext";
 import { useAuth } from "../context/AuthContext";
+import { ApiError, fetchBookByIsbn } from "../lib/api";
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
@@ -161,6 +162,8 @@ const Home = () => {
     imageUrl: "",
     tagsInput: "",
   });
+  const [isbnLoading, setIsbnLoading] = useState(false);
+  const [isbnError, setIsbnError] = useState<string | null>(null);
 
   const selected =
     openKey != null ? books.find((b) => b.key === openKey) : undefined;
@@ -253,17 +256,34 @@ const Home = () => {
     setAdminMode("edit");
   }, []);
 
-  const loadFromRepoByIsbn = useCallback(() => {
-    if (adminDraft.isbn.trim().length < 5) return;
+  const loadFromRepoByIsbn = useCallback(async () => {
     const code = adminDraft.isbn.trim().replace(/\s+/g, "");
-    setAdminDraft((d) => ({
-      ...d,
-      title: d.title || "Loaded from repository",
-      author: d.author || "Repository Author",
-      language: d.language || "English",
-      tagsInput: d.tagsInput || "loaded, api-pending",
-      seed: d.seed || `isbn-${code}`,
-    }));
+    if (code.length < 10) {
+      setIsbnError("Enter a valid ISBN (at least 10 characters).");
+      return;
+    }
+    setIsbnLoading(true);
+    setIsbnError(null);
+    try {
+      const book = await fetchBookByIsbn(code);
+      setAdminDraft((d) => ({
+        ...d,
+        title: book.title || d.title,
+        author: book.author || d.author,
+        imageUrl: book.image || d.imageUrl,
+        seed: d.seed || `isbn-${code}`,
+      }));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        setIsbnError("ISBN not found in Open Library.");
+      } else if (error instanceof ApiError && error.status === 401) {
+        setIsbnError("Session expired. Please sign in again.");
+      } else {
+        setIsbnError("Could not fetch book data. Try again.");
+      }
+    } finally {
+      setIsbnLoading(false);
+    }
   }, [adminDraft.isbn]);
 
   const saveAdminDraft = useCallback(() => {
@@ -661,22 +681,27 @@ const Home = () => {
                       <div className="flex gap-2">
                         <input
                           value={adminDraft.isbn}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setAdminDraft((d) => ({
                               ...d,
                               isbn: e.target.value,
-                            }))
-                          }
+                            }));
+                            if (isbnError) setIsbnError(null);
+                          }}
                           className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                         />
                         <button
                           type="button"
-                          onClick={loadFromRepoByIsbn}
-                          className="rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e]"
+                          onClick={() => void loadFromRepoByIsbn()}
+                          disabled={isbnLoading}
+                          className="shrink-0 rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] disabled:opacity-60"
                         >
-                          Load from repo
+                          {isbnLoading ? "Loading…" : "Autofill from ISBN"}
                         </button>
                       </div>
+                      {isbnError ? (
+                        <p className="mt-1 text-sm text-[#b91c1c]">{isbnError}</p>
+                      ) : null}
                     </div>
                     {(
                       [
