@@ -700,7 +700,9 @@ const Home = () => {
                         </button>
                       </div>
                       {isbnError ? (
-                        <p className="mt-1 text-sm text-[#b91c1c]">{isbnError}</p>
+                        <p className="mt-1 text-sm text-[#b91c1c]">
+                          {isbnError}
+                        </p>
                       ) : null}
                     </div>
                     {(
