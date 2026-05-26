@@ -8,6 +8,7 @@ import com.ocado.library.exception.NotFoundException;
 import com.ocado.library.model.*;
 import com.ocado.library.model.enums.ItemStatus;
 import com.ocado.library.model.enums.ItemType;
+import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.DescriptionRepository;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,7 @@ public class AdminService {
         }
         
         descriptionRepository.save(description);
-        journalService.logAction("Create description " + description.getTitle(), userEmail);
+        journalService.logAction(OperationType.ADD, userEmail, null, description.getId());
         return description;
     }
 
@@ -69,7 +70,7 @@ public class AdminService {
         item.setStatus(request.status() != null ? request.status() : ItemStatus.AVAILABLE);
         
         itemRepository.save(item);
-        journalService.logAction("Create physical copy " + item.getInternalId(), userEmail);
+        journalService.logAction(OperationType.ADD, userEmail, item.getInternalId(), description.getId());
         
         return item;
     }

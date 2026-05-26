@@ -5,6 +5,7 @@ import com.ocado.library.exception.ForbiddenException;
 import com.ocado.library.exception.NotFoundException;
 import com.ocado.library.model.Item;
 import com.ocado.library.model.enums.ItemStatus;
+import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 
@@ -42,7 +43,7 @@ public class ItemService {
         item.setBorrower(userEmail);
         itemRepository.save(item);
         
-        journalService.logAction("Borrow item " + internalId + " by " + userEmail, userEmail);
+        journalService.logAction(OperationType.BORROW, userEmail, internalId, item.getDescription().getId());
     }
     
     public void returnItem(String internalId, String userEmail) {
@@ -62,6 +63,6 @@ public class ItemService {
         item.setBorrower(null);
         itemRepository.save(item);
         
-        journalService.logAction("Return item " + internalId + " by " + previousBorrower, userEmail);
+        journalService.logAction(OperationType.RETURN, userEmail, internalId, item.getDescription().getId());
     }
 }
