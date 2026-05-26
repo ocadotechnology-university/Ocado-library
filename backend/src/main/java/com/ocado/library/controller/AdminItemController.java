@@ -1,6 +1,7 @@
 package com.ocado.library.controller;
 
 import com.ocado.library.dto.request.AdminCreateItemRequest;
+import com.ocado.library.dto.request.AdminUpdateItemStatusRequest;
 import com.ocado.library.dto.response.ItemDetail;
 import com.ocado.library.security.CurrentUser;
 import com.ocado.library.model.Item;
@@ -35,9 +36,14 @@ public class AdminItemController {
     }
 
     @PatchMapping("/{internal_id}/status")
-    public ResponseEntity<Object> changeItemStatus(
+    public ResponseEntity<ItemDetail> changeItemStatus(
             @PathVariable("internal_id") String internalId,
-            @RequestBody Object updateStatusRequest) {
-        return ResponseEntity.ok().build();
+            @RequestBody AdminUpdateItemStatusRequest updateStatusRequest) {
+        Item item = adminService.updatePhysicalCopyStatus(internalId, updateStatusRequest.status(), CurrentUser.email());
+        ItemDetail detail = new ItemDetail(
+            item.getInternalId(), item.getStatus(), item.getBorrower(),
+            item.getDescription().getId(), item.getDescription().getType()
+        );
+        return ResponseEntity.ok(detail);
     }
 }

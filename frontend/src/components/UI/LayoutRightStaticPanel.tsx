@@ -30,9 +30,19 @@ function StatCard({
 }
 
 /**
- * Decorative right rail — balances the layout; demo “pulse” tiles (not live data).
+ * Decorative right rail — balances the layout with live catalogue pulse tiles.
  */
-export default function LayoutRightStaticPanel() {
+export type LibraryStats = {
+  totalRecords: number;
+  borrowedRecords: number;
+  borrowedThisWeek: number;
+};
+
+export default function LayoutRightStaticPanel({
+  stats,
+}: {
+  stats: LibraryStats;
+}) {
   return (
     <SidebarTemplate>
       <div className="rounded-xl bg-gradient-to-br from-[#43485e] via-[#3d4258] to-[#323746] p-4 shadow-[inset_0_1px_0_0_rgb(255_255_255_/0.08)]">
@@ -50,18 +60,18 @@ export default function LayoutRightStaticPanel() {
       <div className="flex flex-col gap-2">
         <StatCard
           icon={String.fromCodePoint(0x1f4da)}
-          value="1.2k"
-          label="Titles"
+          value={String(stats.totalRecords)}
+          label="Records"
         />
         <StatCard
           icon={String.fromCodePoint(0x1f4c8)}
-          value="48"
+          value={String(stats.borrowedThisWeek)}
           label="Out this week"
         />
         <StatCard
           icon={String.fromCodePoint(0x2728)}
-          value="12"
-          label="New on shelf"
+          value={String(stats.borrowedRecords)}
+          label="Borrowed"
         />
       </div>
 

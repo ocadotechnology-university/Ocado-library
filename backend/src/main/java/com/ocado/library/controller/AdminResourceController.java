@@ -46,7 +46,7 @@ public class AdminResourceController {
         
         if (d instanceof BookDescription bd) {
             return ResponseEntity.status(HttpStatus.CREATED).body(new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getImage(),
+                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
                 bd.getDescription(), bd.getTags(), "AVAILABLE"
             ));
         } else if (d instanceof BoardGameDescription bgd) {
@@ -64,10 +64,41 @@ public class AdminResourceController {
     }
 
     @PutMapping("/{type}/{description_id}/edit")
-    public ResponseEntity<Void> editDescription(
+    public ResponseEntity<Object> editDescription(
             @PathVariable ItemType type,
             @PathVariable("description_id") Long descriptionId,
-            @RequestBody Object updateRequest) {
+            @RequestBody Map<String, Object> body) {
+        Object requestDto = null;
+        if (type == ItemType.Book) requestDto = objectMapper.convertValue(body, CreateBookRequest.class);
+        if (type == ItemType.BoardGame) requestDto = objectMapper.convertValue(body, CreateBoardGameRequest.class);
+        if (type == ItemType.PSGame) requestDto = objectMapper.convertValue(body, CreatePSGameRequest.class);
+
+        Description d = adminService.updateDescription(type, descriptionId, requestDto, CurrentUser.email());
+
+        if (d instanceof BookDescription bd) {
+            return ResponseEntity.ok(new BookDescriptionDTO(
+                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
+                bd.getDescription(), bd.getTags(), "AVAILABLE"
+            ));
+        } else if (d instanceof BoardGameDescription bgd) {
+            return ResponseEntity.ok(new BoardGameDescriptionDTO(
+                bgd.getId(), null, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
+                bgd.getNumberOfPlayers(), bgd.getTags(), "AVAILABLE"
+            ));
+        } else if (d instanceof PSGameDescription ps) {
+            return ResponseEntity.ok(new PSGameDescriptionDTO(
+                ps.getId(), null, ps.getType(), ps.getTitle(), ps.getDescription(), ps.getTags()
+            ));
+        }
+
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{type}/{description_id}")
+    public ResponseEntity<Void> deleteDescription(
+            @PathVariable ItemType type,
+            @PathVariable("description_id") Long descriptionId) {
+        adminService.deleteDescription(type, descriptionId, CurrentUser.email());
+        return ResponseEntity.noContent().build();
     }
 }

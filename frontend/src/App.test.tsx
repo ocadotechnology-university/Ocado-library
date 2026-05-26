@@ -34,6 +34,25 @@ describe("App", () => {
             { status: 200, headers: { "Content-Type": "application/json" } },
           );
         }
+        if (String(input).endsWith("/api/descriptions/Book/all")) {
+          return new Response(
+            JSON.stringify([
+              {
+                id: 1,
+                internalId: null,
+                type: "Book",
+                title: "TypeScript Deep Dive",
+                author: "Basarat Ali Syed",
+                isbn: "9780000000001",
+                image: "https://example.com/cover.jpg",
+                description: "Practical TypeScript guidance.",
+                tags: ["typescript"],
+                descriptionStatus: "AVAILABLE",
+              },
+            ]),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
         return new Response(null, { status: 404 });
       }),
     );
@@ -50,7 +69,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Ocado Library")).toBeInTheDocument();
     expect(screen.getByText("Filters")).toBeInTheDocument();
-    expect(screen.getByText("TypeScript Deep Dive")).toBeInTheDocument();
+    expect(await screen.findByText("TypeScript Deep Dive")).toBeInTheDocument();
 
     localStorage.removeItem("ocado.library.auth.persistent.token");
     vi.unstubAllGlobals();

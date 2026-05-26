@@ -204,6 +204,11 @@ const BookPreview = ({
           {title}
         </h2>
         <p className="line-clamp-1 text-xs text-[#9e9eae]">{author}</p>
+        {bookId != null && bookId.length > 0 && (
+          <p className="mt-1 inline-flex w-fit rounded-md bg-[#43485e]/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
+            {bookId}
+          </p>
+        )}
         {footer != null && (
           <div className="mt-1.5 border-t border-[#b1b2b5]/50 pt-1.5">
             {footer}

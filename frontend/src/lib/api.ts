@@ -6,19 +6,87 @@ export type MeResponse = {
 };
 
 export type IsbnBookResponse = {
+  title: string | null;
+  author: string | null;
+  image: string | null;
+  description: string | null;
+};
+
+export type BackendDescriptionStatus =
+  | "AVAILABLE"
+  | "BORROWED"
+  | "BORROWED_BY_ME"
+  | "UNAVAILABLE";
+
+export type BackendItemStatus =
+  | "AVAILABLE"
+  | "BORROWED"
+  | "LOST"
+  | "FOR_OFFICE_USE_ONLY"
+  | "UNAVAILABLE";
+
+export type BackendBookDescription = {
+  id: number;
+  internalId: string | null;
+  type: "Book";
   title: string;
   author: string;
-  image: string;
+  isbn: string | null;
+  image: string | null;
+  description: string | null;
+  tags: string[] | null;
+  descriptionStatus: BackendDescriptionStatus;
+};
+
+export type ItemSummary = {
+  internalId: string;
+  status: BackendItemStatus;
+  borrower: string | null;
+};
+
+export type ItemDetail = ItemSummary & {
+  descriptionId: number;
+  type: "Book" | "BoardGame" | "PSGame";
+};
+
+export type BookDescriptionPayload = {
+  title: string;
+  author: string;
+  isbn: string;
   description: string;
+  image: string;
+  tags: string[];
+};
+
+export type CreateItemPayload = {
+  internalId: string;
+  descriptionId: number;
+  status?: BackendItemStatus;
+};
+
+export type JournalOperationType =
+  | "BORROW"
+  | "RETURN"
+  | "ADD"
+  | "UPDATE"
+  | "DELETE";
+
+export type JournalEntry = {
+  id: number;
+  datetime: string;
+  operationType: JournalOperationType | null;
+  user: string;
+  itemId: string | null;
+  descriptionId: number | null;
 };
 
 export class ApiError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-  ) {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
     super(message);
     this.name = "ApiError";
+    this.status = status;
   }
 }
 
@@ -26,6 +94,33 @@ export function authHeaders(): HeadersInit {
   const token = getAccessToken();
   if (token == null) return {};
   return { Authorization: `Bearer ${token}` };
+}
+
+async function apiJson<T>(
+  url: string,
+  init: RequestInit = {},
+  fallbackMessage = "Request failed",
+): Promise<T> {
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      ...authHeaders(),
+      ...(init.body != null ? { "Content-Type": "application/json" } : {}),
+      ...init.headers,
+    },
+  });
+  if (response.status === 401) {
+    clearStoredToken();
+    throw new ApiError("Unauthorized", 401);
+  }
+  if (!response.ok) {
+    throw new ApiError(fallbackMessage, response.status);
+  }
+  if (response.status === 204) {
+    return undefined as T;
+  }
+  const text = await response.text();
+  return (text.length > 0 ? JSON.parse(text) : undefined) as T;
 }
 
 export async function fetchMe(): Promise<MeResponse> {
@@ -56,6 +151,123 @@ export async function fetchBookByIsbn(isbn: string): Promise<IsbnBookResponse> {
     throw new ApiError("Failed to fetch book data", response.status);
   }
   return (await response.json()) as IsbnBookResponse;
+}
+
+export async function fetchBookDescriptions(): Promise<
+  BackendBookDescription[]
+> {
+  return apiJson<BackendBookDescription[]>(
+    "/api/descriptions/Book/all",
+    {},
+    "Failed to load book catalog",
+  );
+}
+
+export async function fetchItemsByDescription(
+  descriptionId: number,
+  status?: BackendItemStatus,
+): Promise<ItemSummary[]> {
+  const params = new URLSearchParams();
+  if (status != null) params.set("status", status);
+  const query = params.toString();
+  return apiJson<ItemSummary[]>(
+    `/api/items/${descriptionId}${query ? `?${query}` : ""}`,
+    {},
+    "Failed to load book instances",
+  );
+}
+
+export async function borrowItem(internalId: string): Promise<void> {
+  await apiJson<void>(
+    `/api/items/${encodeURIComponent(internalId)}/borrow`,
+    { method: "POST" },
+    "Failed to borrow item",
+  );
+}
+
+export async function returnItem(internalId: string): Promise<void> {
+  await apiJson<void>(
+    `/api/items/${encodeURIComponent(internalId)}/return`,
+    { method: "POST" },
+    "Failed to return item",
+  );
+}
+
+export async function createBookDescription(
+  payload: BookDescriptionPayload,
+): Promise<BackendBookDescription> {
+  return apiJson<BackendBookDescription>(
+    "/api/descriptions/Book/add",
+    { method: "POST", body: JSON.stringify(payload) },
+    "Failed to create book",
+  );
+}
+
+export async function updateBookDescription(
+  descriptionId: number,
+  payload: BookDescriptionPayload,
+): Promise<BackendBookDescription> {
+  return apiJson<BackendBookDescription>(
+    `/api/descriptions/Book/${descriptionId}/edit`,
+    { method: "PUT", body: JSON.stringify(payload) },
+    "Failed to update book",
+  );
+}
+
+export async function deleteBookDescription(
+  descriptionId: number,
+): Promise<void> {
+  await apiJson<void>(
+    `/api/descriptions/Book/${descriptionId}`,
+    { method: "DELETE" },
+    "Failed to delete book",
+  );
+}
+
+export async function createItem(
+  payload: CreateItemPayload,
+): Promise<ItemDetail> {
+  return apiJson<ItemDetail>(
+    "/api/admin/items/add",
+    { method: "POST", body: JSON.stringify(payload) },
+    "Failed to create item",
+  );
+}
+
+export async function updateItemStatus(
+  internalId: string,
+  status: BackendItemStatus,
+): Promise<ItemDetail> {
+  return apiJson<ItemDetail>(
+    `/api/admin/items/${encodeURIComponent(internalId)}/status`,
+    { method: "PATCH", body: JSON.stringify({ status }) },
+    "Failed to update item status",
+  );
+}
+
+export async function fetchJournalEntries(params: {
+  from?: string;
+  to?: string;
+  user?: string;
+  operationType?: JournalOperationType;
+  descriptionId?: number;
+  internalId?: string;
+}): Promise<JournalEntry[]> {
+  const query = new URLSearchParams();
+  if (params.from) query.set("from", params.from);
+  if (params.to) query.set("to", params.to);
+  if (params.user) query.set("user", params.user);
+  if (params.operationType) query.set("operationType", params.operationType);
+  if (params.descriptionId != null) {
+    query.set("descriptionId", String(params.descriptionId));
+  }
+  if (params.internalId) query.set("internalId", params.internalId);
+
+  return apiJson<JournalEntry[]>(
+    `/api/admin/journal${query.toString() ? `?${query.toString()}` : ""}`,
+    {},
+    "Failed to load journal",
+  );
 }
 
 export function hasRole(roles: string[], role: string): boolean {

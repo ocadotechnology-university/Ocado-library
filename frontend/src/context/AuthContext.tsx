@@ -66,19 +66,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loadProfile]);
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = useCallback(() => {
     window.location.href = "/oauth2/authorization/google";
-  };
+  }, []);
 
-  const completeLogin = async (accessToken: string, remember: boolean) => {
-    storeToken(accessToken, remember);
-    await loadProfile();
-  };
+  const completeLogin = useCallback(
+    async (accessToken: string, remember: boolean) => {
+      storeToken(accessToken, remember);
+      await loadProfile();
+    },
+    [loadProfile],
+  );
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clearStoredToken();
     setUser(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -90,12 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       completeLogin,
       logout,
     }),
-    [user, authLoading, loadProfile],
+    [user, authLoading, loginWithGoogle, completeLogin, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (ctx == null) throw new Error("useAuth must be used within AuthProvider");
