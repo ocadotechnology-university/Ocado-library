@@ -25,3 +25,35 @@ replay_pid*
 
 # Database credentials configuration
 .env
+
+# Node / frontend
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Maven / backend
+backend/target/
+
+# Env / local secrets
+.env.*
+!.env.example
+!.env.*.example
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# Local database dumps / volumes
+database/data/
+database/postgres_data/
+*.dump
+*.backup
+*.sql.gz
