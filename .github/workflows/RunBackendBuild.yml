@@ -22,7 +22,7 @@ jobs:
 
       - name: Build backend with Maven
         working-directory: backend
-        run: ./mvnw -B package
+        run: mvn -B package
 
       # - name: Update dependency graph
       #   uses: advanced-security/maven-dependency-submission-action@v5
