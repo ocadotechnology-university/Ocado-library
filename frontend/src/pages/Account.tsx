@@ -4,6 +4,8 @@ import {
   BOOK_LIST_COVER_FRAME_CLASS,
   BOOK_LIST_TEXT_CELL_CLASS,
 } from "../components/UI/bookListLayout";
+import BookClientWindow from "../components/UI/BookClientWindow";
+import BookFullView from "../components/UI/BookFullView";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import {
   SidebarAccentTitle,
@@ -46,6 +48,7 @@ type UserOrderRow = {
   instanceId?: string;
   operationType?: JournalOperationType | null;
   kind: HistoryRowKind;
+  descriptionId?: number;
 };
 
 const NAV: { id: AccountSectionId; label: string }[] = [
@@ -102,6 +105,7 @@ function eventRow(
     instanceId: entry.itemId ?? undefined,
     operationType: entry.operationType,
     kind,
+    descriptionId: entry.descriptionId ?? undefined,
   };
 }
 
@@ -221,25 +225,33 @@ function OrderDateLines({ row }: { row: UserOrderRow }) {
 function OrderListRow({
   row,
   showUserMeta = false,
+  onClick,
 }: {
   row: UserOrderRow;
   showUserMeta?: boolean;
+  onClick?: () => void;
 }) {
+  const isJournalView = row.kind === "history" || row.kind === "log";
   const coverSrc = `https://picsum.photos/seed/${encodeURIComponent(row.seed)}/272/181`;
 
   return (
     <li className="list-none">
-      <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
-        <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
-          <img
-            src={coverSrc}
-            alt=""
-            className="h-full w-full object-cover"
-            width={272}
-            height={181}
-            loading="lazy"
-          />
-        </div>
+      <div
+        className={`flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3 ${isJournalView ? "cursor-pointer hover:border-[#6b7289]" : ""}`}
+        onClick={onClick}
+      >
+        {!isJournalView && (
+          <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
+            <img
+              src={coverSrc}
+              alt=""
+              className="h-full w-full object-cover"
+              width={272}
+              height={181}
+              loading="lazy"
+            />
+          </div>
+        )}
         <div
           className={`${BOOK_LIST_TEXT_CELL_CLASS} min-h-[5rem] py-0.5 sm:min-h-[6rem]`}
         >
@@ -260,7 +272,7 @@ function OrderListRow({
               ) : null}
             </p>
           )}
-          {row.description.length > 0 && (
+          {!isJournalView && row.description.length > 0 && (
             <div className="mt-2 rounded-2xl border border-[#c5c9d6]/70 bg-white/70 p-3 shadow-[inset_0_1px_0_0_rgb(255_255_255_/0.85)] sm:mt-3 sm:p-4">
               <h4 className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8b92a8] sm:text-[11px]">
                 Description
@@ -326,6 +338,8 @@ const Account = () => {
   const [error, setError] = useState<string | null>(null);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
   const [books, setBooks] = useState<BackendBookDescription[]>([]);
+  const [selectedBook, setSelectedBook] =
+    useState<BackendBookDescription | null>(null);
 
   const [personFilter, setPersonFilter] = useState("");
   const [bookFilter, setBookFilter] = useState("");
@@ -651,12 +665,61 @@ const Account = () => {
           </p>
         ) : (
           <ul className="flex flex-col gap-4">
-            {rows.map((row) => (
-              <OrderListRow key={row.id} row={row} showUserMeta={isAdmin} />
-            ))}
+            {rows.map((row) => {
+              const canOpenBook =
+                (row.kind === "history" || row.kind === "log") &&
+                row.descriptionId != null;
+              const handleClick = canOpenBook
+                ? () => {
+                    const book = booksById.get(row.descriptionId!);
+                    if (book) setSelectedBook(book);
+                  }
+                : undefined;
+              return (
+                <OrderListRow
+                  key={row.id}
+                  row={row}
+                  showUserMeta={isAdmin}
+                  onClick={handleClick}
+                />
+              );
+            })}
           </ul>
         )}
       </div>
+
+      {selectedBook && (
+        <BookClientWindow onBackdropClick={() => setSelectedBook(null)}>
+          <BookFullView
+            coverSrc={`https://picsum.photos/seed/${encodeURIComponent(
+              selectedBook.isbn ?? String(selectedBook.id),
+            )}/272/181`}
+            coverSrcLarge={`https://picsum.photos/seed/${encodeURIComponent(
+              selectedBook.isbn ?? String(selectedBook.id),
+            )}/640/960`}
+            title={selectedBook.title}
+            author={selectedBook.author}
+            description={selectedBook.description ?? ""}
+            bookId={selectedBook.id}
+            tags={selectedBook.tags ?? []}
+            status={
+              selectedBook.descriptionStatus === "AVAILABLE"
+                ? "free"
+                : selectedBook.descriptionStatus === "BORROWED_BY_ME"
+                  ? "borrowed-by-me"
+                  : "borrowed"
+            }
+            newArrival={false}
+            onClose={() => setSelectedBook(null)}
+            onBorrow={() => {
+              /* borrow action can be wired later if needed */
+            }}
+            onPing={() => {
+              /* no-op for now */
+            }}
+          />
+        </BookClientWindow>
+      )}
     </Layout>
   );
 };
