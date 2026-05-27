@@ -10,8 +10,11 @@ import com.ocado.library.repository.DescriptionRepository;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CatalogService {
@@ -28,8 +31,23 @@ public class CatalogService {
         
         // Basic filtering for tags and search
         if (tags != null && !tags.isEmpty()) {
+            List<String> wanted = tags.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toLowerCase)
+                .toList();
             descriptions = descriptions.stream()
-                .filter(d -> d.getTags() != null && d.getTags().stream().anyMatch(tags::contains))
+                .filter(d -> {
+                    if (d.getTags() == null || d.getTags().isEmpty()) return false;
+                    List<String> itemTags = d.getTags().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(String::toLowerCase)
+                        .toList();
+                    return wanted.stream().allMatch(itemTags::contains);
+                })
                 .collect(Collectors.toList());
         }
         
@@ -41,6 +59,17 @@ public class CatalogService {
         }
 
         return descriptions.stream().map(d -> mapToDTO(d, userEmail)).collect(Collectors.toList());
+    }
+
+    public List<String> getDistinctTags(ItemType type) {
+        return descriptionRepository.findByType(type).stream()
+            .flatMap(d -> d.getTags() == null ? Stream.empty() : d.getTags().stream())
+            .filter(Objects::nonNull)
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .distinct()
+            .sorted(Comparator.naturalOrder())
+            .collect(Collectors.toList());
     }
     
     private Object mapToDTO(Description d, String userEmail) {
