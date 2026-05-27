@@ -6,6 +6,7 @@ W projekcie używany jest **Docker** do konteneryzacji lokalnej bazy danych **Po
 Aby uruchomić bazę, trzeba mieć zainstalowane:
 * [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac) lub Docker Engine (Linux).
 * Docker Compose w wersji V2 (komenda `docker compose` ze spacją).
+* Konfigurację należy przeprowadzać w katalogu `database`
 
 ---
 

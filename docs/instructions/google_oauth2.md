@@ -126,7 +126,7 @@ Nie używaj ponownie starego URL z parametrem `code`.
 
 ### Wybór konta Google
 
-![Wybór konta Google](./ocado_1.jpg)
+![Wybór konta Google](../pictures/ocado_1.jpg)
 
 Przy odmowie: konto na liście **Test users** w Consent screen.
 
@@ -151,7 +151,7 @@ Parametr `code` jest jednorazowy — backend wymienia go z Google w tle.
 ```
 
 
-![JSON z accessToken](./ocado_2.jpg)
+![JSON z accessToken](../pictures/ocado_2.jpg)
 
 Token to wartość **`accessToken`**. `expiresIn: 86400` — 24 godziny.
 
