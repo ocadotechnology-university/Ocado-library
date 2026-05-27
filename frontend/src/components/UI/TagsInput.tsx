@@ -32,16 +32,10 @@ export default function TagsInput({
   const matchingSuggestions = useMemo(() => {
     const q = input.trim().toLowerCase();
     if (q.length === 0) {
-      return suggestions
-        .filter((s) => !hasTag(value, s))
-        .slice(0, 8);
+      return suggestions.filter((s) => !hasTag(value, s)).slice(0, 8);
     }
     return suggestions
-      .filter(
-        (s) =>
-          !hasTag(value, s) &&
-          s.toLowerCase().includes(q),
-      )
+      .filter((s) => !hasTag(value, s) && s.toLowerCase().includes(q))
       .slice(0, 8);
   }, [input, suggestions, value]);
 
@@ -97,7 +91,11 @@ export default function TagsInput({
             if (e.key === "Enter" || e.key === ",") {
               e.preventDefault();
               addTag(input);
-            } else if (e.key === "Backspace" && input.length === 0 && value.length > 0) {
+            } else if (
+              e.key === "Backspace" &&
+              input.length === 0 &&
+              value.length > 0
+            ) {
               removeTag(value[value.length - 1]);
             }
           }}

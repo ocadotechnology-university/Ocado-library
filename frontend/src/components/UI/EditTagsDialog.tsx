@@ -38,9 +38,7 @@ export default function EditTagsDialog({
             placeholder="Type to search or add a new tag…"
           />
         </div>
-        {error ? (
-          <p className="mt-2 text-sm text-[#b91c1c]">{error}</p>
-        ) : null}
+        {error ? <p className="mt-2 text-sm text-[#b91c1c]">{error}</p> : null}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"

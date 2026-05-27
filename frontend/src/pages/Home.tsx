@@ -50,10 +50,7 @@ import {
   type BackendDescriptionStatus,
   type ItemSummary,
 } from "../lib/api";
-import {
-  applyCatalogFilters,
-  mergeUniqueTags,
-} from "../lib/catalogFilters";
+import { applyCatalogFilters, mergeUniqueTags } from "../lib/catalogFilters";
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
@@ -192,11 +189,15 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
     key: `board-${row.id}`,
     isbn: "",
     title: row.title,
-    author: row.numberOfPlayers != null ? `${row.numberOfPlayers} players` : "Board game",
+    author:
+      row.numberOfPlayers != null
+        ? `${row.numberOfPlayers} players`
+        : "Board game",
     language: languageFromTags(tags),
     level: "middle",
     status,
-    backendStatus: (row.descriptionStatus ?? "AVAILABLE") as BackendDescriptionStatus,
+    backendStatus: (row.descriptionStatus ??
+      "AVAILABLE") as BackendDescriptionStatus,
     newArrival: false,
     caption: captionFor(status),
     bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
@@ -235,7 +236,9 @@ const Home = () => {
   const { setNotificationsOpen } = useAppChrome();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [books, setBooks] = useState<AdminBook[]>([]);
-  const [boardGames, setBoardGames] = useState<BackendBoardGameDescription[]>([]);
+  const [boardGames, setBoardGames] = useState<BackendBoardGameDescription[]>(
+    [],
+  );
   const [psGames, setPsGames] = useState<BackendPSGameDescription[]>([]);
 
   const boardPreviewRows = useMemo(
@@ -363,9 +366,13 @@ const Home = () => {
 
   const catalogAuthors = useMemo(
     () =>
-      [...new Set([...books, ...boardPreviewRows, ...psPreviewRows].map((b) => b.author))].sort(
-        (a, b) => a.localeCompare(b),
-      ),
+      [
+        ...new Set(
+          [...books, ...boardPreviewRows, ...psPreviewRows].map(
+            (b) => b.author,
+          ),
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
     [books, boardPreviewRows, psPreviewRows],
   );
 
@@ -507,10 +514,7 @@ const Home = () => {
     let tags = [...adminDraft.tags];
     if (isBook) {
       const lang = adminDraft.language.trim();
-      if (
-        lang &&
-        !tags.some((t) => t.toLowerCase() === lang.toLowerCase())
-      ) {
+      if (lang && !tags.some((t) => t.toLowerCase() === lang.toLowerCase())) {
         tags.push(lang);
       }
     }
@@ -548,11 +552,13 @@ const Home = () => {
           const created = await createBookDescription(payload);
           // createdBookId not used further here
         }
-        } else if (isBoard) {
+      } else if (isBoard) {
         const payload = {
           title: adminDraft.title.trim(),
           description: adminDraft.description.trim(),
-          numberOfPlayers: adminDraft.language ? parseInt(adminDraft.language, 10) || null : null,
+          numberOfPlayers: adminDraft.language
+            ? parseInt(adminDraft.language, 10) || null
+            : null,
           tags,
         };
         if (adminMode === "edit") {
@@ -562,7 +568,7 @@ const Home = () => {
           const created = await createBoardGameDescription(payload);
           setInstanceTargetKey(String(created.id));
         }
-        } else if (isPs) {
+      } else if (isPs) {
         const payload = {
           title: adminDraft.title.trim(),
           description: adminDraft.description.trim(),
@@ -605,7 +611,8 @@ const Home = () => {
     const isValidBoard = /^OC-WRO-G-[A-Z0-9]+$/.test(value);
     const isValidBook = /^OC-WRO-B-[A-Z0-9]+$/.test(value);
     const isValidPs = /^OC-WRO-PS-[A-Z0-9]+$/.test(value);
-    if ((!isValidBook && !isValidBoard && !isValidPs) || !instanceTargetKey) return;
+    if ((!isValidBook && !isValidBoard && !isValidPs) || !instanceTargetKey)
+      return;
 
     const target =
       books.find((b) => b.key === instanceTargetKey) ||
@@ -626,7 +633,14 @@ const Home = () => {
     } catch {
       setActionError("Could not add this instance. Check if the ID is unique.");
     }
-  }, [books, boardPreviewRows, psPreviewRows, instanceInput, instanceTargetKey, loadCatalog]);
+  }, [
+    books,
+    boardPreviewRows,
+    psPreviewRows,
+    instanceInput,
+    instanceTargetKey,
+    loadCatalog,
+  ]);
 
   const openBorrowDialog = useCallback(async (book: AdminBook) => {
     setBorrowDialog({
@@ -1123,10 +1137,20 @@ const Home = () => {
               {isAdmin && adminMode !== "browse" ? (
                 <div className="rounded-2xl border border-[#b1b2b5]/80 bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-semibold text-[#43485e]">
-                    {adminMode === "add" ? (section === "board" ? "Add new board game" : section === "ps" ? "Add new PS game" : "Add new book") : (section === "board" ? "Edit board game" : section === "ps" ? "Edit PS game" : "Edit book")}
+                    {adminMode === "add"
+                      ? section === "board"
+                        ? "Add new board game"
+                        : section === "ps"
+                          ? "Add new PS game"
+                          : "Add new book"
+                      : section === "board"
+                        ? "Edit board game"
+                        : section === "ps"
+                          ? "Edit PS game"
+                          : "Edit book"}
                   </h2>
                   <p className="mt-1 text-xs text-[#6b7289]">
-                    {section === "books" 
+                    {section === "books"
                       ? "Tip: First load data from ISBN, then you can correct the fields below. ISBN and Title are required; the rest are optional."
                       : "No autocomplete for this type. Title is required; rest optional. Cards use entity-specific fields (e.g. numberOfPlayers for board)."}
                   </p>
@@ -1164,14 +1188,13 @@ const Home = () => {
                         ) : null}
                       </div>
                     )}
-                    {(
-                      section === "books"
-                        ? ([
-                            ["Title *", "title"],
-                            ["Author", "author"],
-                            ["Language", "language"],
-                          ] as const)
-                        : section === "board"
+                    {(section === "books"
+                      ? ([
+                          ["Title *", "title"],
+                          ["Author", "author"],
+                          ["Language", "language"],
+                        ] as const)
+                      : section === "board"
                         ? ([
                             ["Title *", "title"],
                             ["# Players (optional)", "language"],
@@ -1470,15 +1493,16 @@ const Home = () => {
                           Add instance
                         </button>
                       )}
-                      {selected.key.startsWith("ps-") && selected.bookId.trim().length === 0 && (
-                        <button
-                          type="button"
-                          onClick={() => setInstanceTargetKey(selected.key)}
-                          className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
-                        >
-                          Add instance
-                        </button>
-                      )}
+                      {selected.key.startsWith("ps-") &&
+                        selected.bookId.trim().length === 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setInstanceTargetKey(selected.key)}
+                            className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                          >
+                            Add instance
+                          </button>
+                        )}
                       <button
                         type="button"
                         onClick={() => void deleteBook(selected)}
@@ -1681,8 +1705,8 @@ const Home = () => {
               {instanceTargetKey?.startsWith("ps-")
                 ? "Use format: OC-WRO-PS-num"
                 : instanceTargetKey?.startsWith("board-")
-                ? "Use format: OC-WRO-G-num"
-                : "Use format: OC-WRO-B-num"}
+                  ? "Use format: OC-WRO-G-num"
+                  : "Use format: OC-WRO-B-num"}
             </p>
             <input
               value={instanceInput}

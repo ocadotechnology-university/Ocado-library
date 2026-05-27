@@ -26,7 +26,13 @@ export function rowMatchesSearch(
 ): boolean {
   const q = query.trim().toLowerCase();
   if (q.length === 0) return true;
-  const haystack = [row.title, row.author, row.description, row.bookId, ...row.tags]
+  const haystack = [
+    row.title,
+    row.author,
+    row.description,
+    row.bookId,
+    ...row.tags,
+  ]
     .join(" ")
     .toLowerCase();
   return haystack.includes(q);
@@ -75,8 +81,7 @@ export function matchesCategory(
 ): boolean {
   if (cat === "All") return true;
   if (cat === "New arrivals") return row.newArrival;
-  if (cat === "Popular")
-    return row.tags.some((t) => /popular/i.test(t));
+  if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
   if (cat === "Bestsellers") return row.tags.some((t) => /best/i.test(t));
   if (cat === "Fiction") return row.tags.some((t) => /^fiction$/i.test(t));
   if (cat === "Non-fiction")

@@ -152,7 +152,11 @@ async function apiJson<T>(
   if (!response.ok) {
     const bodyText = await response.text().catch(() => "");
     const suffix = bodyText ? `: ${bodyText.slice(0, 400)}` : "";
-    throw new ApiError(`${fallbackMessage}${suffix}`, response.status, bodyText);
+    throw new ApiError(
+      `${fallbackMessage}${suffix}`,
+      response.status,
+      bodyText,
+    );
   }
   if (response.status === 204) {
     return undefined as T;

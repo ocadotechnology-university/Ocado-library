@@ -365,12 +365,14 @@ const Account = () => {
     setLoading(true);
     setError(null);
     try {
-      const [bookCatalog, boardCatalog, psCatalog, entries] = await Promise.all([
-        fetchBookDescriptions(),
-        fetchBoardGameDescriptions(),
-        fetchPSGameDescriptions(),
-        fetchJournalEntries(isAdmin ? {} : { user: user.email }),
-      ]);
+      const [bookCatalog, boardCatalog, psCatalog, entries] = await Promise.all(
+        [
+          fetchBookDescriptions(),
+          fetchBoardGameDescriptions(),
+          fetchPSGameDescriptions(),
+          fetchJournalEntries(isAdmin ? {} : { user: user.email }),
+        ],
+      );
       const mappedBooks: JournalDescriptionView[] = bookCatalog.map(
         (book: BackendBookDescription) => ({
           id: book.id,
@@ -425,13 +427,17 @@ const Account = () => {
 
   const borrowedRows = useMemo(
     () =>
-      user == null ? [] : buildBorrowedRows(journal, descriptionsById, user.email),
+      user == null
+        ? []
+        : buildBorrowedRows(journal, descriptionsById, user.email),
     [descriptionsById, journal, user],
   );
 
   const historyRows = useMemo(
     () =>
-      user == null ? [] : buildHistoryRows(journal, descriptionsById, user.email),
+      user == null
+        ? []
+        : buildHistoryRows(journal, descriptionsById, user.email),
     [descriptionsById, journal, user],
   );
 

@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { CatalogTagPoolButton } from "./CatalogTagPoolButton";
 
 export type MediaSection = "books" | "board" | "ps";
