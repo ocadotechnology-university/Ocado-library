@@ -98,6 +98,13 @@ public class AdminService {
     public Item addPhysicalCopy(AdminCreateItemRequest request, String userEmail) {
         Description description = descriptionRepository.findById(request.descriptionId())
                 .orElseThrow(() -> new NotFoundException("Description not found"));
+
+        if (description.getType() == ItemType.PSGame) {
+            boolean hasAny = !itemRepository.findByDescriptionId(description.getId()).isEmpty();
+            if (hasAny) {
+                throw new IllegalArgumentException("PS games can only have one physical instance");
+            }
+        }
                 
         Item item = new Item();
         item.setInternalId(request.internalId());

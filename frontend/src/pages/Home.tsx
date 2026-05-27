@@ -23,15 +23,25 @@ import {
   ApiError,
   borrowItem,
   createBookDescription,
+  createBoardGameDescription,
   createItem,
+  createPSGameDescription,
+  deleteBoardGameDescription,
   deleteBookDescription,
+  deletePSGameDescription,
+  fetchBoardGameDescriptions,
   fetchBookByIsbn,
   fetchBookDescriptions,
   fetchItemsByDescription,
   fetchJournalEntries,
+  fetchPSGameDescriptions,
   returnItem,
+  updateBoardGameDescription,
   updateBookDescription,
+  updatePSGameDescription,
+  type BackendBoardGameDescription,
   type BackendBookDescription,
+  type BackendPSGameDescription,
   type BackendDescriptionStatus,
   type ItemSummary,
 } from "../lib/api";
@@ -190,11 +200,68 @@ function mapBook(row: BackendBookDescription, index: number): AdminBook {
   };
 }
 
+function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
+  const seed = `board-${row.id}`;
+  return {
+    id: row.id,
+    key: `board-${row.id}`,
+    isbn: "",
+    title: row.title,
+    author: row.numberOfPlayers != null ? `${row.numberOfPlayers} players` : "Board game",
+    language: "",
+    level: "middle",
+    status: "free",
+    backendStatus: (row.descriptionStatus ?? "AVAILABLE") as BackendDescriptionStatus,
+    newArrival: false,
+    caption: "Available",
+    bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
+    description: row.description || "",
+    tags: row.tags || [],
+    placeholderSeed: seed,
+    imageUrl: undefined,
+  };
+}
+
+function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
+  const seed = `ps-${row.id}`;
+  return {
+    id: row.id,
+    key: `ps-${row.id}`,
+    isbn: "",
+    title: row.title,
+    author: "PS Game",
+    language: "",
+    level: "middle",
+    status: "free",
+    backendStatus: "AVAILABLE",
+    newArrival: false,
+    caption: "PS Game",
+    bookId: row.internalId ?? "",
+    description: row.description || "",
+    tags: row.tags || [],
+    placeholderSeed: seed,
+    imageUrl: undefined,
+  };
+}
+
 const Home = () => {
   const { isAdmin, user } = useAuth();
   const { setNotificationsOpen } = useAppChrome();
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [books, setBooks] = useState<AdminBook[]>([]);
+  const [boardGames, setBoardGames] = useState<BackendBoardGameDescription[]>([]);
+  const [psGames, setPsGames] = useState<BackendPSGameDescription[]>([]);
+
+  const boardPreviewRows = useMemo(
+    () => boardGames.map(mapBoardToAdminBook),
+    [boardGames],
+  );
+
+  const psPreviewRows = useMemo(
+    () => psGames.map(mapPSGameToAdminBook),
+    [psGames],
+  );
+
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -241,7 +308,11 @@ const Home = () => {
   const [isbnError, setIsbnError] = useState<string | null>(null);
 
   const selected =
-    openKey != null ? books.find((b) => b.key === openKey) : undefined;
+    openKey != null
+      ? books.find((b) => b.key === openKey) ||
+        boardPreviewRows.find((b) => b.key === openKey) ||
+        psPreviewRows.find((b) => b.key === openKey)
+      : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
 
@@ -260,6 +331,14 @@ const Home = () => {
       const rows = await fetchBookDescriptions();
       const mapped = rows.map(mapBook);
       setBooks(mapped);
+
+      // Load board and ps in parallel (no isbn autocomplete for them)
+      const [boardRows, psRows] = await Promise.all([
+        fetchBoardGameDescriptions().catch(() => []),
+        fetchPSGameDescriptions().catch(() => []),
+      ]);
+      setBoardGames(boardRows);
+      setPsGames(psRows);
 
       if (isAdmin) {
         const from = new Date();
@@ -409,9 +488,20 @@ const Home = () => {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    if (!adminDraft.title.trim() || !adminDraft.author.trim()) {
+    const isBook = section === "books";
+    const isBoard = section === "board";
+    const isPs = section === "ps";
+
+    // Validation: ISBN+title for books, title only for others
+    if (isBook) {
+      if (!adminDraft.isbn.trim() || !adminDraft.title.trim()) {
+        setActionMessage(null);
+        setActionError("ISBN and Title are required before saving.");
+        return;
+      }
+    } else if (!adminDraft.title.trim()) {
       setActionMessage(null);
-      setActionError("Title and author are required before saving.");
+      setActionError("Title is required before saving.");
       return;
     }
 
@@ -419,57 +509,85 @@ const Home = () => {
     setActionError(null);
     setActionMessage(null);
     try {
-      const payload = {
-        isbn: adminDraft.isbn.trim(),
-        title: adminDraft.title.trim(),
-        author: adminDraft.author.trim(),
-        description: adminDraft.description.trim(),
-        image: adminDraft.imageUrl.trim(),
-        tags,
-      };
-
-      let createdBookId: number | null = null;
-      if (adminMode === "edit") {
-        if (adminDraft.descriptionId == null) return;
-        await updateBookDescription(adminDraft.descriptionId, payload);
-      } else {
-        const created = await createBookDescription(payload);
-        createdBookId = created.id;
+      if (isBook) {
+        const payload = {
+          isbn: adminDraft.isbn.trim(),
+          title: adminDraft.title.trim(),
+          author: adminDraft.author.trim(),
+          description: adminDraft.description.trim(),
+          image: adminDraft.imageUrl.trim(),
+          tags,
+        };
+        if (adminMode === "edit") {
+          if (adminDraft.descriptionId == null) return;
+          await updateBookDescription(adminDraft.descriptionId, payload);
+        } else {
+          const created = await createBookDescription(payload);
+          // createdBookId not used further here
+        }
+        } else if (isBoard) {
+        const payload = {
+          title: adminDraft.title.trim(),
+          description: adminDraft.description.trim(),
+          numberOfPlayers: adminDraft.language ? parseInt(adminDraft.language, 10) || null : null,
+          tags,
+        };
+        if (adminMode === "edit") {
+          if (adminDraft.descriptionId == null) return;
+          await updateBoardGameDescription(adminDraft.descriptionId, payload);
+        } else {
+          const created = await createBoardGameDescription(payload);
+          setInstanceTargetKey(String(created.id));
+        }
+        } else if (isPs) {
+        const payload = {
+          title: adminDraft.title.trim(),
+          description: adminDraft.description.trim(),
+          tags,
+        };
+        if (adminMode === "edit") {
+          if (adminDraft.descriptionId == null) return;
+          await updatePSGameDescription(adminDraft.descriptionId, payload);
+        } else {
+          const created = await createPSGameDescription(payload);
+          setInstanceTargetKey(`ps-${created.id}`);
+        }
       }
 
       await loadCatalog();
       setAdminMode("browse");
       resetDraft();
-      if (createdBookId != null) {
-        setInstanceTargetKey(String(createdBookId));
-      }
+      const typeLabel = isBoard ? "Board game" : isPs ? "PS game" : "Book";
       setActionMessage(
         adminMode === "edit"
-          ? "Book updated."
-          : "Book created. Add its first instance.",
+          ? `${typeLabel} updated.`
+          : `${typeLabel} created. Add its first instance.`,
       );
     } catch (error) {
       setActionMessage(null);
       if (error instanceof ApiError && error.status === 401) {
         setActionError("Session expired. Please sign in again.");
-      } else if (error instanceof ApiError && error.status === 409) {
-        setActionError(
-          "Could not save the book. This internal copy ID already exists.",
-        );
       } else {
         setActionError(
-          "Could not save the book. Check the fields and try again.",
+          `Could not save the ${isBoard ? "board game" : isPs ? "PS game" : "book"}. Check the fields and try again.`,
         );
       }
     } finally {
       setAdminSaving(false);
     }
-  }, [adminDraft, adminMode, loadCatalog, resetDraft]);
+  }, [adminDraft, adminMode, loadCatalog, resetDraft, section]);
 
   const addInstance = useCallback(async () => {
     const value = instanceInput.trim().toUpperCase();
-    if (!/^OC-WRO-B-[A-Z0-9]+$/.test(value) || !instanceTargetKey) return;
-    const target = books.find((book) => book.key === instanceTargetKey);
+    const isValidBoard = /^OC-WRO-G-[A-Z0-9]+$/.test(value);
+    const isValidBook = /^OC-WRO-B-[A-Z0-9]+$/.test(value);
+    const isValidPs = /^OC-WRO-PS-[A-Z0-9]+$/.test(value);
+    if ((!isValidBook && !isValidBoard && !isValidPs) || !instanceTargetKey) return;
+
+    const target =
+      books.find((b) => b.key === instanceTargetKey) ||
+      boardPreviewRows.find((b) => b.key === instanceTargetKey) ||
+      psPreviewRows.find((b) => b.key === instanceTargetKey);
     if (!target) return;
 
     setActionError(null);
@@ -485,7 +603,7 @@ const Home = () => {
     } catch {
       setActionError("Could not add this instance. Check if the ID is unique.");
     }
-  }, [books, instanceInput, instanceTargetKey, loadCatalog]);
+  }, [books, boardPreviewRows, psPreviewRows, instanceInput, instanceTargetKey, loadCatalog]);
 
   const openBorrowDialog = useCallback(async (book: AdminBook) => {
     setBorrowDialog({
@@ -554,12 +672,18 @@ const Home = () => {
       setActionError(null);
       setActionMessage(null);
       try {
-        await deleteBookDescription(book.id);
+        if (book.key.startsWith("board-")) {
+          await deleteBoardGameDescription(book.id);
+        } else if (book.key.startsWith("ps-")) {
+          await deletePSGameDescription(book.id);
+        } else {
+          await deleteBookDescription(book.id);
+        }
         await loadCatalog();
         setOpenKey(null);
-        setActionMessage("Book deleted.");
+        setActionMessage("Description deleted.");
       } catch {
-        setActionError("Could not delete the book. Try again.");
+        setActionError("Could not delete this description. Try again.");
       }
     },
     [loadCatalog],
@@ -692,10 +816,33 @@ const Home = () => {
               <div className="mt-2 flex flex-col gap-2">
                 <button
                   type="button"
-                  onClick={startAddBook}
+                  onClick={() => {
+                    setSection("books");
+                    startAddBook();
+                  }}
                   className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
                 >
                   Add book
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSection("board");
+                    startAddBook();
+                  }}
+                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                >
+                  Add board game
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSection("ps");
+                    startAddBook();
+                  }}
+                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                >
+                  Add PS game
                 </button>
                 {adminMode !== "browse" && (
                   <button
@@ -919,52 +1066,70 @@ const Home = () => {
             </p>
           ) : null}
 
-          {section === "books" ? (
+          {section === "books" || section === "board" || section === "ps" ? (
             <div className="flex flex-col gap-4">
               {isAdmin && adminMode !== "browse" ? (
                 <div className="rounded-2xl border border-[#b1b2b5]/80 bg-white p-5 shadow-sm">
                   <h2 className="text-xl font-semibold text-[#43485e]">
-                    {adminMode === "add" ? "Add new book" : "Edit book"}
+                    {adminMode === "add" ? (section === "board" ? "Add new board game" : section === "ps" ? "Add new PS game" : "Add new book") : (section === "board" ? "Edit board game" : section === "ps" ? "Edit PS game" : "Edit book")}
                   </h2>
+                  <p className="mt-1 text-xs text-[#6b7289]">
+                    {section === "books" 
+                      ? "Tip: First load data from ISBN, then you can correct the fields below. ISBN and Title are required; the rest are optional."
+                      : "No autocomplete for this type. Title is required; rest optional. Cards use entity-specific fields (e.g. numberOfPlayers for board)."}
+                  </p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                        ISBN
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          value={adminDraft.isbn}
-                          onChange={(e) => {
-                            setAdminDraft((d) => ({
-                              ...d,
-                              isbn: e.target.value,
-                            }));
-                            if (isbnError) setIsbnError(null);
-                          }}
-                          className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => void loadFromRepoByIsbn()}
-                          disabled={isbnLoading}
-                          className="shrink-0 rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] disabled:opacity-60"
-                        >
-                          {isbnLoading ? "Loading…" : "Autofill from ISBN"}
-                        </button>
+                    {section === "books" && (
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                          ISBN <span className="text-[#b91c1c]">*</span>
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            value={adminDraft.isbn}
+                            onChange={(e) => {
+                              setAdminDraft((d) => ({
+                                ...d,
+                                isbn: e.target.value,
+                              }));
+                              if (isbnError) setIsbnError(null);
+                            }}
+                            className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void loadFromRepoByIsbn()}
+                            disabled={isbnLoading}
+                            className="shrink-0 rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] disabled:opacity-60"
+                          >
+                            {isbnLoading ? "Loading…" : "Autofill from ISBN"}
+                          </button>
+                        </div>
+                        {isbnError ? (
+                          <p className="mt-1 text-sm text-[#b91c1c]">
+                            {isbnError}
+                          </p>
+                        ) : null}
                       </div>
-                      {isbnError ? (
-                        <p className="mt-1 text-sm text-[#b91c1c]">
-                          {isbnError}
-                        </p>
-                      ) : null}
-                    </div>
+                    )}
                     {(
-                      [
-                        ["Title", "title"],
-                        ["Author", "author"],
-                        ["Language", "language"],
-                        ["Tags (comma separated)", "tagsInput"],
-                      ] as const
+                      section === "books"
+                        ? ([
+                            ["Title *", "title"],
+                            ["Author", "author"],
+                            ["Language", "language"],
+                            ["Tags (comma separated)", "tagsInput"],
+                          ] as const)
+                        : section === "board"
+                        ? ([
+                            ["Title *", "title"],
+                            ["# Players (optional)", "language"],
+                            ["Tags (comma separated)", "tagsInput"],
+                          ] as const)
+                        : ([
+                            ["Title *", "title"],
+                            ["Tags (comma separated)", "tagsInput"],
+                          ] as const)
                     ).map(([label, field]) => (
                       <div
                         key={field}
@@ -1001,57 +1166,63 @@ const Home = () => {
                         className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                       />
                     </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                        Image URL
-                      </label>
-                      <input
-                        value={adminDraft.imageUrl}
-                        onChange={(e) =>
-                          setAdminDraft((d) => ({
-                            ...d,
-                            imageUrl: e.target.value,
-                          }))
-                        }
-                        placeholder="https://..."
-                        className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                        Status
-                      </label>
-                      <select
-                        value={adminDraft.status}
-                        onChange={(e) =>
-                          setAdminDraft((d) => ({
-                            ...d,
-                            status: e.target.value as BookStatus,
-                          }))
-                        }
-                        className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                      >
-                        {STATUS_OPTIONS.map((s) => (
-                          <option key={s.status} value={s.status}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
-                      <input
-                        type="checkbox"
-                        checked={adminDraft.newArrival}
-                        onChange={(e) =>
-                          setAdminDraft((d) => ({
-                            ...d,
-                            newArrival: e.target.checked,
-                          }))
-                        }
-                        className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
-                      />
-                      Mark as new arrival
-                    </label>
+                    {section === "books" && (
+                      <div className="sm:col-span-2">
+                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                          Image URL
+                        </label>
+                        <input
+                          value={adminDraft.imageUrl}
+                          onChange={(e) =>
+                            setAdminDraft((d) => ({
+                              ...d,
+                              imageUrl: e.target.value,
+                            }))
+                          }
+                          placeholder="https://..."
+                          className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                        />
+                      </div>
+                    )}
+                    {section === "books" && (
+                      <>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                            Status
+                          </label>
+                          <select
+                            value={adminDraft.status}
+                            onChange={(e) =>
+                              setAdminDraft((d) => ({
+                                ...d,
+                                status: e.target.value as BookStatus,
+                              }))
+                            }
+                            className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                          >
+                            {STATUS_OPTIONS.map((s) => (
+                              <option key={s.status} value={s.status}>
+                                {s.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
+                          <input
+                            type="checkbox"
+                            checked={adminDraft.newArrival}
+                            onChange={(e) =>
+                              setAdminDraft((d) => ({
+                                ...d,
+                                newArrival: e.target.checked,
+                              }))
+                            }
+                            className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
+                          />
+                          Mark as new arrival
+                        </label>
+                      </>
+                    )}
                   </div>
                   <div className="mt-4 flex gap-2">
                     <button
@@ -1086,6 +1257,72 @@ const Home = () => {
                     Retry
                   </button>
                 </div>
+              ) : section === "board" || section === "ps" ? (
+                <>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <h2 className="text-lg font-semibold text-[#43485e]">
+                      Browse
+                    </h2>
+                    <CatalogViewToggle
+                      mode={catalogView}
+                      onModeChange={setCatalogView}
+                    />
+                  </div>
+                  {catalogView === "cards" ? (
+                    <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                      {(section === "board"
+                        ? boardPreviewRows
+                        : psPreviewRows
+                      ).map((row) => (
+                        <li
+                          key={row.key}
+                          className="flex flex-col items-center gap-2"
+                          onContextMenu={(e) => {
+                            if (!isAdmin) return;
+                            e.preventDefault();
+                            setContextMenu({
+                              key: row.key,
+                              x: e.clientX,
+                              y: e.clientY,
+                            });
+                          }}
+                        >
+                          <BookPreview
+                            variant="card"
+                            coverSrc={coverSrcFor(row)}
+                            title={row.title}
+                            author={row.author}
+                            status={row.status}
+                            newArrival={row.newArrival}
+                            bookId={row.bookId}
+                            onOpen={() => openBook(row.key)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <ul className="flex list-none flex-col gap-4">
+                      {(section === "board"
+                        ? boardPreviewRows
+                        : psPreviewRows
+                      ).map((row) => (
+                        <li key={row.key} className="w-full">
+                          <BookPreview
+                            variant="list"
+                            coverSrc={coverSrcFor(row)}
+                            title={row.title}
+                            author={row.author}
+                            status={row.status}
+                            newArrival={row.newArrival}
+                            bookId={row.bookId}
+                            description={row.description}
+                            onOpen={() => openBook(row.key)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               ) : filteredRows.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
                   No items match these filters. Try another category or clear
@@ -1201,24 +1438,37 @@ const Home = () => {
               status={selected.status}
               newArrival={selected.newArrival}
               onClose={close}
-              onBorrow={() => void openBorrowDialog(selected)}
-              onPing={() =>
-                setActionError(
-                  "All copies are currently borrowed. Try again later.",
-                )
+              onBorrow={
+                selected.key.startsWith("ps-")
+                  ? undefined
+                  : () => void openBorrowDialog(selected)
               }
-              onReturn={() => void returnBorrowedBook(selected)}
+              onPing={
+                selected.key.startsWith("ps-")
+                  ? undefined
+                  : () =>
+                      setActionError(
+                        "All copies are currently borrowed. Try again later.",
+                      )
+              }
+              onReturn={
+                selected.key.startsWith("ps-")
+                  ? undefined
+                  : () => void returnBorrowedBook(selected)
+              }
               onEditTags={() => {}}
-              showPrimaryAction={!isAdmin}
+              showPrimaryAction={!isAdmin && !selected.key.startsWith("ps-")}
               footerExtraActions={
                 <>
-                  <button
-                    type="button"
-                    onClick={() => void openInstancesDialog(selected)}
-                    className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
-                  >
-                    View instances
-                  </button>
+                  {!selected.key.startsWith("ps-") && (
+                    <button
+                      type="button"
+                      onClick={() => void openInstancesDialog(selected)}
+                      className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                    >
+                      View instances
+                    </button>
+                  )}
                   {isAdmin ? (
                     <>
                       <button
@@ -1228,13 +1478,24 @@ const Home = () => {
                       >
                         Edit
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => setInstanceTargetKey(selected.key)}
-                        className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
-                      >
-                        Add instance
-                      </button>
+                      {!selected.key.startsWith("ps-") && (
+                        <button
+                          type="button"
+                          onClick={() => setInstanceTargetKey(selected.key)}
+                          className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                        >
+                          Add instance
+                        </button>
+                      )}
+                      {selected.key.startsWith("ps-") && selected.bookId.trim().length === 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setInstanceTargetKey(selected.key)}
+                          className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                        >
+                          Add instance
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => void deleteBook(selected)}
@@ -1425,12 +1686,22 @@ const Home = () => {
               Add instance
             </h3>
             <p className="mt-1 text-xs text-[#6b7289]">
-              Use format: OC-WRO-B-num
+              {instanceTargetKey?.startsWith("ps-")
+                ? "Use format: OC-WRO-PS-num"
+                : instanceTargetKey?.startsWith("board-")
+                ? "Use format: OC-WRO-G-num"
+                : "Use format: OC-WRO-B-num"}
             </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}
-              placeholder="OC-WRO-B-0109"
+              placeholder={
+                instanceTargetKey?.startsWith("ps-")
+                  ? "OC-WRO-PS-0001"
+                  : instanceTargetKey?.startsWith("board-")
+                    ? "OC-WRO-G-0101"
+                    : "OC-WRO-B-0109"
+              }
               className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
             />
             <div className="mt-3 flex justify-end gap-2">

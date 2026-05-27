@@ -4,5 +4,5 @@ import jakarta.persistence.Entity;
 
 @Entity
 public class PSGameDescription extends Description {
-    // Specific fields can be added here if needed
+    // PSGame-specific fields can be added later if needed; currently uses base Description only
 }

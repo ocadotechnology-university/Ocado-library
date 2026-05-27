@@ -45,21 +45,22 @@ public class CatalogService {
     
     private Object mapToDTO(Description d, String userEmail) {
         List<Item> items = itemRepository.findByDescriptionId(d.getId());
+        String internalId = items.isEmpty() ? null : items.get(0).getInternalId();
         String status = resolveStatus(items, userEmail, d.getType());
         
         if (d instanceof BookDescription bd) {
             return new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
+                bd.getId(), internalId, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
                 bd.getDescription(), bd.getTags(), status
             );
         } else if (d instanceof BoardGameDescription bgd) {
             return new BoardGameDescriptionDTO(
-                bgd.getId(), null, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
+                bgd.getId(), internalId, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
                 bgd.getNumberOfPlayers(), bgd.getTags(), status
             );
         } else if (d instanceof PSGameDescription ps) {
             return new PSGameDescriptionDTO(
-                ps.getId(), null, ps.getType(), ps.getTitle(), ps.getDescription(), ps.getTags()
+                ps.getId(), internalId, ps.getType(), ps.getTitle(), ps.getDescription(), ps.getTags()
             );
         }
         return null;
