@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Layout from "../components/Layout";
 import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
@@ -17,14 +17,24 @@ import {
   SidebarSectionLabel,
   SidebarTemplate,
 } from "../components/UI/SidebarTemplate";
-import {
-  BOOK_DESCRIPTION,
-  type BookRow,
-  previewVariants,
-} from "../catalogue/demoCatalog";
 import { useAppChrome } from "../context/AppChromeContext";
 import { useAuth } from "../context/AuthContext";
-import { ApiError, fetchBookByIsbn } from "../lib/api";
+import {
+  ApiError,
+  borrowItem,
+  createBookDescription,
+  createItem,
+  deleteBookDescription,
+  fetchBookByIsbn,
+  fetchBookDescriptions,
+  fetchItemsByDescription,
+  fetchJournalEntries,
+  returnItem,
+  updateBookDescription,
+  type BackendBookDescription,
+  type BackendDescriptionStatus,
+  type ItemSummary,
+} from "../lib/api";
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
@@ -33,14 +43,28 @@ const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
 ];
 const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
 
-type AdminBook = BookRow & {
+type AdminBook = {
+  id: number;
+  key: string;
   isbn: string;
-  instances: string[];
+  title: string;
+  author: string;
+  language: string;
+  level: "middle";
+  status: BookStatus;
+  backendStatus: BackendDescriptionStatus;
+  newArrival: boolean;
+  caption: string;
+  bookId: string;
+  description: string;
+  tags: string[];
+  placeholderSeed: string;
   imageUrl?: string;
 };
 
 type AdminDraft = {
   key: string;
+  descriptionId: number | null;
   isbn: string;
   title: string;
   author: string;
@@ -48,9 +72,25 @@ type AdminDraft = {
   status: BookStatus;
   newArrival: boolean;
   bookId: string;
-  seed: string;
   imageUrl: string;
+  description: string;
   tagsInput: string;
+};
+
+type BorrowDialogState = {
+  book: AdminBook;
+  items: ItemSummary[];
+  selectedInternalId: string;
+  loading: boolean;
+  submitting: boolean;
+  error: string | null;
+};
+
+type InstancesDialogState = {
+  book: AdminBook;
+  items: ItemSummary[];
+  loading: boolean;
+  error: string | null;
 };
 
 type ContextMenuState = {
@@ -65,28 +105,28 @@ function toggleInList<T>(list: T[], item: T): T[] {
   return [...list, item];
 }
 
-function rowMatchesStatuses(row: BookRow, selected: BookStatus[]): boolean {
+function rowMatchesStatuses(row: AdminBook, selected: BookStatus[]): boolean {
   if (selected.length === 0) return true;
   return selected.includes(row.status);
 }
 
-function rowMatchesLanguages(row: BookRow, selected: string[]): boolean {
+function rowMatchesLanguages(row: AdminBook, selected: string[]): boolean {
   if (selected.length === 0) return true;
   return selected.includes(row.language);
 }
 
-function rowMatchesAuthors(row: BookRow, selected: string[]): boolean {
+function rowMatchesAuthors(row: AdminBook, selected: string[]): boolean {
   if (selected.length === 0) return true;
   return selected.includes(row.author);
 }
 
-function rowMatchesChosenTags(row: BookRow, chosen: string[]): boolean {
+function rowMatchesChosenTags(row: AdminBook, chosen: string[]): boolean {
   if (chosen.length === 0) return true;
   const lower = row.tags.map((t) => t.toLowerCase());
   return chosen.every((c) => lower.includes(c.toLowerCase()));
 }
 
-function matchesCategory(row: BookRow, cat: string): boolean {
+function matchesCategory(row: AdminBook, cat: string): boolean {
   if (cat === "All") return true;
   if (cat === "New arrivals") return row.newArrival;
   if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
@@ -108,30 +148,64 @@ function pillClass(active: boolean): string {
 }
 
 function coverSrcFor(row: AdminBook): string {
-  return row.imageUrl?.trim()
-    ? row.imageUrl
-    : `https://picsum.photos/seed/${row.seed}/272/181`;
+  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/272/181`;
 }
 
 function coverSrcLargeFor(row: AdminBook): string {
-  return row.imageUrl?.trim()
-    ? row.imageUrl
-    : `https://picsum.photos/seed/${row.seed}/640/960`;
+  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/640/960`;
+}
+
+function toUiStatus(status: BackendDescriptionStatus): BookStatus {
+  if (status === "AVAILABLE") return "free";
+  if (status === "BORROWED_BY_ME") return "borrowed-by-me";
+  return "borrowed";
+}
+
+function captionFor(status: BookStatus): string {
+  if (status === "free") return "Available";
+  if (status === "borrowed-by-me") return "Borrowed by me";
+  return "Borrowed";
+}
+
+function mapBook(row: BackendBookDescription, index: number): AdminBook {
+  const status = toUiStatus(row.descriptionStatus);
+  const isbn = row.isbn?.trim() || `description-${row.id}`;
+  return {
+    id: row.id,
+    key: String(row.id),
+    isbn,
+    title: row.title,
+    author: row.author,
+    language: "",
+    level: "middle",
+    status,
+    backendStatus: row.descriptionStatus,
+    newArrival: index < 3,
+    caption: captionFor(status),
+    bookId: isbn,
+    description: row.description ?? "",
+    tags: row.tags ?? [],
+    placeholderSeed: `book-${isbn}`,
+    imageUrl: row.image ?? "",
+  };
 }
 
 const Home = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const { setNotificationsOpen } = useAppChrome();
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [books, setBooks] = useState<AdminBook[]>(
-    previewVariants.map((b, i) => ({
-      ...b,
-      language: i % 2 === 0 ? "English" : "Polish",
-      isbn: `97800000000${i + 1}`,
-      instances: [b.bookId],
-      imageUrl: "",
-    })),
+  const [books, setBooks] = useState<AdminBook[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [adminSaving, setAdminSaving] = useState(false);
+  const [borrowedThisWeek, setBorrowedThisWeek] = useState(0);
+  const [borrowDialog, setBorrowDialog] = useState<BorrowDialogState | null>(
+    null,
   );
+  const [instancesDialog, setInstancesDialog] =
+    useState<InstancesDialogState | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
   const [activeCategory, setActiveCategory] = useState("All");
   const [catalogView, setCatalogView] = useState<CatalogViewMode>("cards");
@@ -151,6 +225,7 @@ const Home = () => {
   const [authorQuery, setAuthorQuery] = useState("");
   const [adminDraft, setAdminDraft] = useState<AdminDraft>({
     key: "",
+    descriptionId: null,
     isbn: "",
     title: "",
     author: "",
@@ -158,8 +233,8 @@ const Home = () => {
     status: "free",
     newArrival: false,
     bookId: "",
-    seed: "",
     imageUrl: "",
+    description: "",
     tagsInput: "",
   });
   const [isbnLoading, setIsbnLoading] = useState(false);
@@ -177,6 +252,42 @@ const Home = () => {
     },
     [setNotificationsOpen],
   );
+
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+    setCatalogError(null);
+    try {
+      const rows = await fetchBookDescriptions();
+      const mapped = rows.map(mapBook);
+      setBooks(mapped);
+
+      if (isAdmin) {
+        const from = new Date();
+        from.setDate(from.getDate() - 7);
+        const journal = await fetchJournalEntries({
+          operationType: "BORROW",
+          from: from.toISOString().slice(0, 10),
+        });
+        setBorrowedThisWeek(journal.length);
+      } else {
+        setBorrowedThisWeek(
+          mapped.filter((row) => row.status !== "free").length,
+        );
+      }
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setCatalogError("Session expired. Please sign in again.");
+      } else {
+        setCatalogError("Could not load the catalog from backend.");
+      }
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, [isAdmin]);
+
+  useEffect(() => {
+    void loadCatalog();
+  }, [loadCatalog]);
 
   const catalogAuthors = useMemo(
     () =>
@@ -221,6 +332,7 @@ const Home = () => {
   const resetDraft = useCallback(() => {
     setAdminDraft({
       key: "",
+      descriptionId: null,
       isbn: "",
       title: "",
       author: "",
@@ -228,20 +340,26 @@ const Home = () => {
       status: "free",
       newArrival: false,
       bookId: "",
-      seed: "",
       imageUrl: "",
+      description: "",
       tagsInput: "",
     });
   }, []);
 
   const startAddBook = useCallback(() => {
     resetDraft();
+    setActionError(null);
+    setActionMessage(null);
     setAdminMode("add");
   }, [resetDraft]);
 
   const startEditBook = useCallback((row: AdminBook) => {
+    setOpenKey(null);
+    setActionError(null);
+    setActionMessage(null);
     setAdminDraft({
       key: row.key,
+      descriptionId: row.id,
       isbn: row.isbn,
       title: row.title,
       author: row.author,
@@ -249,8 +367,8 @@ const Home = () => {
       status: row.status,
       newArrival: row.newArrival,
       bookId: row.bookId,
-      seed: row.seed,
       imageUrl: row.imageUrl ?? "",
+      description: row.description,
       tagsInput: row.tags.join(", "),
     });
     setAdminMode("edit");
@@ -271,7 +389,7 @@ const Home = () => {
         title: book.title || d.title,
         author: book.author || d.author,
         imageUrl: book.image || d.imageUrl,
-        seed: d.seed || `isbn-${code}`,
+        description: book.description || d.description,
       }));
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
@@ -286,113 +404,229 @@ const Home = () => {
     }
   }, [adminDraft.isbn]);
 
-  const saveAdminDraft = useCallback(() => {
+  const saveAdminDraft = useCallback(async () => {
     const tags = adminDraft.tagsInput
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    if (
-      !adminDraft.title.trim() ||
-      !adminDraft.author.trim() ||
-      !adminDraft.bookId.trim()
-    )
+    if (!adminDraft.title.trim() || !adminDraft.author.trim()) {
+      setActionMessage(null);
+      setActionError("Title and author are required before saving.");
       return;
-
-    if (adminMode === "edit") {
-      setBooks((prev) =>
-        prev.map((row) =>
-          row.key === adminDraft.key
-            ? {
-                ...row,
-                isbn: adminDraft.isbn.trim(),
-                title: adminDraft.title.trim(),
-                author: adminDraft.author.trim(),
-                language: adminDraft.language.trim(),
-                level: row.level,
-                status: adminDraft.status,
-                newArrival: adminDraft.newArrival,
-                bookId: adminDraft.bookId.trim(),
-                seed: adminDraft.seed.trim() || row.seed,
-                imageUrl: adminDraft.imageUrl.trim(),
-                tags,
-              }
-            : row,
-        ),
-      );
-    } else {
-      const key = `book-${Date.now()}`;
-      setBooks((prev) => [
-        ...prev,
-        {
-          key,
-          isbn: adminDraft.isbn.trim(),
-          title: adminDraft.title.trim(),
-          author: adminDraft.author.trim(),
-          language: adminDraft.language.trim(),
-          level: "middle",
-          status: adminDraft.status,
-          newArrival: adminDraft.newArrival,
-          caption: adminDraft.status === "free" ? "Free" : "Borrowed",
-          seed: adminDraft.seed.trim() || key,
-          imageUrl: adminDraft.imageUrl.trim(),
-          bookId: adminDraft.bookId.trim(),
-          tags,
-          instances: [adminDraft.bookId.trim()],
-        },
-      ]);
     }
-    setAdminMode("browse");
-    resetDraft();
-  }, [adminDraft, adminMode, resetDraft]);
 
-  const deleteBook = useCallback((key: string) => {
-    if (!window.confirm("Delete this book?")) return;
-    setBooks((prev) => prev.filter((b) => b.key !== key));
-  }, []);
+    setAdminSaving(true);
+    setActionError(null);
+    setActionMessage(null);
+    try {
+      const payload = {
+        isbn: adminDraft.isbn.trim(),
+        title: adminDraft.title.trim(),
+        author: adminDraft.author.trim(),
+        description: adminDraft.description.trim(),
+        image: adminDraft.imageUrl.trim(),
+        tags,
+      };
 
-  const setBookStatus = useCallback((key: string, status: BookStatus) => {
-    setBooks((prev) =>
-      prev.map((b) =>
-        b.key === key
-          ? {
-              ...b,
-              status,
-              caption:
-                status === "free"
-                  ? "Free"
-                  : status === "borrowed"
-                    ? "Borrowed"
-                    : "Borrowed by me",
-            }
-          : b,
-      ),
-    );
-  }, []);
+      let createdBookId: number | null = null;
+      if (adminMode === "edit") {
+        if (adminDraft.descriptionId == null) return;
+        await updateBookDescription(adminDraft.descriptionId, payload);
+      } else {
+        const created = await createBookDescription(payload);
+        createdBookId = created.id;
+      }
 
-  const addInstance = useCallback(() => {
+      await loadCatalog();
+      setAdminMode("browse");
+      resetDraft();
+      if (createdBookId != null) {
+        setInstanceTargetKey(String(createdBookId));
+      }
+      setActionMessage(
+        adminMode === "edit"
+          ? "Book updated."
+          : "Book created. Add its first instance.",
+      );
+    } catch (error) {
+      setActionMessage(null);
+      if (error instanceof ApiError && error.status === 401) {
+        setActionError("Session expired. Please sign in again.");
+      } else if (error instanceof ApiError && error.status === 409) {
+        setActionError(
+          "Could not save the book. This internal copy ID already exists.",
+        );
+      } else {
+        setActionError(
+          "Could not save the book. Check the fields and try again.",
+        );
+      }
+    } finally {
+      setAdminSaving(false);
+    }
+  }, [adminDraft, adminMode, loadCatalog, resetDraft]);
+
+  const addInstance = useCallback(async () => {
     const value = instanceInput.trim().toUpperCase();
     if (!/^OC-WRO-B-[A-Z0-9]+$/.test(value) || !instanceTargetKey) return;
-    setBooks((prev) =>
-      prev.map((b) =>
-        b.key === instanceTargetKey
-          ? {
-              ...b,
-              instances: b.instances.includes(value)
-                ? b.instances
-                : [...b.instances, value],
-            }
-          : b,
-      ),
+    const target = books.find((book) => book.key === instanceTargetKey);
+    if (!target) return;
+
+    setActionError(null);
+    try {
+      await createItem({
+        internalId: value,
+        descriptionId: target.id,
+        status: "AVAILABLE",
+      });
+      await loadCatalog();
+      setInstanceInput("");
+      setInstanceTargetKey(null);
+    } catch {
+      setActionError("Could not add this instance. Check if the ID is unique.");
+    }
+  }, [books, instanceInput, instanceTargetKey, loadCatalog]);
+
+  const openBorrowDialog = useCallback(async (book: AdminBook) => {
+    setBorrowDialog({
+      book,
+      items: [],
+      selectedInternalId: "",
+      loading: true,
+      submitting: false,
+      error: null,
+    });
+    try {
+      const items = await fetchItemsByDescription(book.id, "AVAILABLE");
+      setBorrowDialog({
+        book,
+        items,
+        selectedInternalId: items[0]?.internalId ?? "",
+        loading: false,
+        submitting: false,
+        error:
+          items.length === 0 ? "No available instances for this book." : null,
+      });
+    } catch {
+      setBorrowDialog({
+        book,
+        items: [],
+        selectedInternalId: "",
+        loading: false,
+        submitting: false,
+        error: "Could not load available instances.",
+      });
+    }
+  }, []);
+
+  const openInstancesDialog = useCallback(async (book: AdminBook) => {
+    setInstancesDialog({
+      book,
+      items: [],
+      loading: true,
+      error: null,
+    });
+    try {
+      const items = await fetchItemsByDescription(book.id);
+      setInstancesDialog({
+        book,
+        items,
+        loading: false,
+        error:
+          items.length === 0 ? "No physical instances for this book." : null,
+      });
+    } catch {
+      setInstancesDialog({
+        book,
+        items: [],
+        loading: false,
+        error: "Could not load instances.",
+      });
+    }
+  }, []);
+
+  const deleteBook = useCallback(
+    async (book: AdminBook) => {
+      if (!window.confirm(`Delete "${book.title}" and all its instances?`)) {
+        return;
+      }
+
+      setActionError(null);
+      setActionMessage(null);
+      try {
+        await deleteBookDescription(book.id);
+        await loadCatalog();
+        setOpenKey(null);
+        setActionMessage("Book deleted.");
+      } catch {
+        setActionError("Could not delete the book. Try again.");
+      }
+    },
+    [loadCatalog],
+  );
+
+  const confirmBorrow = useCallback(async () => {
+    if (!borrowDialog?.selectedInternalId) return;
+    setBorrowDialog((state) =>
+      state == null ? state : { ...state, submitting: true, error: null },
     );
-    setInstanceInput("");
-    setInstanceTargetKey(null);
-  }, [instanceInput, instanceTargetKey]);
+    try {
+      await borrowItem(borrowDialog.selectedInternalId);
+      await loadCatalog();
+      setBorrowDialog(null);
+      setOpenKey(null);
+    } catch {
+      setBorrowDialog((state) =>
+        state == null
+          ? state
+          : {
+              ...state,
+              submitting: false,
+              error:
+                "Could not borrow this instance. It may no longer be available.",
+            },
+      );
+    }
+  }, [borrowDialog, loadCatalog]);
+
+  const returnBorrowedBook = useCallback(
+    async (book: AdminBook) => {
+      if (user == null) return;
+      setActionError(null);
+      try {
+        const items = await fetchItemsByDescription(book.id);
+        const borrowedByMe = items.find(
+          (item) => item.status === "BORROWED" && item.borrower === user.email,
+        );
+        if (borrowedByMe == null) {
+          setActionError(
+            "Could not find your borrowed instance for this book.",
+          );
+          return;
+        }
+        await returnItem(borrowedByMe.internalId);
+        await loadCatalog();
+        setOpenKey(null);
+      } catch {
+        setActionError("Could not return this book. Try again.");
+      }
+    },
+    [loadCatalog, user],
+  );
 
   const openInstanceModalFromContext = useCallback(() => {
     if (!contextMenu) return;
     setContextMenu(null);
     setInstanceTargetKey(contextMenu.key);
   }, [contextMenu]);
+
+  const openInstancesFromContext = useCallback(() => {
+    if (!contextMenu) return;
+    const row = books.find((b) => b.key === contextMenu.key);
+    if (!row) return;
+    setContextMenu(null);
+    void openInstancesDialog(row);
+  }, [books, contextMenu, openInstancesDialog]);
 
   const startEditFromContext = useCallback(() => {
     if (!contextMenu) return;
@@ -404,11 +638,11 @@ const Home = () => {
 
   const deleteFromContext = useCallback(() => {
     if (!contextMenu) return;
-    const key = contextMenu.key;
+    const row = books.find((b) => b.key === contextMenu.key);
+    if (!row) return;
     setContextMenu(null);
-    if (openKey === key) setOpenKey(null);
-    deleteBook(key);
-  }, [contextMenu, deleteBook, openKey]);
+    void deleteBook(row);
+  }, [books, contextMenu, deleteBook]);
 
   const sidebarFiltersActive =
     selectedStatuses.length > 0 ||
@@ -436,6 +670,15 @@ const Home = () => {
     setFilterTags([]);
     setAuthorQuery("");
   }, []);
+
+  const libraryStats = useMemo(
+    () => ({
+      totalRecords: books.length,
+      borrowedRecords: books.filter((book) => book.status !== "free").length,
+      borrowedThisWeek,
+    }),
+    [books, borrowedThisWeek],
+  );
 
   const leftSidebar = useMemo(
     () => (
@@ -628,7 +871,6 @@ const Home = () => {
       selectedLanguages,
       selectedAuthors,
       filterTags,
-      catalogAuthors,
       catalogAllTags,
       authorQuery,
       filteredAuthors,
@@ -653,7 +895,7 @@ const Home = () => {
           />
         }
         leftSidebar={leftSidebar}
-        rightSidebar={<LayoutRightStaticPanel />}
+        rightSidebar={<LayoutRightStaticPanel stats={libraryStats} />}
       >
         <div className="flex w-full flex-col gap-8">
           <CatalogHomeHeader
@@ -665,6 +907,17 @@ const Home = () => {
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
           />
+
+          {actionError ? (
+            <p className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
+              {actionError}
+            </p>
+          ) : null}
+          {actionMessage ? (
+            <p className="rounded-xl border border-[#b7d9bc] bg-[#eefbf0] px-4 py-3 text-sm text-[#166534]">
+              {actionMessage}
+            </p>
+          ) : null}
 
           {section === "books" ? (
             <div className="flex flex-col gap-4">
@@ -710,8 +963,6 @@ const Home = () => {
                         ["Title", "title"],
                         ["Author", "author"],
                         ["Language", "language"],
-                        ["Book number", "bookId"],
-                        ["Seed", "seed"],
                         ["Tags (comma separated)", "tagsInput"],
                       ] as const
                     ).map(([label, field]) => (
@@ -734,6 +985,22 @@ const Home = () => {
                         />
                       </div>
                     ))}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                        Description
+                      </label>
+                      <textarea
+                        value={adminDraft.description}
+                        onChange={(e) =>
+                          setAdminDraft((d) => ({
+                            ...d,
+                            description: e.target.value,
+                          }))
+                        }
+                        rows={4}
+                        className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                      />
+                    </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-[#43485e]">
                         Image URL
@@ -790,9 +1057,10 @@ const Home = () => {
                     <button
                       type="button"
                       onClick={saveAdminDraft}
+                      disabled={adminSaving}
                       className="rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
                     >
-                      Save
+                      {adminSaving ? "Saving..." : "Save"}
                     </button>
                     <button
                       type="button"
@@ -802,6 +1070,21 @@ const Home = () => {
                       Cancel
                     </button>
                   </div>
+                </div>
+              ) : catalogLoading ? (
+                <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
+                  Loading real catalog data...
+                </p>
+              ) : catalogError ? (
+                <div className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-8 text-center text-sm text-[#b91c1c]">
+                  <p>{catalogError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void loadCatalog()}
+                    className="mt-3 rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : filteredRows.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
@@ -841,6 +1124,7 @@ const Home = () => {
                           author={row.author}
                           status={row.status}
                           newArrival={row.newArrival}
+                          bookId={row.bookId}
                           onOpen={() => openBook(row.key)}
                         />
                       </li>
@@ -880,7 +1164,7 @@ const Home = () => {
                             status={row.status}
                             newArrival={row.newArrival}
                             bookId={row.bookId}
-                            description={BOOK_DESCRIPTION}
+                            description={row.description}
                             onOpen={() => openBook(row.key)}
                           />
                         </div>
@@ -911,57 +1195,56 @@ const Home = () => {
               coverSrcLarge={coverSrcLargeFor(selected)}
               title={selected.title}
               author={selected.author}
-              description={BOOK_DESCRIPTION}
+              description={selected.description}
               bookId={selected.bookId}
               tags={selected.tags}
               status={selected.status}
               newArrival={selected.newArrival}
               onClose={close}
-              onBorrow={() => {}}
-              onPing={() => {}}
-              onReturn={() => {}}
+              onBorrow={() => void openBorrowDialog(selected)}
+              onPing={() =>
+                setActionError(
+                  "All copies are currently borrowed. Try again later.",
+                )
+              }
+              onReturn={() => void returnBorrowedBook(selected)}
               onEditTags={() => {}}
               showPrimaryAction={!isAdmin}
               footerExtraActions={
-                isAdmin ? (
-                  <>
-                    <select
-                      value={selected.status}
-                      onChange={(e) =>
-                        setBookStatus(
-                          selected.key,
-                          e.target.value as BookStatus,
-                        )
-                      }
-                      className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-4 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm"
-                    >
-                      <option value="free">Available</option>
-                      <option value="borrowed">Borrowed</option>
-                      <option value="borrowed-by-me">Borrowed by me</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => startEditBook(selected)}
-                      className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setInstanceTargetKey(selected.key)}
-                      className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
-                    >
-                      Add instance
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteBook(selected.key)}
-                      className="w-44 rounded-2xl border border-[#dc2626]/35 bg-[#fbe7e9] px-6 py-3.5 text-base font-semibold text-[#b4232a] shadow-sm transition hover:bg-[#fee2e2]"
-                    >
-                      Delete
-                    </button>
-                  </>
-                ) : null
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void openInstancesDialog(selected)}
+                    className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                  >
+                    View instances
+                  </button>
+                  {isAdmin ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => startEditBook(selected)}
+                        className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setInstanceTargetKey(selected.key)}
+                        className="w-44 rounded-2xl border border-[#43485e]/35 bg-[#eef0f6] px-6 py-3.5 text-base font-semibold text-[#3f465c] shadow-sm transition hover:bg-white"
+                      >
+                        Add instance
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void deleteBook(selected)}
+                        className="w-44 rounded-2xl border border-[#dc2626]/35 bg-[#fbe7e9] px-6 py-3.5 text-base font-semibold text-[#b4232a] shadow-sm transition hover:bg-[#fee2e2]"
+                      >
+                        Delete
+                      </button>
+                    </>
+                  ) : null}
+                </>
               }
               className="w-full"
             />
@@ -996,6 +1279,13 @@ const Home = () => {
             </button>
             <button
               type="button"
+              onClick={openInstancesFromContext}
+              className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-[#43485e] hover:bg-[#eeeef0]"
+            >
+              View instances
+            </button>
+            <button
+              type="button"
               onClick={deleteFromContext}
               className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-[#b91c1c] hover:bg-[#fee2e2]"
             >
@@ -1003,6 +1293,130 @@ const Home = () => {
             </button>
           </div>
         </>
+      )}
+      {instancesDialog != null && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/25 px-4">
+          <div className="w-full max-w-lg rounded-xl border border-[#b1b2b5]/80 bg-white p-4 shadow-lg">
+            <h3 className="text-base font-semibold text-[#43485e]">
+              Book instances
+            </h3>
+            <p className="mt-1 text-sm text-[#6b7289]">
+              {instancesDialog.book.title}
+            </p>
+            {instancesDialog.loading ? (
+              <p className="mt-4 text-sm text-[#6b7289]">
+                Loading instances...
+              </p>
+            ) : instancesDialog.error ? (
+              <p className="mt-4 rounded-lg bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">
+                {instancesDialog.error}
+              </p>
+            ) : (
+              <ul className="mt-4 flex max-h-72 flex-col gap-2 overflow-y-auto pr-1">
+                {instancesDialog.items.map((item) => (
+                  <li
+                    key={item.internalId}
+                    className="rounded-lg border border-[#b1b2b5]/80 bg-[#eeeef0] px-3 py-2 text-sm text-[#43485e]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-mono font-semibold">
+                        {item.internalId}
+                      </span>
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold">
+                        {item.status.replaceAll("_", " ")}
+                      </span>
+                    </div>
+                    {item.borrower ? (
+                      <p className="mt-1 text-xs text-[#6b7289]">
+                        Borrower: {item.borrower}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setInstancesDialog(null)}
+                className="rounded-md border border-[#43485e]/30 bg-[#eeeef0] px-3 py-1.5 text-sm text-[#43485e]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {borrowDialog != null && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/25 px-4">
+          <div className="w-full max-w-md rounded-xl border border-[#b1b2b5]/80 bg-white p-4 shadow-lg">
+            <h3 className="text-base font-semibold text-[#43485e]">
+              Choose an instance
+            </h3>
+            <p className="mt-1 text-sm text-[#6b7289]">
+              {borrowDialog.book.title}
+            </p>
+            {borrowDialog.loading ? (
+              <p className="mt-4 text-sm text-[#6b7289]">
+                Loading available copies...
+              </p>
+            ) : borrowDialog.error ? (
+              <p className="mt-4 rounded-lg bg-[#fef2f2] px-3 py-2 text-sm text-[#b91c1c]">
+                {borrowDialog.error}
+              </p>
+            ) : (
+              <div className="mt-4 flex flex-col gap-2">
+                {borrowDialog.items.map((item) => (
+                  <label
+                    key={item.internalId}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#b1b2b5]/80 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e]"
+                  >
+                    <input
+                      type="radio"
+                      name="borrow-instance"
+                      value={item.internalId}
+                      checked={
+                        borrowDialog.selectedInternalId === item.internalId
+                      }
+                      onChange={() =>
+                        setBorrowDialog((state) =>
+                          state == null
+                            ? state
+                            : {
+                                ...state,
+                                selectedInternalId: item.internalId,
+                              },
+                        )
+                      }
+                    />
+                    <span className="font-mono">{item.internalId}</span>
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setBorrowDialog(null)}
+                className="rounded-md border border-[#43485e]/30 bg-[#eeeef0] px-3 py-1.5 text-sm text-[#43485e]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void confirmBorrow()}
+                disabled={
+                  borrowDialog.loading ||
+                  borrowDialog.submitting ||
+                  !borrowDialog.selectedInternalId
+                }
+                className="rounded-md bg-[#43485e] px-3 py-1.5 text-sm text-[#eeeef0] disabled:opacity-60"
+              >
+                {borrowDialog.submitting ? "Borrowing..." : "Borrow"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {instanceTargetKey != null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/25 px-4">

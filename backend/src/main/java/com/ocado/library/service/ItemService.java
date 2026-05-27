@@ -29,10 +29,7 @@ public class ItemService {
     }
     
     public void borrowItem(String internalId, String userEmail) {
-        // We'll need a custom finder by internalId
-        Item item = itemRepository.findAll().stream()
-                .filter(i -> i.getInternalId().equals(internalId))
-                .findFirst()
+        Item item = itemRepository.findByInternalId(internalId)
                 .orElseThrow(() -> new NotFoundException("Item not found: " + internalId));
                 
         if (item.getStatus() != ItemStatus.AVAILABLE) {
@@ -47,9 +44,7 @@ public class ItemService {
     }
     
     public void returnItem(String internalId, String userEmail) {
-        Item item = itemRepository.findAll().stream()
-                .filter(i -> i.getInternalId().equals(internalId))
-                .findFirst()
+        Item item = itemRepository.findByInternalId(internalId)
                 .orElseThrow(() -> new NotFoundException("Item not found: " + internalId));
                 
         if (item.getStatus() != ItemStatus.BORROWED) {

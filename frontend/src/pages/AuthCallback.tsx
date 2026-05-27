@@ -11,17 +11,19 @@ function parseHashParams(hash: string): URLSearchParams {
 export default function AuthCallback() {
   const navigate = useNavigate();
   const { completeLogin, isAuthenticated } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() => {
+    const token = parseHashParams(window.location.hash).get("access_token");
+    return token == null || token.length === 0
+      ? "Missing token after Google sign-in. Please try again."
+      : null;
+  });
 
   useEffect(() => {
-    if (isAuthenticated) return;
+    if (isAuthenticated || error != null) return;
 
     const params = parseHashParams(window.location.hash);
     const token = params.get("access_token");
-    if (token == null || token.length === 0) {
-      setError("Missing token after Google sign-in. Please try again.");
-      return;
-    }
+    if (token == null || token.length === 0) return;
 
     const remember = sessionStorage.getItem(REMEMBER_PREF_KEY) !== "false";
 
@@ -33,7 +35,7 @@ export default function AuthCallback() {
       .catch(() => {
         setError("Could not verify your session. Please sign in again.");
       });
-  }, [completeLogin, isAuthenticated, navigate]);
+  }, [completeLogin, error, isAuthenticated, navigate]);
 
   if (isAuthenticated) {
     return <Navigate to="/" replace />;

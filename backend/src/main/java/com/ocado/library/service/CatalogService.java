@@ -49,7 +49,7 @@ public class CatalogService {
         
         if (d instanceof BookDescription bd) {
             return new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getImage(),
+                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
                 bd.getDescription(), bd.getTags(), status
             );
         } else if (d instanceof BoardGameDescription bgd) {
