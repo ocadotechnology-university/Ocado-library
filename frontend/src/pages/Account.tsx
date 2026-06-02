@@ -17,9 +17,13 @@ import { useAppChrome } from "../context/AppChromeContext";
 import { useAuth } from "../context/AuthContext";
 import {
   ApiError,
+  fetchBoardGameDescriptions,
   fetchBookDescriptions,
   fetchJournalEntries,
+  fetchPSGameDescriptions,
+  type BackendBoardGameDescription,
   type BackendBookDescription,
+  type BackendPSGameDescription,
   type JournalEntry,
   type JournalOperationType,
 } from "../lib/api";
@@ -51,6 +55,14 @@ type UserOrderRow = {
   descriptionId?: number;
 };
 
+type JournalDescriptionView = {
+  id: number;
+  title: string;
+  author: string;
+  description: string;
+  seed: string;
+};
+
 const NAV: { id: AccountSectionId; label: string }[] = [
   { id: "history", label: "History" },
   { id: "borrowed", label: "Borrowed by me" },
@@ -73,20 +85,20 @@ function parseDate(value: string | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-function bookForEntry(
+function descriptionForEntry(
   entry: JournalEntry,
-  booksById: Map<number, BackendBookDescription>,
-): BackendBookDescription | undefined {
+  descriptionsById: Map<number, JournalDescriptionView>,
+): JournalDescriptionView | undefined {
   if (entry.descriptionId == null) return undefined;
-  return booksById.get(entry.descriptionId);
+  return descriptionsById.get(entry.descriptionId);
 }
 
 function eventRow(
   entry: JournalEntry,
-  booksById: Map<number, BackendBookDescription>,
+  descriptionsById: Map<number, JournalDescriptionView>,
   kind: HistoryRowKind,
 ): UserOrderRow {
-  const book = bookForEntry(entry, booksById);
+  const book = descriptionForEntry(entry, descriptionsById);
   const fallback = entry.descriptionId ?? entry.itemId ?? entry.id;
   const title = book?.title ?? `Resource ${fallback}`;
   const author = book?.author ?? "Unknown author";
@@ -94,7 +106,7 @@ function eventRow(
     id: String(entry.id),
     title,
     author,
-    seed: `history-${book?.isbn ?? fallback}`,
+    seed: `history-${book?.seed ?? fallback}`,
     description: book?.description ?? "",
     eventDate: entry.datetime,
     borrowedOn:
@@ -111,7 +123,7 @@ function eventRow(
 
 function buildBorrowedRows(
   entries: JournalEntry[],
-  booksById: Map<number, BackendBookDescription>,
+  descriptionsById: Map<number, JournalDescriptionView>,
   currentUserEmail: string,
 ): UserOrderRow[] {
   const byItem = new Map<string, JournalEntry>();
@@ -135,7 +147,7 @@ function buildBorrowedRows(
       (entry) =>
         entry.operationType === "BORROW" && entry.user === currentUserEmail,
     )
-    .map((entry) => eventRow(entry, booksById, "borrowed"))
+    .map((entry) => eventRow(entry, descriptionsById, "borrowed"))
     .sort(
       (a, b) =>
         new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
@@ -144,7 +156,7 @@ function buildBorrowedRows(
 
 function buildHistoryRows(
   entries: JournalEntry[],
-  booksById: Map<number, BackendBookDescription>,
+  descriptionsById: Map<number, JournalDescriptionView>,
   currentUserEmail: string,
 ): UserOrderRow[] {
   return entries
@@ -153,7 +165,7 @@ function buildHistoryRows(
         entry.user === currentUserEmail &&
         (entry.operationType === "BORROW" || entry.operationType === "RETURN"),
     )
-    .map((entry) => eventRow(entry, booksById, "history"))
+    .map((entry) => eventRow(entry, descriptionsById, "history"))
     .sort(
       (a, b) =>
         new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
@@ -162,10 +174,10 @@ function buildHistoryRows(
 
 function buildAdminRows(
   entries: JournalEntry[],
-  booksById: Map<number, BackendBookDescription>,
+  descriptionsById: Map<number, JournalDescriptionView>,
 ): UserOrderRow[] {
   return entries
-    .map((entry) => eventRow(entry, booksById, "log"))
+    .map((entry) => eventRow(entry, descriptionsById, "log"))
     .sort(
       (a, b) =>
         new Date(b.eventDate).getTime() - new Date(a.eventDate).getTime(),
@@ -353,11 +365,45 @@ const Account = () => {
     setLoading(true);
     setError(null);
     try {
-      const [catalog, entries] = await Promise.all([
-        fetchBookDescriptions(),
-        fetchJournalEntries(isAdmin ? {} : { user: user.email }),
-      ]);
-      setBooks(catalog);
+      const [bookCatalog, boardCatalog, psCatalog, entries] = await Promise.all(
+        [
+          fetchBookDescriptions(),
+          fetchBoardGameDescriptions(),
+          fetchPSGameDescriptions(),
+          fetchJournalEntries(isAdmin ? {} : { user: user.email }),
+        ],
+      );
+      const mappedBooks: JournalDescriptionView[] = bookCatalog.map(
+        (book: BackendBookDescription) => ({
+          id: book.id,
+          title: book.title,
+          author: book.author || "Unknown author",
+          description: book.description ?? "",
+          seed: book.isbn ?? String(book.id),
+        }),
+      );
+      const mappedBoards: JournalDescriptionView[] = boardCatalog.map(
+        (board: BackendBoardGameDescription) => ({
+          id: board.id,
+          title: board.title,
+          author:
+            board.numberOfPlayers != null
+              ? `${board.numberOfPlayers} players`
+              : "Board game",
+          description: board.description ?? "",
+          seed: `board-${board.id}`,
+        }),
+      );
+      const mappedPs: JournalDescriptionView[] = psCatalog.map(
+        (ps: BackendPSGameDescription) => ({
+          id: ps.id,
+          title: ps.title,
+          author: "PS game",
+          description: ps.description ?? "",
+          seed: `ps-${ps.id}`,
+        }),
+      );
+      setDescriptions([...mappedBooks, ...mappedBoards, ...mappedPs]);
       setJournal(entries);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -374,26 +420,30 @@ const Account = () => {
     void loadHistory();
   }, [loadHistory]);
 
-  const booksById = useMemo(
-    () => new Map(books.map((book) => [book.id, book])),
-    [books],
+  const descriptionsById = useMemo(
+    () => new Map(descriptions.map((d) => [d.id, d])),
+    [descriptions],
   );
 
   const borrowedRows = useMemo(
     () =>
-      user == null ? [] : buildBorrowedRows(journal, booksById, user.email),
-    [booksById, journal, user],
+      user == null
+        ? []
+        : buildBorrowedRows(journal, descriptionsById, user.email),
+    [descriptionsById, journal, user],
   );
 
   const historyRows = useMemo(
     () =>
-      user == null ? [] : buildHistoryRows(journal, booksById, user.email),
-    [booksById, journal, user],
+      user == null
+        ? []
+        : buildHistoryRows(journal, descriptionsById, user.email),
+    [descriptionsById, journal, user],
   );
 
   const adminRows = useMemo(
-    () => buildAdminRows(journal, booksById),
-    [booksById, journal],
+    () => buildAdminRows(journal, descriptionsById),
+    [descriptionsById, journal],
   );
 
   const counts = useMemo(() => {

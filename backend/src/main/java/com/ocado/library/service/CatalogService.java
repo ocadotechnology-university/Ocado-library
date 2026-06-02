@@ -10,8 +10,11 @@ import com.ocado.library.repository.DescriptionRepository;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CatalogService {
@@ -28,8 +31,23 @@ public class CatalogService {
         
         // Basic filtering for tags and search
         if (tags != null && !tags.isEmpty()) {
+            List<String> wanted = tags.stream()
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toLowerCase)
+                .toList();
             descriptions = descriptions.stream()
-                .filter(d -> d.getTags() != null && d.getTags().stream().anyMatch(tags::contains))
+                .filter(d -> {
+                    if (d.getTags() == null || d.getTags().isEmpty()) return false;
+                    List<String> itemTags = d.getTags().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .map(String::toLowerCase)
+                        .toList();
+                    return wanted.stream().allMatch(itemTags::contains);
+                })
                 .collect(Collectors.toList());
         }
         
@@ -42,24 +60,36 @@ public class CatalogService {
 
         return descriptions.stream().map(d -> mapToDTO(d, userEmail)).collect(Collectors.toList());
     }
+
+    public List<String> getDistinctTags(ItemType type) {
+        return descriptionRepository.findByType(type).stream()
+            .flatMap(d -> d.getTags() == null ? Stream.empty() : d.getTags().stream())
+            .filter(Objects::nonNull)
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .distinct()
+            .sorted(Comparator.naturalOrder())
+            .collect(Collectors.toList());
+    }
     
     private Object mapToDTO(Description d, String userEmail) {
         List<Item> items = itemRepository.findByDescriptionId(d.getId());
+        String internalId = items.isEmpty() ? null : items.get(0).getInternalId();
         String status = resolveStatus(items, userEmail, d.getType());
         
         if (d instanceof BookDescription bd) {
             return new BookDescriptionDTO(
-                bd.getId(), null, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
+                bd.getId(), internalId, bd.getType(), bd.getTitle(), bd.getAuthor(), bd.getIsbn(), bd.getImage(),
                 bd.getDescription(), bd.getTags(), status
             );
         } else if (d instanceof BoardGameDescription bgd) {
             return new BoardGameDescriptionDTO(
-                bgd.getId(), null, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
+                bgd.getId(), internalId, bgd.getType(), bgd.getTitle(), bgd.getDescription(),
                 bgd.getNumberOfPlayers(), bgd.getTags(), status
             );
         } else if (d instanceof PSGameDescription ps) {
             return new PSGameDescriptionDTO(
-                ps.getId(), null, ps.getType(), ps.getTitle(), ps.getDescription(), ps.getTags()
+                ps.getId(), internalId, ps.getType(), ps.getTitle(), ps.getDescription(), ps.getTags()
             );
         }
         return null;

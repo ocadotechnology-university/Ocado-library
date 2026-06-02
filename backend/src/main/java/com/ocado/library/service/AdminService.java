@@ -14,6 +14,10 @@ import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+
 @Service
 public class AdminService {
     private final DescriptionRepository descriptionRepository;
@@ -95,9 +99,41 @@ public class AdminService {
         return saved;
     }
 
+    public Description updateTags(ItemType type, Long descriptionId, List<String> tags, String userEmail) {
+        Description description = descriptionRepository.findById(descriptionId)
+                .orElseThrow(() -> new NotFoundException("Description not found"));
+
+        if (type != description.getType()) {
+            throw new IllegalArgumentException("Description type mismatch");
+        }
+
+        LinkedHashSet<String> unique = new LinkedHashSet<>();
+        if (tags != null) {
+            for (String raw : tags) {
+                if (raw == null) continue;
+                String tag = raw.trim();
+                if (!tag.isEmpty()) {
+                    unique.add(tag);
+                }
+            }
+        }
+        description.setTags(new ArrayList<>(unique));
+
+        Description saved = descriptionRepository.save(description);
+        journalService.logAction(OperationType.UPDATE, userEmail, null, saved.getId());
+        return saved;
+    }
+
     public Item addPhysicalCopy(AdminCreateItemRequest request, String userEmail) {
         Description description = descriptionRepository.findById(request.descriptionId())
                 .orElseThrow(() -> new NotFoundException("Description not found"));
+
+        if (description.getType() == ItemType.PSGame) {
+            boolean hasAny = !itemRepository.findByDescriptionId(description.getId()).isEmpty();
+            if (hasAny) {
+                throw new IllegalArgumentException("PS games can only have one physical instance");
+            }
+        }
                 
         Item item = new Item();
         item.setInternalId(request.internalId());

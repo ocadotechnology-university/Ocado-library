@@ -200,9 +200,11 @@ const BookFullView = ({
                 {title}
               </h2>
               <p className="mt-1.5 text-base text-[#6b7289]">{author}</p>
-              <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
-                {bookId}
-              </p>
+              {bookId.trim().length > 0 && (
+                <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
+                  {bookId}
+                </p>
+              )}
               <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">
                 {description}
               </p>
