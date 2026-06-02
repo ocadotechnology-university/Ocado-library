@@ -42,6 +42,7 @@ export type BookFullViewProps = {
   onContextMenu?: (e: import("react").MouseEvent<HTMLElement>) => void;
   footerExtraActions?: ReactNode;
   showPrimaryAction?: boolean;
+  primaryActionPending?: boolean;
   className?: string;
 };
 
@@ -69,6 +70,7 @@ const BookFullView = ({
   onContextMenu,
   footerExtraActions,
   showPrimaryAction = true,
+  primaryActionPending = false,
   className,
 }: BookFullViewProps) => {
   const largeSrc = coverSrcLarge ?? coverSrc;
@@ -267,7 +269,7 @@ const BookFullView = ({
               {showPrimaryAction && (
                 <button
                   type="button"
-                  disabled={!primaryAction}
+                  disabled={!primaryAction || primaryActionPending}
                   onClick={() => primaryAction?.()}
                   className={[
                     "min-w-[min(100%,16rem)] rounded-2xl px-12 py-4 text-lg font-semibold tracking-wide",
@@ -281,7 +283,9 @@ const BookFullView = ({
                     "disabled:cursor-not-allowed disabled:opacity-45",
                   ].join(" ")}
                 >
-                  {actionLabel[status]}
+                  {primaryActionPending
+                    ? "Sending…"
+                    : actionLabel[status]}
                 </button>
               )}
               {footerExtraActions ? (

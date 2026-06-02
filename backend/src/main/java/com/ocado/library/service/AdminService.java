@@ -116,6 +116,7 @@ public class AdminService {
         item.setStatus(status);
         if (status == ItemStatus.AVAILABLE) {
             item.setBorrower(null);
+            item.setBorrowedAt(null);
         }
         Item saved = itemRepository.save(item);
         journalService.logAction(OperationType.UPDATE, userEmail, internalId, saved.getDescription().getId());

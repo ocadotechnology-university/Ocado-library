@@ -18,7 +18,9 @@ import { useAuth } from "../context/AuthContext";
 import {
   ApiError,
   fetchBookDescriptions,
+  fetchItemsByDescription,
   fetchJournalEntries,
+  pingBorrower,
   type BackendBookDescription,
   type JournalEntry,
   type JournalOperationType,
@@ -340,6 +342,9 @@ const Account = () => {
   const [books, setBooks] = useState<BackendBookDescription[]>([]);
   const [selectedBook, setSelectedBook] =
     useState<BackendBookDescription | null>(null);
+  const [bookActionError, setBookActionError] = useState<string | null>(null);
+  const [bookActionMessage, setBookActionMessage] = useState<string | null>(null);
+  const [pinging, setPinging] = useState(false);
 
   const [personFilter, setPersonFilter] = useState("");
   const [bookFilter, setBookFilter] = useState("");
@@ -485,6 +490,54 @@ const Account = () => {
   ]);
 
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
+
+  const selectedBookUiStatus =
+    selectedBook == null
+      ? null
+      : selectedBook.descriptionStatus === "AVAILABLE"
+        ? "free"
+        : selectedBook.descriptionStatus === "BORROWED_BY_ME"
+          ? "borrowed-by-me"
+          : "borrowed";
+
+  const pingSelectedBook = useCallback(async () => {
+    if (user == null || selectedBook == null) return;
+    setBookActionError(null);
+    setBookActionMessage(null);
+    setPinging(true);
+    try {
+      const items = await fetchItemsByDescription(selectedBook.id, "BORROWED");
+      const borrowedByOther = items.find(
+        (item) =>
+          item.borrower != null &&
+          item.borrower.toLowerCase() !== user.email.toLowerCase(),
+      );
+      if (borrowedByOther == null) {
+        setBookActionError("Brak wypożyczonego egzemplarza do pingowania.");
+        return;
+      }
+      await pingBorrower(borrowedByOther.internalId);
+      setBookActionMessage(
+        "Ping wysłany na Slacka do osoby, która trzyma tę książkę.",
+      );
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setBookActionError(
+            "Nie można wysłać pinga (książka nie jest wypożyczona, pingujesz siebie lub wysłałeś go niedawno).",
+          );
+        } else if (err.status === 404) {
+          setBookActionError("Nie znaleziono egzemplarza.");
+        } else {
+          setBookActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+        }
+      } else {
+        setBookActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+      }
+    } finally {
+      setPinging(false);
+    }
+  }, [selectedBook, user]);
 
   const leftSidebar = useMemo(
     () => (
@@ -689,7 +742,23 @@ const Account = () => {
       </div>
 
       {selectedBook && (
-        <BookClientWindow onBackdropClick={() => setSelectedBook(null)}>
+        <BookClientWindow
+          onBackdropClick={() => {
+            setSelectedBook(null);
+            setBookActionError(null);
+            setBookActionMessage(null);
+          }}
+        >
+          {bookActionError ? (
+            <p className="mb-3 rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
+              {bookActionError}
+            </p>
+          ) : null}
+          {bookActionMessage ? (
+            <p className="mb-3 rounded-xl border border-[#b7d9bc] bg-[#eefbf0] px-4 py-3 text-sm text-[#166534]">
+              {bookActionMessage}
+            </p>
+          ) : null}
           <BookFullView
             coverSrc={`https://picsum.photos/seed/${encodeURIComponent(
               selectedBook.isbn ?? String(selectedBook.id),
@@ -700,23 +769,27 @@ const Account = () => {
             title={selectedBook.title}
             author={selectedBook.author}
             description={selectedBook.description ?? ""}
-            bookId={selectedBook.id}
+            bookId={selectedBook.isbn ?? String(selectedBook.id)}
             tags={selectedBook.tags ?? []}
-            status={
-              selectedBook.descriptionStatus === "AVAILABLE"
-                ? "free"
-                : selectedBook.descriptionStatus === "BORROWED_BY_ME"
-                  ? "borrowed-by-me"
-                  : "borrowed"
-            }
+            status={selectedBookUiStatus ?? "borrowed"}
             newArrival={false}
-            onClose={() => setSelectedBook(null)}
+            onClose={() => {
+              setSelectedBook(null);
+              setBookActionError(null);
+              setBookActionMessage(null);
+            }}
             onBorrow={() => {
               /* borrow action can be wired later if needed */
             }}
-            onPing={() => {
-              /* no-op for now */
-            }}
+            onPing={() => void pingSelectedBook()}
+            showPrimaryAction={
+              selectedBookUiStatus === "free" ||
+              selectedBookUiStatus === "borrowed" ||
+              selectedBookUiStatus === "borrowed-by-me"
+            }
+            primaryActionPending={
+              pinging && selectedBookUiStatus === "borrowed"
+            }
           />
         </BookClientWindow>
       )}

@@ -4,6 +4,7 @@ import com.ocado.library.dto.response.ItemSummary;
 import com.ocado.library.model.enums.ItemStatus;
 import com.ocado.library.security.CurrentUser;
 import com.ocado.library.service.ItemService;
+import com.ocado.library.service.ReminderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +16,11 @@ import java.util.stream.Collectors;
 public class ItemController {
 
     private final ItemService itemService;
+    private final ReminderService reminderService;
 
-    public ItemController(ItemService itemService) {
+    public ItemController(ItemService itemService, ReminderService reminderService) {
         this.itemService = itemService;
+        this.reminderService = reminderService;
     }
 
     @GetMapping("/{description_id}")
@@ -42,5 +45,11 @@ public class ItemController {
     public ResponseEntity<Void> returnItem(@PathVariable("internal_id") String internalId) {
         itemService.returnItem(internalId, CurrentUser.email());
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{internal_id}/ping")
+    public ResponseEntity<Void> pingBorrower(@PathVariable("internal_id") String internalId) {
+        reminderService.sendUserPing(internalId, CurrentUser.email());
+        return ResponseEntity.noContent().build();
     }
 }

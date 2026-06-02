@@ -3,6 +3,8 @@ package com.ocado.library.model;
 import com.ocado.library.model.enums.ItemStatus;
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 public class Item {
 
@@ -19,6 +21,8 @@ public class Item {
 
     private String borrower; // Email of borrower
 
+    private LocalDateTime borrowedAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "description_id", nullable = false)
     private Description description;
@@ -31,6 +35,8 @@ public class Item {
     public void setStatus(ItemStatus status) { this.status = status; }
     public String getBorrower() { return borrower; }
     public void setBorrower(String borrower) { this.borrower = borrower; }
+    public LocalDateTime getBorrowedAt() { return borrowedAt; }
+    public void setBorrowedAt(LocalDateTime borrowedAt) { this.borrowedAt = borrowedAt; }
     public Description getDescription() { return description; }
     public void setDescription(Description description) { this.description = description; }
 }

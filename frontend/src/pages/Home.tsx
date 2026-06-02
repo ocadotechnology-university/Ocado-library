@@ -29,6 +29,7 @@ import {
   fetchBookDescriptions,
   fetchItemsByDescription,
   fetchJournalEntries,
+  pingBorrower,
   returnItem,
   updateBookDescription,
   type BackendBookDescription,
@@ -199,6 +200,7 @@ const Home = () => {
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [pinging, setPinging] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [borrowedThisWeek, setBorrowedThisWeek] = useState(0);
   const [borrowDialog, setBorrowDialog] = useState<BorrowDialogState | null>(
@@ -612,6 +614,48 @@ const Home = () => {
       }
     },
     [loadCatalog, user],
+  );
+
+  const pingBorrowedBook = useCallback(
+    async (book: AdminBook) => {
+      if (user == null) return;
+      setActionError(null);
+      setActionMessage(null);
+      setPinging(true);
+      try {
+        const items = await fetchItemsByDescription(book.id, "BORROWED");
+        const borrowedByOther = items.find(
+          (item) =>
+            item.borrower != null &&
+            item.borrower.toLowerCase() !== user.email.toLowerCase(),
+        );
+        if (borrowedByOther == null) {
+          setActionError("Brak wypożyczonego egzemplarza do pingowania.");
+          return;
+        }
+        await pingBorrower(borrowedByOther.internalId);
+        setActionMessage(
+          "Ping wysłany na Slacka do osoby, która trzyma tę książkę.",
+        );
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.status === 409) {
+            setActionError(
+              "Nie można wysłać pinga (książka nie jest wypożyczona, pingujesz siebie lub wysłałeś go niedawno).",
+            );
+          } else if (err.status === 404) {
+            setActionError("Nie znaleziono egzemplarza.");
+          } else {
+            setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+          }
+        } else {
+          setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+        }
+      } finally {
+        setPinging(false);
+      }
+    },
+    [user],
   );
 
   const openInstanceModalFromContext = useCallback(() => {
@@ -1202,14 +1246,17 @@ const Home = () => {
               newArrival={selected.newArrival}
               onClose={close}
               onBorrow={() => void openBorrowDialog(selected)}
-              onPing={() =>
-                setActionError(
-                  "All copies are currently borrowed. Try again later.",
-                )
-              }
+              onPing={() => void pingBorrowedBook(selected)}
               onReturn={() => void returnBorrowedBook(selected)}
               onEditTags={() => {}}
-              showPrimaryAction={!isAdmin}
+              showPrimaryAction={
+                selected.status === "free" ||
+                selected.status === "borrowed" ||
+                selected.status === "borrowed-by-me"
+              }
+              primaryActionPending={
+                pinging && selected.status === "borrowed"
+              }
               footerExtraActions={
                 <>
                   <button
