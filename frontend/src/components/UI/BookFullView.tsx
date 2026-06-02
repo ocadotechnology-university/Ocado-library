@@ -283,9 +283,7 @@ const BookFullView = ({
                     "disabled:cursor-not-allowed disabled:opacity-45",
                   ].join(" ")}
                 >
-                  {primaryActionPending
-                    ? "Sending…"
-                    : actionLabel[status]}
+                  {primaryActionPending ? "Sending…" : actionLabel[status]}
                 </button>
               )}
               {footerExtraActions ? (

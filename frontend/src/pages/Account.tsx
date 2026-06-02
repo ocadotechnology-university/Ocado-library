@@ -343,7 +343,9 @@ const Account = () => {
   const [selectedBook, setSelectedBook] =
     useState<BackendBookDescription | null>(null);
   const [bookActionError, setBookActionError] = useState<string | null>(null);
-  const [bookActionMessage, setBookActionMessage] = useState<string | null>(null);
+  const [bookActionMessage, setBookActionMessage] = useState<string | null>(
+    null,
+  );
   const [pinging, setPinging] = useState(false);
 
   const [personFilter, setPersonFilter] = useState("");

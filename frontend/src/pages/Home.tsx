@@ -1254,9 +1254,7 @@ const Home = () => {
                 selected.status === "borrowed" ||
                 selected.status === "borrowed-by-me"
               }
-              primaryActionPending={
-                pinging && selected.status === "borrowed"
-              }
+              primaryActionPending={pinging && selected.status === "borrowed"}
               footerExtraActions={
                 <>
                   <button
