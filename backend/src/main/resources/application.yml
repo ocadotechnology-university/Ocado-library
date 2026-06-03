@@ -41,7 +41,7 @@ app:
     secret: ${JWT_SECRET:ocado-library-dev-jwt-secret-change-in-production-min-32-chars}
     expiration-hours: 24
   security:
-    admin-emails: "mikhaildek23@gmail.com,280949@student.pwr.edu.pl,281158@student.pwr.edu.pl"
+    admin-emails: "mikhaildek23@gmail.com,uladzislautrybukhouski@gmail.com"
   oauth2:
     frontend-url: ${FRONTEND_URL:http://localhost:5173}
     login-failure-url: ${FRONTEND_URL:http://localhost:5173}/login?error=oauth_failed

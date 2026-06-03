@@ -20,10 +20,9 @@ import {
   ApiError,
   fetchBoardGameDescriptions,
   fetchBookDescriptions,
-  fetchItemsByDescription,
   fetchJournalEntries,
   fetchPSGameDescriptions,
-  pingBorrower,
+  pingDescriptionBorrowers,
   type BackendDescriptionStatus,
   type JournalEntry,
   type JournalOperationType,
@@ -524,22 +523,9 @@ const Account = () => {
     setBookActionMessage(null);
     setPinging(true);
     try {
-      const items = await fetchItemsByDescription(
-        selectedDescription.id,
-        "BORROWED",
-      );
-      const borrowedByOther = items.find(
-        (item) =>
-          item.borrower != null &&
-          item.borrower.toLowerCase() !== user.email.toLowerCase(),
-      );
-      if (borrowedByOther == null) {
-        setBookActionError("Brak wypożyczonego egzemplarza do pingowania.");
-        return;
-      }
-      await pingBorrower(borrowedByOther.internalId);
+      await pingDescriptionBorrowers(selectedDescription.id);
       setBookActionMessage(
-        "Ping wysłany na Slacka do osoby, która trzyma tę książkę.",
+        "Ping wysłany na Slacka do osób, które trzymają wypożyczone egzemplarze tej książki.",
       );
     } catch (err) {
       if (err instanceof ApiError) {
@@ -549,6 +535,10 @@ const Account = () => {
           );
         } else if (err.status === 404) {
           setBookActionError("Nie znaleziono egzemplarza.");
+        } else if (err.status === 401 || err.status === 403) {
+          setBookActionError(
+            "Brak uprawnień do wysłania pinga. Zaloguj się ponownie.",
+          );
         } else {
           setBookActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
         }

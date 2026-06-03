@@ -75,6 +75,25 @@ class ItemPingIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void pingDescriptionNotifiesAllBorrowedInstances() throws Exception {
+        String internalId1 = "OC-B-PING-MULTI-001";
+        String internalId2 = "OC-B-PING-MULTI-002";
+        long descriptionId = createBookAndItem(internalId1);
+        createItemForDescription(internalId2, descriptionId);
+
+        mockMvc.perform(post("/api/items/" + internalId1 + "/borrow")
+                        .header("X-User-Email", "borrower1@example.com"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/items/" + internalId2 + "/borrow")
+                        .header("X-User-Email", "borrower2@example.com"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/items/description/" + descriptionId + "/ping")
+                        .header("X-User-Email", "pinger@example.com"))
+                .andExpect(status().isNoContent());
+    }
+
     private long createBookAndItem(String internalId) throws Exception {
         CreateBookRequest createBookRequest = new CreateBookRequest(
                 "Ping Test Book",
@@ -105,5 +124,16 @@ class ItemPingIntegrationTest {
                 .andExpect(status().isCreated());
 
         return descriptionId;
+    }
+
+    private void createItemForDescription(String internalId, long descriptionId) throws Exception {
+        AdminCreateItemRequest createItemRequest = new AdminCreateItemRequest(
+                internalId, descriptionId, ItemStatus.AVAILABLE);
+
+        mockMvc.perform(post("/api/admin/items/add")
+                        .header("X-User-Email", "admin@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(createItemRequest)))
+                .andExpect(status().isCreated());
     }
 }

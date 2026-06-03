@@ -50,6 +50,7 @@ import {
   type BackendPSGameDescription,
   type BackendDescriptionStatus,
   type ItemSummary,
+  pingDescriptionBorrowers,
 } from "../lib/api";
 import { applyCatalogFilters, mergeUniqueTags } from "../lib/catalogFilters";
 
@@ -785,19 +786,9 @@ const Home = () => {
       setActionMessage(null);
       setPinging(true);
       try {
-        const items = await fetchItemsByDescription(book.id, "BORROWED");
-        const borrowedByOther = items.find(
-          (item) =>
-            item.borrower != null &&
-            item.borrower.toLowerCase() !== user.email.toLowerCase(),
-        );
-        if (borrowedByOther == null) {
-          setActionError("Brak wypożyczonego egzemplarza do pingowania.");
-          return;
-        }
-        await pingBorrower(borrowedByOther.internalId);
+        await pingDescriptionBorrowers(book.id);
         setActionMessage(
-          "Ping wysłany na Slacka do osoby, która trzyma tę książkę.",
+          "Ping wysłany na Slacka do osób, które trzymają wypożyczone egzemplarze tej książki.",
         );
       } catch (err) {
         if (err instanceof ApiError) {
@@ -807,6 +798,10 @@ const Home = () => {
             );
           } else if (err.status === 404) {
             setActionError("Nie znaleziono egzemplarza.");
+          } else if (err.status === 401 || err.status === 403) {
+            setActionError(
+              "Brak uprawnień do wysłania pinga. Zaloguj się ponownie.",
+            );
           } else {
             setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
           }
@@ -1486,10 +1481,10 @@ const Home = () => {
               onPing={
                 selected.key.startsWith("ps-")
                   ? undefined
-                  : () =>
-                      setActionError(
-                        "All copies are currently borrowed. Try again later.",
-                      )
+                  : () => void pingBorrowedBook(selected)
+              }
+              primaryActionPending={
+                pinging && selected.status === "borrowed"
               }
               onReturn={
                 selected.key.startsWith("ps-")

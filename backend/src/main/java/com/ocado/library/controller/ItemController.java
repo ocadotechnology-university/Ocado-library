@@ -52,4 +52,11 @@ public class ItemController {
         reminderService.sendUserPing(internalId, CurrentUser.email());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/description/{description_id}/ping")
+    public ResponseEntity<Void> pingDescriptionBorrowers(
+            @PathVariable("description_id") Long descriptionId) {
+        reminderService.sendUserPingsForDescription(descriptionId, CurrentUser.email());
+        return ResponseEntity.noContent().build();
+    }
 }

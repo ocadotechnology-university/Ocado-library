@@ -44,7 +44,7 @@ Dodatkowe ustawienia w `application.yml` (bez sekretów):
 |-----------|------|
 | Cron | Codziennie sprawdza wypożyczenia po terminie (książka 120 dni, gra planszowa 240 dni) i wysyła DM |
 | Admin | `POST /api/admin/reminders/{internal_id}` — ręczne przypomnienie (egzemplarz musi być `BORROWED`) |
-| Użytkownik (Ping) | `POST /api/items/{internal_id}/ping` — DM do pożyczającego z treścią zawierającą e-mail pingującego |
+| Użytkownik (Ping) | `POST /api/items/description/{description_id}/ping` — DM do pożyczających **wszystkich** wypożyczonych egzemplarzy tej pozycji; `POST /api/items/{internal_id}/ping` — ping jednego egzemplarza |
 
 ## Udostępnienie aplikacji Slack innej firmie / workspace
 

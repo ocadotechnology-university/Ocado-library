@@ -267,6 +267,16 @@ export async function pingBorrower(internalId: string): Promise<void> {
   );
 }
 
+export async function pingDescriptionBorrowers(
+  descriptionId: number,
+): Promise<void> {
+  await apiJson<void>(
+    `/api/items/description/${descriptionId}/ping`,
+    { method: "POST" },
+    "Failed to send ping",
+  );
+}
+
 export async function createBookDescription(
   payload: BookDescriptionPayload,
 ): Promise<BackendBookDescription> {
