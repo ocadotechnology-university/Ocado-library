@@ -7,8 +7,11 @@ import CatalogViewToggle from "../components/UI/CatalogViewToggle";
 import type { CatalogViewMode } from "../components/UI/CatalogViewToggle";
 import type { BookStatus } from "../components/UI/BookPreview";
 import CatalogHomeHeader, {
+  type CatalogSearchItem,
   type MediaSection,
 } from "../components/UI/CatalogHomeHeader";
+import EditTagsDialog from "../components/UI/EditTagsDialog";
+import TagsInput from "../components/UI/TagsInput";
 import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
@@ -32,12 +35,14 @@ import {
   fetchBoardGameDescriptions,
   fetchBookByIsbn,
   fetchBookDescriptions,
+  fetchCatalogTags,
   fetchItemsByDescription,
   fetchJournalEntries,
   fetchPSGameDescriptions,
   returnItem,
   updateBoardGameDescription,
   updateBookDescription,
+  updateDescriptionTags,
   updatePSGameDescription,
   type BackendBoardGameDescription,
   type BackendBookDescription,
@@ -45,6 +50,7 @@ import {
   type BackendDescriptionStatus,
   type ItemSummary,
 } from "../lib/api";
+import { applyCatalogFilters, mergeUniqueTags } from "../lib/catalogFilters";
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
@@ -84,7 +90,7 @@ type AdminDraft = {
   bookId: string;
   imageUrl: string;
   description: string;
-  tagsInput: string;
+  tags: string[];
 };
 
 type BorrowDialogState = {
@@ -113,39 +119,6 @@ function toggleInList<T>(list: T[], item: T): T[] {
   const i = list.indexOf(item);
   if (i >= 0) return list.filter((_, idx) => idx !== i);
   return [...list, item];
-}
-
-function rowMatchesStatuses(row: AdminBook, selected: BookStatus[]): boolean {
-  if (selected.length === 0) return true;
-  return selected.includes(row.status);
-}
-
-function rowMatchesLanguages(row: AdminBook, selected: string[]): boolean {
-  if (selected.length === 0) return true;
-  return selected.includes(row.language);
-}
-
-function rowMatchesAuthors(row: AdminBook, selected: string[]): boolean {
-  if (selected.length === 0) return true;
-  return selected.includes(row.author);
-}
-
-function rowMatchesChosenTags(row: AdminBook, chosen: string[]): boolean {
-  if (chosen.length === 0) return true;
-  const lower = row.tags.map((t) => t.toLowerCase());
-  return chosen.every((c) => lower.includes(c.toLowerCase()));
-}
-
-function matchesCategory(row: AdminBook, cat: string): boolean {
-  if (cat === "All") return true;
-  if (cat === "New arrivals") return row.newArrival;
-  if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
-  if (cat === "Bestsellers") return row.tags.some((t) => /best/i.test(t));
-  if (cat === "Fiction") return row.tags.some((t) => /^fiction$/i.test(t));
-  if (cat === "Non-fiction")
-    return row.tags.some((t) => /non-?fiction/i.test(t));
-  if (cat === "Prizes") return row.tags.some((t) => /prize/i.test(t));
-  return true;
 }
 
 function pillClass(active: boolean): string {
@@ -177,16 +150,21 @@ function captionFor(status: BookStatus): string {
   return "Borrowed";
 }
 
+function languageFromTags(tags: string[]): string {
+  return tags.find((t) => /^(English|Polish)$/i.test(t)) ?? "";
+}
+
 function mapBook(row: BackendBookDescription, index: number): AdminBook {
   const status = toUiStatus(row.descriptionStatus);
   const isbn = row.isbn?.trim() || `description-${row.id}`;
+  const tags = row.tags ?? [];
   return {
     id: row.id,
     key: String(row.id),
     isbn,
     title: row.title,
     author: row.author,
-    language: "",
+    language: languageFromTags(tags),
     level: "middle",
     status,
     backendStatus: row.descriptionStatus,
@@ -194,7 +172,7 @@ function mapBook(row: BackendBookDescription, index: number): AdminBook {
     caption: captionFor(status),
     bookId: isbn,
     description: row.description ?? "",
-    tags: row.tags ?? [],
+    tags,
     placeholderSeed: `book-${isbn}`,
     imageUrl: row.image ?? "",
   };
@@ -202,6 +180,10 @@ function mapBook(row: BackendBookDescription, index: number): AdminBook {
 
 function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
   const seed = `board-${row.id}`;
+  const status = toUiStatus(
+    (row.descriptionStatus ?? "AVAILABLE") as BackendDescriptionStatus,
+  );
+  const tags = row.tags || [];
   return {
     id: row.id,
     key: `board-${row.id}`,
@@ -211,16 +193,16 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
       row.numberOfPlayers != null
         ? `${row.numberOfPlayers} players`
         : "Board game",
-    language: "",
+    language: languageFromTags(tags),
     level: "middle",
-    status: "free",
+    status,
     backendStatus: (row.descriptionStatus ??
       "AVAILABLE") as BackendDescriptionStatus,
     newArrival: false,
-    caption: "Available",
+    caption: captionFor(status),
     bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
     description: row.description || "",
-    tags: row.tags || [],
+    tags,
     placeholderSeed: seed,
     imageUrl: undefined,
   };
@@ -228,13 +210,14 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
 
 function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
   const seed = `ps-${row.id}`;
+  const tags = row.tags || [];
   return {
     id: row.id,
     key: `ps-${row.id}`,
     isbn: "",
     title: row.title,
     author: "PS Game",
-    language: "",
+    language: languageFromTags(tags),
     level: "middle",
     status: "free",
     backendStatus: "AVAILABLE",
@@ -242,7 +225,7 @@ function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
     caption: "PS Game",
     bookId: row.internalId ?? "",
     description: row.description || "",
-    tags: row.tags || [],
+    tags,
     placeholderSeed: seed,
     imageUrl: undefined,
   };
@@ -295,7 +278,10 @@ const Home = () => {
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<string[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [catalogSearchQuery, setCatalogSearchQuery] = useState("");
+  const [knownTags, setKnownTags] = useState<string[]>([]);
   const [authorQuery, setAuthorQuery] = useState("");
+  const [tagsEditTarget, setTagsEditTarget] = useState<AdminBook | null>(null);
   const [adminDraft, setAdminDraft] = useState<AdminDraft>({
     key: "",
     descriptionId: null,
@@ -308,7 +294,7 @@ const Home = () => {
     bookId: "",
     imageUrl: "",
     description: "",
-    tagsInput: "",
+    tags: [],
   });
   const [isbnLoading, setIsbnLoading] = useState(false);
   const [isbnError, setIsbnError] = useState<string | null>(null);
@@ -338,13 +324,17 @@ const Home = () => {
       const mapped = rows.map(mapBook);
       setBooks(mapped);
 
-      // Load board and ps in parallel (no isbn autocomplete for them)
-      const [boardRows, psRows] = await Promise.all([
-        fetchBoardGameDescriptions().catch(() => []),
-        fetchPSGameDescriptions().catch(() => []),
-      ]);
+      const [boardRows, psRows, bookTagRows, boardTagRows, psTagRows] =
+        await Promise.all([
+          fetchBoardGameDescriptions().catch(() => []),
+          fetchPSGameDescriptions().catch(() => []),
+          fetchCatalogTags("Book").catch(() => []),
+          fetchCatalogTags("BoardGame").catch(() => []),
+          fetchCatalogTags("PSGame").catch(() => []),
+        ]);
       setBoardGames(boardRows);
       setPsGames(psRows);
+      setKnownTags(mergeUniqueTags(bookTagRows, boardTagRows, psTagRows));
 
       if (isAdmin) {
         const from = new Date();
@@ -376,18 +366,64 @@ const Home = () => {
 
   const catalogAuthors = useMemo(
     () =>
-      [...new Set(books.map((b) => b.author))].sort((a, b) =>
-        a.localeCompare(b),
-      ),
-    [books],
+      [
+        ...new Set(
+          [...books, ...boardPreviewRows, ...psPreviewRows].map(
+            (b) => b.author,
+          ),
+        ),
+      ].sort((a, b) => a.localeCompare(b)),
+    [books, boardPreviewRows, psPreviewRows],
   );
 
   const catalogAllTags = useMemo(
     () =>
-      [...new Set(books.flatMap((b) => b.tags))].sort((a, b) =>
-        a.localeCompare(b),
+      mergeUniqueTags(
+        knownTags,
+        ...books.map((b) => b.tags),
+        ...boardPreviewRows.map((b) => b.tags),
+        ...psPreviewRows.map((b) => b.tags),
       ),
-    [books],
+    [knownTags, books, boardPreviewRows, psPreviewRows],
+  );
+
+  const sectionRows = useMemo(() => {
+    if (section === "board") return boardPreviewRows;
+    if (section === "ps") return psPreviewRows;
+    return books;
+  }, [section, books, boardPreviewRows, psPreviewRows]);
+
+  const displayRows = useMemo(
+    () =>
+      sectionRows.filter((row) =>
+        applyCatalogFilters(row, {
+          activeCategory,
+          selectedStatuses,
+          selectedLanguages,
+          selectedAuthors,
+          filterTags,
+          searchQuery: catalogSearchQuery,
+        }),
+      ),
+    [
+      sectionRows,
+      activeCategory,
+      selectedStatuses,
+      selectedLanguages,
+      selectedAuthors,
+      filterTags,
+      catalogSearchQuery,
+    ],
+  );
+
+  const searchItems = useMemo<CatalogSearchItem[]>(
+    () =>
+      sectionRows.map((row) => ({
+        key: row.key,
+        title: row.title,
+        hint: `${row.author}${row.tags.length > 0 ? ` · ${row.tags.slice(0, 3).join(", ")}` : ""}`,
+      })),
+    [sectionRows],
   );
 
   const filteredAuthors = useMemo(() => {
@@ -395,24 +431,6 @@ const Home = () => {
     if (q.length === 0) return [];
     return catalogAuthors.filter((a) => a.toLowerCase().includes(q));
   }, [catalogAuthors, authorQuery]);
-
-  const filteredRows = useMemo(() => {
-    return books.filter((row) => {
-      if (!matchesCategory(row, activeCategory)) return false;
-      if (!rowMatchesStatuses(row, selectedStatuses)) return false;
-      if (!rowMatchesLanguages(row, selectedLanguages)) return false;
-      if (!rowMatchesAuthors(row, selectedAuthors)) return false;
-      if (!rowMatchesChosenTags(row, filterTags)) return false;
-      return true;
-    });
-  }, [
-    activeCategory,
-    selectedStatuses,
-    selectedLanguages,
-    selectedAuthors,
-    filterTags,
-    books,
-  ]);
 
   const resetDraft = useCallback(() => {
     setAdminDraft({
@@ -427,7 +445,7 @@ const Home = () => {
       bookId: "",
       imageUrl: "",
       description: "",
-      tagsInput: "",
+      tags: [],
     });
   }, []);
 
@@ -454,7 +472,7 @@ const Home = () => {
       bookId: row.bookId,
       imageUrl: row.imageUrl ?? "",
       description: row.description,
-      tagsInput: row.tags.join(", "),
+      tags: [...row.tags],
     });
     setAdminMode("edit");
   }, []);
@@ -490,13 +508,16 @@ const Home = () => {
   }, [adminDraft.isbn]);
 
   const saveAdminDraft = useCallback(async () => {
-    const tags = adminDraft.tagsInput
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
     const isBook = section === "books";
     const isBoard = section === "board";
     const isPs = section === "ps";
+    let tags = [...adminDraft.tags];
+    if (isBook) {
+      const lang = adminDraft.language.trim();
+      if (lang && !tags.some((t) => t.toLowerCase() === lang.toLowerCase())) {
+        tags.push(lang);
+      }
+    }
 
     // Validation: ISBN+title for books, title only for others
     if (isBook) {
@@ -760,29 +781,50 @@ const Home = () => {
     setInstanceTargetKey(contextMenu.key);
   }, [contextMenu]);
 
+  const findRowByKey = useCallback(
+    (key: string) =>
+      books.find((b) => b.key === key) ||
+      boardPreviewRows.find((b) => b.key === key) ||
+      psPreviewRows.find((b) => b.key === key),
+    [books, boardPreviewRows, psPreviewRows],
+  );
+
+  const saveTagsForRow = useCallback(
+    async (row: AdminBook, tags: string[]) => {
+      const type = row.key.startsWith("board-")
+        ? "BoardGame"
+        : row.key.startsWith("ps-")
+          ? "PSGame"
+          : "Book";
+      await updateDescriptionTags(type, row.id, tags);
+      await loadCatalog();
+    },
+    [loadCatalog],
+  );
+
   const openInstancesFromContext = useCallback(() => {
     if (!contextMenu) return;
-    const row = books.find((b) => b.key === contextMenu.key);
+    const row = findRowByKey(contextMenu.key);
     if (!row) return;
     setContextMenu(null);
     void openInstancesDialog(row);
-  }, [books, contextMenu, openInstancesDialog]);
+  }, [contextMenu, findRowByKey, openInstancesDialog]);
 
   const startEditFromContext = useCallback(() => {
     if (!contextMenu) return;
-    const row = books.find((b) => b.key === contextMenu.key);
+    const row = findRowByKey(contextMenu.key);
     if (!row) return;
     setContextMenu(null);
     startEditBook(row);
-  }, [contextMenu, books, startEditBook]);
+  }, [contextMenu, findRowByKey, startEditBook]);
 
   const deleteFromContext = useCallback(() => {
     if (!contextMenu) return;
-    const row = books.find((b) => b.key === contextMenu.key);
+    const row = findRowByKey(contextMenu.key);
     if (!row) return;
     setContextMenu(null);
     void deleteBook(row);
-  }, [books, contextMenu, deleteBook]);
+  }, [contextMenu, deleteBook, findRowByKey]);
 
   const sidebarFiltersActive =
     selectedStatuses.length > 0 ||
@@ -808,6 +850,7 @@ const Home = () => {
     setSelectedLanguages([]);
     setSelectedAuthors([]);
     setFilterTags([]);
+    setCatalogSearchQuery("");
     setAuthorQuery("");
   }, []);
 
@@ -1066,9 +1109,16 @@ const Home = () => {
             selectedTags={filterTags}
             onToggleFilterTag={toggleFilterTag}
             section={section}
-            onSectionChange={setSection}
+            onSectionChange={(next) => {
+              setSection(next);
+              setCatalogSearchQuery("");
+            }}
             activeCategory={activeCategory}
             onCategoryChange={setActiveCategory}
+            searchQuery={catalogSearchQuery}
+            onSearchQueryChange={setCatalogSearchQuery}
+            searchItems={searchItems}
+            onSearchSelect={(key) => openBook(key)}
           />
 
           {actionError ? (
@@ -1143,23 +1193,15 @@ const Home = () => {
                           ["Title *", "title"],
                           ["Author", "author"],
                           ["Language", "language"],
-                          ["Tags (comma separated)", "tagsInput"],
                         ] as const)
                       : section === "board"
                         ? ([
                             ["Title *", "title"],
                             ["# Players (optional)", "language"],
-                            ["Tags (comma separated)", "tagsInput"],
                           ] as const)
-                        : ([
-                            ["Title *", "title"],
-                            ["Tags (comma separated)", "tagsInput"],
-                          ] as const)
+                        : ([["Title *", "title"]] as const)
                     ).map(([label, field]) => (
-                      <div
-                        key={field}
-                        className={field === "tagsInput" ? "sm:col-span-2" : ""}
-                      >
+                      <div key={field}>
                         <label className="mb-1 block text-sm font-medium text-[#43485e]">
                           {label}
                         </label>
@@ -1175,6 +1217,21 @@ const Home = () => {
                         />
                       </div>
                     ))}
+                    <div className="sm:col-span-2">
+                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                        Tags
+                      </label>
+                      <TagsInput
+                        value={adminDraft.tags}
+                        onChange={(tags) =>
+                          setAdminDraft((d) => ({
+                            ...d,
+                            tags,
+                          }))
+                        }
+                        suggestions={catalogAllTags}
+                      />
+                    </div>
                     <div className="sm:col-span-2">
                       <label className="mb-1 block text-sm font-medium text-[#43485e]">
                         Description
@@ -1282,73 +1339,7 @@ const Home = () => {
                     Retry
                   </button>
                 </div>
-              ) : section === "board" || section === "ps" ? (
-                <>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">
-                      Browse
-                    </h2>
-                    <CatalogViewToggle
-                      mode={catalogView}
-                      onModeChange={setCatalogView}
-                    />
-                  </div>
-                  {catalogView === "cards" ? (
-                    <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                      {(section === "board"
-                        ? boardPreviewRows
-                        : psPreviewRows
-                      ).map((row) => (
-                        <li
-                          key={row.key}
-                          className="flex flex-col items-center gap-2"
-                          onContextMenu={(e) => {
-                            if (!isAdmin) return;
-                            e.preventDefault();
-                            setContextMenu({
-                              key: row.key,
-                              x: e.clientX,
-                              y: e.clientY,
-                            });
-                          }}
-                        >
-                          <BookPreview
-                            variant="card"
-                            coverSrc={coverSrcFor(row)}
-                            title={row.title}
-                            author={row.author}
-                            status={row.status}
-                            newArrival={row.newArrival}
-                            bookId={row.bookId}
-                            onOpen={() => openBook(row.key)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <ul className="flex list-none flex-col gap-4">
-                      {(section === "board"
-                        ? boardPreviewRows
-                        : psPreviewRows
-                      ).map((row) => (
-                        <li key={row.key} className="w-full">
-                          <BookPreview
-                            variant="list"
-                            coverSrc={coverSrcFor(row)}
-                            title={row.title}
-                            author={row.author}
-                            status={row.status}
-                            newArrival={row.newArrival}
-                            bookId={row.bookId}
-                            description={row.description}
-                            onOpen={() => openBook(row.key)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              ) : filteredRows.length === 0 ? (
+              ) : displayRows.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
                   No items match these filters. Try another category or clear
                   the filters on the left.
@@ -1365,7 +1356,7 @@ const Home = () => {
                     />
                   </div>
                   <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                    {filteredRows.map((row) => (
+                    {displayRows.map((row) => (
                       <li
                         key={row.key}
                         className="flex flex-col items-center gap-2"
@@ -1405,7 +1396,7 @@ const Home = () => {
                     />
                   </div>
                   <ul className="flex list-none flex-col gap-4">
-                    {filteredRows.map((row) => (
+                    {displayRows.map((row) => (
                       <li key={row.key} className="w-full">
                         <div
                           onContextMenu={(e) => {
@@ -1436,17 +1427,7 @@ const Home = () => {
                 </>
               )}
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#f3f4f8] px-4 py-10 text-center">
-              <p className="text-base font-medium text-[#43485e]">
-                {section === "board" ? "Board games" : "PS games"} catalogue
-              </p>
-              <p className="mt-2 text-sm text-[#6b7289]">
-                This section is ready for your inventory — the demo list below
-                is under <strong>Books</strong>.
-              </p>
-            </div>
-          )}
+          ) : null}
         </div>
       </Layout>
       {selected != null && (
@@ -1481,7 +1462,7 @@ const Home = () => {
                   ? undefined
                   : () => void returnBorrowedBook(selected)
               }
-              onEditTags={() => {}}
+              onEditTags={() => setTagsEditTarget(selected)}
               showPrimaryAction={!isAdmin && !selected.key.startsWith("ps-")}
               footerExtraActions={
                 <>
@@ -1537,6 +1518,15 @@ const Home = () => {
             />
           </div>
         </BookClientWindow>
+      )}
+      {tagsEditTarget != null && (
+        <EditTagsDialog
+          title={tagsEditTarget.title}
+          initialTags={tagsEditTarget.tags}
+          allTagSuggestions={catalogAllTags}
+          onClose={() => setTagsEditTarget(null)}
+          onSave={(tags) => saveTagsForRow(tagsEditTarget, tags)}
+        />
       )}
       {isAdmin && contextMenu && (
         <>
