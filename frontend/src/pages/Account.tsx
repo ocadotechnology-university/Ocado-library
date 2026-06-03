@@ -349,6 +349,9 @@ const Account = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
+  const [descriptions, setDescriptions] = useState<JournalDescriptionView[]>(
+    [],
+  );
   const [books, setBooks] = useState<BackendBookDescription[]>([]);
   const [selectedBook, setSelectedBook] =
     useState<BackendBookDescription | null>(null);
@@ -404,6 +407,7 @@ const Account = () => {
         }),
       );
       setDescriptions([...mappedBooks, ...mappedBoards, ...mappedPs]);
+      setBooks(bookCatalog);
       setJournal(entries);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -423,6 +427,11 @@ const Account = () => {
   const descriptionsById = useMemo(
     () => new Map(descriptions.map((d) => [d.id, d])),
     [descriptions],
+  );
+
+  const booksById = useMemo(
+    () => new Map(books.map((book) => [book.id, book])),
+    [books],
   );
 
   const borrowedRows = useMemo(
@@ -750,7 +759,7 @@ const Account = () => {
             title={selectedBook.title}
             author={selectedBook.author}
             description={selectedBook.description ?? ""}
-            bookId={selectedBook.id}
+            bookId={selectedBook.isbn ?? String(selectedBook.id)}
             tags={selectedBook.tags ?? []}
             status={
               selectedBook.descriptionStatus === "AVAILABLE"
