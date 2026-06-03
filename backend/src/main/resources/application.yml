@@ -54,4 +54,4 @@ app:
       board-game: 240
     cron: "0 0 8 * * *"
     reminder-cooldown-days: 7
-    ping-cooldown-hours: 24
+    ping-cooldown-hours: 0
