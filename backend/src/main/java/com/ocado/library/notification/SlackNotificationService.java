@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 @Service
-public class SlackNotificationService {
+public class SlackNotificationService implements NotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(SlackNotificationService.class);
 
@@ -21,6 +21,12 @@ public class SlackNotificationService {
         this.properties = properties;
     }
 
+    @Override
+    public boolean isEnabled() {
+        return slackClient.isConfigured();
+    }
+
+    @Override
     public boolean sendOverdueReminder(Item item) {
         if (item.getBorrower() == null || item.getBorrowedAt() == null) {
             return false;
@@ -35,10 +41,12 @@ public class SlackNotificationService {
         return sendDirectMessage(item.getBorrower(), message);
     }
 
+    @Override
     public boolean sendManualReminder(Item item, String pingerEmail) {
         return sendUserPing(item, pingerEmail);
     }
 
+    @Override
     public boolean sendUserPing(Item item, String pingerEmail) {
         if (item.getBorrower() == null || pingerEmail == null || pingerEmail.isBlank()) {
             return false;

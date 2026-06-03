@@ -12,26 +12,23 @@ public class OverdueReminderScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(OverdueReminderScheduler.class);
 
-    private final SlackClient slackClient;
     private final OverdueDetectionService overdueDetectionService;
-    private final SlackNotificationService slackNotificationService;
+    private final NotificationService notificationService;
     private final NotificationLogService notificationLogService;
 
     public OverdueReminderScheduler(
-            SlackClient slackClient,
             OverdueDetectionService overdueDetectionService,
-            SlackNotificationService slackNotificationService,
+            NotificationService notificationService,
             NotificationLogService notificationLogService) {
-        this.slackClient = slackClient;
         this.overdueDetectionService = overdueDetectionService;
-        this.slackNotificationService = slackNotificationService;
+        this.notificationService = notificationService;
         this.notificationLogService = notificationLogService;
     }
 
     @Scheduled(cron = "${app.notifications.cron}")
     public void sendOverdueReminders() {
-        if (!slackClient.isConfigured()) {
-            log.debug("Skipping overdue reminder cron: Slack not configured");
+        if (!notificationService.isEnabled()) {
+            log.debug("Skipping overdue reminder cron: Notifications disabled");
             return;
         }
 
@@ -40,7 +37,7 @@ public class OverdueReminderScheduler {
                     item.getInternalId(), NotificationType.OVERDUE_REMINDER)) {
                 continue;
             }
-            if (slackNotificationService.sendOverdueReminder(item)) {
+            if (notificationService.sendOverdueReminder(item)) {
                 notificationLogService.record(
                         item.getInternalId(),
                         NotificationType.OVERDUE_REMINDER,

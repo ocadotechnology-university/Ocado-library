@@ -6,8 +6,7 @@ import com.ocado.library.model.Item;
 import com.ocado.library.model.enums.ItemStatus;
 import com.ocado.library.model.enums.NotificationType;
 import com.ocado.library.notification.NotificationLogService;
-import com.ocado.library.notification.SlackClient;
-import com.ocado.library.notification.SlackNotificationService;
+import com.ocado.library.notification.NotificationService;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,18 +14,15 @@ import org.springframework.stereotype.Service;
 public class ReminderService {
 
     private final ItemRepository itemRepository;
-    private final SlackClient slackClient;
-    private final SlackNotificationService slackNotificationService;
+    private final NotificationService notificationService;
     private final NotificationLogService notificationLogService;
 
     public ReminderService(
             ItemRepository itemRepository,
-            SlackClient slackClient,
-            SlackNotificationService slackNotificationService,
+            NotificationService notificationService,
             NotificationLogService notificationLogService) {
         this.itemRepository = itemRepository;
-        this.slackClient = slackClient;
-        this.slackNotificationService = slackNotificationService;
+        this.notificationService = notificationService;
         this.notificationLogService = notificationLogService;
     }
 
@@ -56,11 +52,11 @@ public class ReminderService {
             throw new ConflictException("You already sent a ping for this item recently");
         }
 
-        if (!slackClient.isConfigured()) {
+        if (!notificationService.isEnabled()) {
             return;
         }
 
-        if (slackNotificationService.sendUserPing(item, normalizedPinger)) {
+        if (notificationService.sendUserPing(item, normalizedPinger)) {
             notificationLogService.record(
                     item.getInternalId(),
                     NotificationType.USER_PING,
