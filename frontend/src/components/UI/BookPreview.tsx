@@ -155,7 +155,10 @@ const BookPreview = ({
             >
               {title}
             </h2>
-            <p className="mt-1 truncate text-sm text-[#6b7289] sm:text-base" title={author}>
+            <p
+              className="mt-1 truncate text-sm text-[#6b7289] sm:text-base"
+              title={author}
+            >
               {author}
             </p>
             {tags != null && tags.length > 0 && <PreviewTagsRow tags={tags} />}

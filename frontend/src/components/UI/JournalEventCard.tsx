@@ -103,13 +103,18 @@ export default function JournalEventCard({
             className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border bg-white/80 shadow-sm ${item.badgeClass}`}
             title={item.label}
           >
-            <ItemTypeIcon itemType={itemType} className={`h-5 w-5 ${item.iconClass}`} />
+            <ItemTypeIcon
+              itemType={itemType}
+              className={`h-5 w-5 ${item.iconClass}`}
+            />
           </span>
           <div className="min-w-0 flex-1">
             <h3 className="line-clamp-2 text-base font-semibold leading-snug text-[#2a3142] sm:text-lg">
               {row.title}
             </h3>
-            <p className="mt-0.5 line-clamp-1 text-sm text-[#6b7289]">{row.author}</p>
+            <p className="mt-0.5 line-clamp-1 text-sm text-[#6b7289]">
+              {row.author}
+            </p>
           </div>
         </div>
 

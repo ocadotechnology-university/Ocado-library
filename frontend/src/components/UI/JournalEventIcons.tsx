@@ -95,7 +95,12 @@ export function OperationIcon({
       return (
         <svg className={cls} viewBox="0 0 24 24" fill="none" aria-hidden>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-          <path d="M12 8v5M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M12 8v5M12 16h.01"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       );
   }
@@ -150,7 +155,12 @@ export function ItemTypeIcon({
             strokeWidth="2"
             strokeLinejoin="round"
           />
-          <path d="M15 4v4h4M8 10h8M8 14h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M15 4v4h4M8 10h8M8 14h6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       );
   }
