@@ -1483,9 +1483,7 @@ const Home = () => {
                   ? undefined
                   : () => void pingBorrowedBook(selected)
               }
-              primaryActionPending={
-                pinging && selected.status === "borrowed"
-              }
+              primaryActionPending={pinging && selected.status === "borrowed"}
               onReturn={
                 selected.key.startsWith("ps-")
                   ? undefined
