@@ -22,9 +22,12 @@ import {
   fetchBookDescriptions,
   fetchJournalEntries,
   fetchPSGameDescriptions,
+  pingDescriptionBorrowers,
+  type BackendDescriptionStatus,
   type JournalEntry,
   type JournalOperationType,
 } from "../lib/api";
+import type { BookStatus } from "../components/UI/bookStatusCover";
 import type { CatalogItemType } from "../lib/journalEventTheme";
 
 export type AccountSectionId = "history" | "borrowed" | "waiting";
@@ -61,7 +64,15 @@ type JournalDescriptionView = {
   description: string;
   seed: string;
   itemType: CatalogItemType;
+  descriptionStatus?: BackendDescriptionStatus;
+  tags?: string[];
 };
+
+function toUiStatus(status?: BackendDescriptionStatus): BookStatus {
+  if (status === "AVAILABLE") return "free";
+  if (status === "BORROWED_BY_ME") return "borrowed-by-me";
+  return "borrowed";
+}
 
 const NAV: { id: AccountSectionId; label: string }[] = [
   { id: "history", label: "History" },
@@ -297,6 +308,11 @@ const Account = () => {
   );
   const [selectedDescription, setSelectedDescription] =
     useState<JournalDescriptionView | null>(null);
+  const [bookActionError, setBookActionError] = useState<string | null>(null);
+  const [bookActionMessage, setBookActionMessage] = useState<string | null>(
+    null,
+  );
+  const [pinging, setPinging] = useState(false);
 
   const [personFilter, setPersonFilter] = useState("");
   const [bookFilter, setBookFilter] = useState("");
@@ -325,6 +341,8 @@ const Account = () => {
         description: book.description ?? "",
         seed: book.isbn ?? String(book.id),
         itemType: "book" as const,
+        descriptionStatus: book.descriptionStatus,
+        tags: book.tags ?? [],
       }));
       const mappedBoards: JournalDescriptionView[] = boardCatalog.map(
         (board) => ({
@@ -337,6 +355,8 @@ const Account = () => {
           description: board.description ?? "",
           seed: `board-${board.id}`,
           itemType: "board" as const,
+          descriptionStatus: board.descriptionStatus,
+          tags: board.tags ?? [],
         }),
       );
       const mappedPs: JournalDescriptionView[] = psCatalog.map((ps) => ({
@@ -479,6 +499,56 @@ const Account = () => {
   ]);
 
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
+
+  const selectedDescriptionUiStatus =
+    selectedDescription == null
+      ? null
+      : toUiStatus(selectedDescription.descriptionStatus);
+
+  const closeSelectedDescription = useCallback(() => {
+    setSelectedDescription(null);
+    setBookActionError(null);
+    setBookActionMessage(null);
+  }, []);
+
+  const pingSelectedDescription = useCallback(async () => {
+    if (
+      user == null ||
+      selectedDescription == null ||
+      selectedDescription.itemType !== "book"
+    ) {
+      return;
+    }
+    setBookActionError(null);
+    setBookActionMessage(null);
+    setPinging(true);
+    try {
+      await pingDescriptionBorrowers(selectedDescription.id);
+      setBookActionMessage(
+        "Ping wysłany na Slacka do osób, które trzymają wypożyczone egzemplarze tej książki.",
+      );
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.status === 409) {
+          setBookActionError(
+            "Nie można wysłać pinga (książka nie jest wypożyczona, pingujesz siebie lub wysłałeś go niedawno).",
+          );
+        } else if (err.status === 404) {
+          setBookActionError("Nie znaleziono egzemplarza.");
+        } else if (err.status === 401 || err.status === 403) {
+          setBookActionError(
+            "Brak uprawnień do wysłania pinga. Zaloguj się ponownie.",
+          );
+        } else {
+          setBookActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+        }
+      } else {
+        setBookActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+      }
+    } finally {
+      setPinging(false);
+    }
+  }, [selectedDescription, user]);
 
   const leftSidebar = useMemo(
     () => (
@@ -685,7 +755,17 @@ const Account = () => {
       </div>
 
       {selectedDescription != null && (
-        <BookClientWindow onBackdropClick={() => setSelectedDescription(null)}>
+        <BookClientWindow onBackdropClick={closeSelectedDescription}>
+          {bookActionError ? (
+            <p className="mb-3 rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
+              {bookActionError}
+            </p>
+          ) : null}
+          {bookActionMessage ? (
+            <p className="mb-3 rounded-xl border border-[#b7d9bc] bg-[#eefbf0] px-4 py-3 text-sm text-[#166534]">
+              {bookActionMessage}
+            </p>
+          ) : null}
           <BookFullView
             coverSrc={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/272/181`}
             coverSrcLarge={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/640/960`}
@@ -693,10 +773,27 @@ const Account = () => {
             author={selectedDescription.author}
             description={selectedDescription.description}
             bookId={selectedDescription.seed}
-            tags={[]}
-            status="free"
+            tags={selectedDescription.tags ?? []}
+            status={selectedDescriptionUiStatus ?? "borrowed"}
             newArrival={false}
-            onClose={() => setSelectedDescription(null)}
+            onClose={closeSelectedDescription}
+            onBorrow={() => {
+              /* borrow action can be wired later if needed */
+            }}
+            onPing={
+              selectedDescription.itemType === "book"
+                ? () => void pingSelectedDescription()
+                : undefined
+            }
+            showPrimaryAction={
+              selectedDescription.itemType === "book" &&
+              (selectedDescriptionUiStatus === "free" ||
+                selectedDescriptionUiStatus === "borrowed" ||
+                selectedDescriptionUiStatus === "borrowed-by-me")
+            }
+            primaryActionPending={
+              pinging && selectedDescriptionUiStatus === "borrowed"
+            }
           />
         </BookClientWindow>
       )}

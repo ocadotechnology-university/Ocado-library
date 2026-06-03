@@ -13,5 +13,6 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
     List<Item> findByDescriptionId(Long descriptionId);
     List<Item> findByDescriptionIdAndStatus(Long descriptionId, ItemStatus status);
     Optional<Item> findByInternalId(String internalId);
+    List<Item> findByStatus(ItemStatus status);
     void deleteByDescriptionId(Long descriptionId);
 }

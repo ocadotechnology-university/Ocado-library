@@ -9,6 +9,7 @@ import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -38,6 +39,7 @@ public class ItemService {
         
         item.setStatus(ItemStatus.BORROWED);
         item.setBorrower(userEmail);
+        item.setBorrowedAt(LocalDateTime.now());
         itemRepository.save(item);
         
         journalService.logAction(OperationType.BORROW, userEmail, internalId, item.getDescription().getId());
@@ -56,6 +58,7 @@ public class ItemService {
         String previousBorrower = item.getBorrower();
         item.setStatus(ItemStatus.AVAILABLE);
         item.setBorrower(null);
+        item.setBorrowedAt(null);
         itemRepository.save(item);
         
         journalService.logAction(OperationType.RETURN, userEmail, internalId, item.getDescription().getId());

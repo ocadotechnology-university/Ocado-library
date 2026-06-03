@@ -50,6 +50,7 @@ import {
   type BackendPSGameDescription,
   type BackendDescriptionStatus,
   type ItemSummary,
+  pingDescriptionBorrowers,
 } from "../lib/api";
 import { applyCatalogFilters, mergeUniqueTags } from "../lib/catalogFilters";
 
@@ -256,6 +257,7 @@ const Home = () => {
   const [catalogError, setCatalogError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [pinging, setPinging] = useState(false);
   const [adminSaving, setAdminSaving] = useState(false);
   const [borrowedThisWeek, setBorrowedThisWeek] = useState(0);
   const [borrowDialog, setBorrowDialog] = useState<BorrowDialogState | null>(
@@ -775,6 +777,42 @@ const Home = () => {
       }
     },
     [loadCatalog, user],
+  );
+
+  const pingBorrowedBook = useCallback(
+    async (book: AdminBook) => {
+      if (user == null) return;
+      setActionError(null);
+      setActionMessage(null);
+      setPinging(true);
+      try {
+        await pingDescriptionBorrowers(book.id);
+        setActionMessage(
+          "Ping wysłany na Slacka do osób, które trzymają wypożyczone egzemplarze tej książki.",
+        );
+      } catch (err) {
+        if (err instanceof ApiError) {
+          if (err.status === 409) {
+            setActionError(
+              "Nie można wysłać pinga (książka nie jest wypożyczona, pingujesz siebie lub wysłałeś go niedawno).",
+            );
+          } else if (err.status === 404) {
+            setActionError("Nie znaleziono egzemplarza.");
+          } else if (err.status === 401 || err.status === 403) {
+            setActionError(
+              "Brak uprawnień do wysłania pinga. Zaloguj się ponownie.",
+            );
+          } else {
+            setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+          }
+        } else {
+          setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+        }
+      } finally {
+        setPinging(false);
+      }
+    },
+    [user],
   );
 
   const openInstanceModalFromContext = useCallback(() => {
@@ -1443,11 +1481,9 @@ const Home = () => {
               onPing={
                 selected.key.startsWith("ps-")
                   ? undefined
-                  : () =>
-                      setActionError(
-                        "All copies are currently borrowed. Try again later.",
-                      )
+                  : () => void pingBorrowedBook(selected)
               }
+              primaryActionPending={pinging && selected.status === "borrowed"}
               onReturn={
                 selected.key.startsWith("ps-")
                   ? undefined
