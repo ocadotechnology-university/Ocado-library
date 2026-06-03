@@ -1,12 +1,15 @@
-package com.ocado.library.notification;
+package com.ocado.library.notification.slack_service_impl;
 
-import com.ocado.library.model.Item;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import com.ocado.library.model.Item;
+import com.ocado.library.notification.NotificationProperties;
+import com.ocado.library.notification.NotificationService;
 
 @Service
 public class SlackNotificationService implements NotificationService {
@@ -42,8 +45,8 @@ public class SlackNotificationService implements NotificationService {
     }
 
     @Override
-    public boolean sendManualReminder(Item item, String pingerEmail) {
-        return sendUserPing(item, pingerEmail);
+    public boolean sendManualMessage(String recipientEmail, String message) {
+        return sendDirectMessage(recipientEmail, message);
     }
 
     @Override

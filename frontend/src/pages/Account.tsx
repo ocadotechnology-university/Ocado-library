@@ -7,6 +7,7 @@ import {
 import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
+import JournalEventCard from "../components/UI/JournalEventCard";
 import {
   SidebarAccentTitle,
   SidebarSectionLabel,
@@ -22,12 +23,13 @@ import {
   fetchItemsByDescription,
   fetchJournalEntries,
   fetchPSGameDescriptions,
-  type BackendBoardGameDescription,
-  type BackendBookDescription,
-  type BackendPSGameDescription,
+  pingBorrower,
+  type BackendDescriptionStatus,
   type JournalEntry,
   type JournalOperationType,
 } from "../lib/api";
+import type { BookStatus } from "../components/UI/bookStatusCover";
+import type { CatalogItemType } from "../lib/journalEventTheme";
 
 export type AccountSectionId = "history" | "borrowed" | "waiting";
 
@@ -62,7 +64,16 @@ type JournalDescriptionView = {
   author: string;
   description: string;
   seed: string;
+  itemType: CatalogItemType;
+  descriptionStatus?: BackendDescriptionStatus;
+  tags?: string[];
 };
+
+function toUiStatus(status?: BackendDescriptionStatus): BookStatus {
+  if (status === "AVAILABLE") return "free";
+  if (status === "BORROWED_BY_ME") return "borrowed-by-me";
+  return "borrowed";
+}
 
 const NAV: { id: AccountSectionId; label: string }[] = [
   { id: "history", label: "History" },
@@ -77,6 +88,18 @@ function formatDate(value: string): string {
     year: "numeric",
     month: "short",
     day: "numeric",
+  });
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -161,11 +184,7 @@ function buildHistoryRows(
   currentUserEmail: string,
 ): UserOrderRow[] {
   return entries
-    .filter(
-      (entry) =>
-        entry.user === currentUserEmail &&
-        (entry.operationType === "BORROW" || entry.operationType === "RETURN"),
-    )
+    .filter((entry) => entry.user === currentUserEmail)
     .map((entry) => eventRow(entry, descriptionsById, "history"))
     .sort(
       (a, b) =>
@@ -185,86 +204,22 @@ function buildAdminRows(
     );
 }
 
-function OrderDateLines({ row }: { row: UserOrderRow }) {
-  const lineClass =
-    "mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-[#5c6378] sm:mt-3 sm:gap-x-6 sm:text-sm";
-
-  if (row.kind === "log") {
-    return (
-      <p className={lineClass}>
-        <span>
-          <span className="font-semibold text-[#43485e]">Operation:</span>{" "}
-          {row.operationType ?? "UNKNOWN"}
-        </span>
-        <span>
-          <span className="font-semibold text-[#43485e]">Date:</span>{" "}
-          {formatDate(row.eventDate)}
-        </span>
-      </p>
-    );
-  }
-
-  if (row.kind === "history") {
-    return (
-      <p className={lineClass}>
-        <span>
-          <span className="font-semibold text-[#43485e]">
-            {row.operationType === "RETURN" ? "Returned:" : "Borrowed:"}
-          </span>{" "}
-          {formatDate(row.eventDate)}
-        </span>
-      </p>
-    );
-  }
-
-  if (row.kind === "borrowed") {
-    return (
-      <p className={lineClass}>
-        <span>
-          <span className="font-semibold text-[#43485e]">Borrowed:</span>{" "}
-          {row.borrowedOn ?? formatDate(row.eventDate)}
-        </span>
-      </p>
-    );
-  }
-
-  return (
-    <p className={lineClass}>
-      <span>No waiting-list data is available yet.</span>
-    </p>
-  );
-}
-
-function OrderListRow({
-  row,
-  showUserMeta = false,
-  onClick,
-}: {
-  row: UserOrderRow;
-  showUserMeta?: boolean;
-  onClick?: () => void;
-}) {
-  const isJournalView = row.kind === "history" || row.kind === "log";
+function OrderListRow({ row }: { row: UserOrderRow }) {
   const coverSrc = `https://picsum.photos/seed/${encodeURIComponent(row.seed)}/272/181`;
 
   return (
     <li className="list-none">
-      <div
-        className={`flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3 ${isJournalView ? "cursor-pointer hover:border-[#6b7289]" : ""}`}
-        onClick={onClick}
-      >
-        {!isJournalView && (
-          <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
-            <img
-              src={coverSrc}
-              alt=""
-              className="h-full w-full object-cover"
-              width={272}
-              height={181}
-              loading="lazy"
-            />
-          </div>
-        )}
+      <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
+        <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
+          <img
+            src={coverSrc}
+            alt=""
+            className="h-full w-full object-cover"
+            width={272}
+            height={181}
+            loading="lazy"
+          />
+        </div>
         <div
           className={`${BOOK_LIST_TEXT_CELL_CLASS} min-h-[5rem] py-0.5 sm:min-h-[6rem]`}
         >
@@ -272,20 +227,12 @@ function OrderListRow({
             {row.title}
           </h3>
           <p className="line-clamp-1 text-sm text-[#9e9eae]">{row.author}</p>
-          {(showUserMeta || row.instanceId != null) && (
-            <p className="mt-1 text-xs text-[#5c6378]">
-              {showUserMeta && row.userEmail ? (
-                <span className="font-semibold text-[#43485e]">
-                  {row.userEmail}
-                </span>
-              ) : null}
-              {showUserMeta && row.userEmail && row.instanceId ? " · " : null}
-              {row.instanceId ? (
-                <span className="font-mono">{row.instanceId}</span>
-              ) : null}
+          {row.instanceId ? (
+            <p className="mt-1 font-mono text-xs text-[#5c6378]">
+              {row.instanceId}
             </p>
-          )}
-          {!isJournalView && row.description.length > 0 && (
+          ) : null}
+          {row.description.length > 0 && (
             <div className="mt-2 rounded-2xl border border-[#c5c9d6]/70 bg-white/70 p-3 shadow-[inset_0_1px_0_0_rgb(255_255_255_/0.85)] sm:mt-3 sm:p-4">
               <h4 className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[#8b92a8] sm:text-[11px]">
                 Description
@@ -295,11 +242,18 @@ function OrderListRow({
               </p>
             </div>
           )}
-          <OrderDateLines row={row} />
+          <p className="mt-2 text-xs text-[#5c6378] sm:mt-3 sm:text-sm">
+            <span className="font-semibold text-[#43485e]">Borrowed:</span>{" "}
+            {row.borrowedOn ?? formatDate(row.eventDate)}
+          </p>
         </div>
       </div>
     </li>
   );
+}
+
+function isJournalEventRow(row: UserOrderRow): boolean {
+  return row.kind === "history" || row.kind === "log";
 }
 
 function AccountStatsSidebar({
@@ -350,9 +304,11 @@ const Account = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [journal, setJournal] = useState<JournalEntry[]>([]);
-  const [books, setBooks] = useState<BackendBookDescription[]>([]);
-  const [selectedBook, setSelectedBook] =
-    useState<BackendBookDescription | null>(null);
+  const [descriptions, setDescriptions] = useState<JournalDescriptionView[]>(
+    [],
+  );
+  const [selectedDescription, setSelectedDescription] =
+    useState<JournalDescriptionView | null>(null);
   const [bookActionError, setBookActionError] = useState<string | null>(null);
   const [bookActionMessage, setBookActionMessage] = useState<string | null>(
     null,
@@ -379,17 +335,18 @@ const Account = () => {
           fetchJournalEntries(isAdmin ? {} : { user: user.email }),
         ],
       );
-      const mappedBooks: JournalDescriptionView[] = bookCatalog.map(
-        (book: BackendBookDescription) => ({
-          id: book.id,
-          title: book.title,
-          author: book.author || "Unknown author",
-          description: book.description ?? "",
-          seed: book.isbn ?? String(book.id),
-        }),
-      );
+      const mappedBooks: JournalDescriptionView[] = bookCatalog.map((book) => ({
+        id: book.id,
+        title: book.title,
+        author: book.author || "Unknown author",
+        description: book.description ?? "",
+        seed: book.isbn ?? String(book.id),
+        itemType: "book" as const,
+        descriptionStatus: book.descriptionStatus,
+        tags: book.tags ?? [],
+      }));
       const mappedBoards: JournalDescriptionView[] = boardCatalog.map(
-        (board: BackendBoardGameDescription) => ({
+        (board) => ({
           id: board.id,
           title: board.title,
           author:
@@ -398,17 +355,19 @@ const Account = () => {
               : "Board game",
           description: board.description ?? "",
           seed: `board-${board.id}`,
+          itemType: "board" as const,
+          descriptionStatus: board.descriptionStatus,
+          tags: board.tags ?? [],
         }),
       );
-      const mappedPs: JournalDescriptionView[] = psCatalog.map(
-        (ps: BackendPSGameDescription) => ({
-          id: ps.id,
-          title: ps.title,
-          author: "PS game",
-          description: ps.description ?? "",
-          seed: `ps-${ps.id}`,
-        }),
-      );
+      const mappedPs: JournalDescriptionView[] = psCatalog.map((ps) => ({
+        id: ps.id,
+        title: ps.title,
+        author: "PS game",
+        description: ps.description ?? "",
+        seed: `ps-${ps.id}`,
+        itemType: "ps" as const,
+      }));
       setDescriptions([...mappedBooks, ...mappedBoards, ...mappedPs]);
       setJournal(entries);
     } catch (err) {
@@ -542,22 +501,33 @@ const Account = () => {
 
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
 
-  const selectedBookUiStatus =
-    selectedBook == null
+  const selectedDescriptionUiStatus =
+    selectedDescription == null
       ? null
-      : selectedBook.descriptionStatus === "AVAILABLE"
-        ? "free"
-        : selectedBook.descriptionStatus === "BORROWED_BY_ME"
-          ? "borrowed-by-me"
-          : "borrowed";
+      : toUiStatus(selectedDescription.descriptionStatus);
 
-  const pingSelectedBook = useCallback(async () => {
-    if (user == null || selectedBook == null) return;
+  const closeSelectedDescription = useCallback(() => {
+    setSelectedDescription(null);
+    setBookActionError(null);
+    setBookActionMessage(null);
+  }, []);
+
+  const pingSelectedDescription = useCallback(async () => {
+    if (
+      user == null ||
+      selectedDescription == null ||
+      selectedDescription.itemType !== "book"
+    ) {
+      return;
+    }
     setBookActionError(null);
     setBookActionMessage(null);
     setPinging(true);
     try {
-      const items = await fetchItemsByDescription(selectedBook.id, "BORROWED");
+      const items = await fetchItemsByDescription(
+        selectedDescription.id,
+        "BORROWED",
+      );
       const borrowedByOther = items.find(
         (item) =>
           item.borrower != null &&
@@ -588,7 +558,7 @@ const Account = () => {
     } finally {
       setPinging(false);
     }
-  }, [selectedBook, user]);
+  }, [selectedDescription, user]);
 
   const leftSidebar = useMemo(
     () => (
@@ -770,36 +740,32 @@ const Account = () => {
         ) : (
           <ul className="flex flex-col gap-4">
             {rows.map((row) => {
-              const canOpenBook =
-                (row.kind === "history" || row.kind === "log") &&
-                row.descriptionId != null;
-              const handleClick = canOpenBook
-                ? () => {
-                    const book = booksById.get(row.descriptionId!);
-                    if (book) setSelectedBook(book);
-                  }
-                : undefined;
-              return (
-                <OrderListRow
-                  key={row.id}
-                  row={row}
-                  showUserMeta={isAdmin}
-                  onClick={handleClick}
-                />
-              );
+              if (isJournalEventRow(row)) {
+                const handleClick =
+                  row.descriptionId != null
+                    ? () => {
+                        const desc = descriptionsById.get(row.descriptionId!);
+                        if (desc) setSelectedDescription(desc);
+                      }
+                    : undefined;
+                return (
+                  <JournalEventCard
+                    key={row.id}
+                    row={row}
+                    formattedWhen={formatDateTime(row.eventDate)}
+                    showUserInMeta={isAdmin}
+                    onClick={handleClick}
+                  />
+                );
+              }
+              return <OrderListRow key={row.id} row={row} />;
             })}
           </ul>
         )}
       </div>
 
-      {selectedBook && (
-        <BookClientWindow
-          onBackdropClick={() => {
-            setSelectedBook(null);
-            setBookActionError(null);
-            setBookActionMessage(null);
-          }}
-        >
+      {selectedDescription != null && (
+        <BookClientWindow onBackdropClick={closeSelectedDescription}>
           {bookActionError ? (
             <p className="mb-3 rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
               {bookActionError}
@@ -811,35 +777,32 @@ const Account = () => {
             </p>
           ) : null}
           <BookFullView
-            coverSrc={`https://picsum.photos/seed/${encodeURIComponent(
-              selectedBook.isbn ?? String(selectedBook.id),
-            )}/272/181`}
-            coverSrcLarge={`https://picsum.photos/seed/${encodeURIComponent(
-              selectedBook.isbn ?? String(selectedBook.id),
-            )}/640/960`}
-            title={selectedBook.title}
-            author={selectedBook.author}
-            description={selectedBook.description ?? ""}
-            bookId={selectedBook.isbn ?? String(selectedBook.id)}
-            tags={selectedBook.tags ?? []}
-            status={selectedBookUiStatus ?? "borrowed"}
+            coverSrc={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/272/181`}
+            coverSrcLarge={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/640/960`}
+            title={selectedDescription.title}
+            author={selectedDescription.author}
+            description={selectedDescription.description}
+            bookId={selectedDescription.seed}
+            tags={selectedDescription.tags ?? []}
+            status={selectedDescriptionUiStatus ?? "borrowed"}
             newArrival={false}
-            onClose={() => {
-              setSelectedBook(null);
-              setBookActionError(null);
-              setBookActionMessage(null);
-            }}
+            onClose={closeSelectedDescription}
             onBorrow={() => {
               /* borrow action can be wired later if needed */
             }}
-            onPing={() => void pingSelectedBook()}
+            onPing={
+              selectedDescription.itemType === "book"
+                ? () => void pingSelectedDescription()
+                : undefined
+            }
             showPrimaryAction={
-              selectedBookUiStatus === "free" ||
-              selectedBookUiStatus === "borrowed" ||
-              selectedBookUiStatus === "borrowed-by-me"
+              selectedDescription.itemType === "book" &&
+              (selectedDescriptionUiStatus === "free" ||
+                selectedDescriptionUiStatus === "borrowed" ||
+                selectedDescriptionUiStatus === "borrowed-by-me")
             }
             primaryActionPending={
-              pinging && selectedBookUiStatus === "borrowed"
+              pinging && selectedDescriptionUiStatus === "borrowed"
             }
           />
         </BookClientWindow>

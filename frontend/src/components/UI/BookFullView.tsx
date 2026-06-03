@@ -182,7 +182,7 @@ const BookFullView = ({
             <span
               className={`absolute top-3 left-3 z-10 max-w-[calc(100%-5.5rem)] ${NEW_ARRIVAL_COVER_CLASS}`}
             >
-              New arrival
+              New
             </span>
           )}
           <span

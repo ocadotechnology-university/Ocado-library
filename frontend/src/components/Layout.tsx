@@ -11,6 +11,8 @@ type LayoutProps = {
   leftSidebar: ReactNode;
   /** Omit or pass null to use full width for main content (e.g. user panel is a slide-over). */
   rightSidebar?: ReactNode | null;
+  /** Tailwind background class for the scrollable main column (e.g. section tint on Home). */
+  mainBgClass?: string;
   children: ReactNode;
 };
 
@@ -25,10 +27,13 @@ const Layout = ({
   topBar,
   leftSidebar,
   rightSidebar = null,
+  mainBgClass = "bg-[#eeeef0]",
   children,
 }: LayoutProps) => {
   return (
-    <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[#eeeef0]">
+    <div
+      className={`flex h-screen min-h-0 flex-col overflow-hidden ${mainBgClass}`}
+    >
       <header className={TOP_BAR_HEADER_CLASS}>{topBar}</header>
 
       <div className={`${TOP_BAR_HEIGHT} shrink-0`} aria-hidden />
@@ -36,7 +41,9 @@ const Layout = ({
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside className={`${asideClass} border-r`}>{leftSidebar}</aside>
 
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-[#eeeef0] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main
+          className={`min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain ${mainBgClass} px-4 py-6 sm:px-6 lg:px-8 lg:py-8`}
+        >
           <div className="mx-auto w-full max-w-6xl">{children}</div>
         </main>
 

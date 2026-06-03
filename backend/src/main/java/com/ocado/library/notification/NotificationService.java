@@ -8,7 +8,7 @@ public interface NotificationService {
 
     boolean sendOverdueReminder(Item item);
 
-    boolean sendManualReminder(Item item, String pingerEmail);
+    boolean sendManualMessage(String recipientEmail, String message);
 
     boolean sendUserPing(Item item, String pingerEmail);
 }

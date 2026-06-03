@@ -1,6 +1,7 @@
-package com.ocado.library.notification;
+package com.ocado.library.notification.slack_service_impl;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +12,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
-import java.util.Optional;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.ocado.library.notification.NotificationProperties;
 
 @Component
 public class SlackClient {
