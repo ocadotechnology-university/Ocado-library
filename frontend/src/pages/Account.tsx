@@ -197,9 +197,7 @@ function OrderListRow({ row }: { row: UserOrderRow }) {
 
   return (
     <li className="list-none">
-      <div
-        className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3"
-      >
+      <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
         <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
           <img
             src={coverSrc}
@@ -320,16 +318,14 @@ const Account = () => {
           fetchJournalEntries(isAdmin ? {} : { user: user.email }),
         ],
       );
-      const mappedBooks: JournalDescriptionView[] = bookCatalog.map(
-        (book) => ({
-          id: book.id,
-          title: book.title,
-          author: book.author || "Unknown author",
-          description: book.description ?? "",
-          seed: book.isbn ?? String(book.id),
-          itemType: "book" as const,
-        }),
-      );
+      const mappedBooks: JournalDescriptionView[] = bookCatalog.map((book) => ({
+        id: book.id,
+        title: book.title,
+        author: book.author || "Unknown author",
+        description: book.description ?? "",
+        seed: book.isbn ?? String(book.id),
+        itemType: "book" as const,
+      }));
       const mappedBoards: JournalDescriptionView[] = boardCatalog.map(
         (board) => ({
           id: board.id,

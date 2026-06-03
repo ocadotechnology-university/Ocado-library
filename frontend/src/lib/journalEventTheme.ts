@@ -16,10 +16,7 @@ export type ItemTypeTheme = {
   iconClass: string;
 };
 
-export const OPERATION_THEME: Record<
-  JournalOperationType,
-  OperationTheme
-> = {
+export const OPERATION_THEME: Record<JournalOperationType, OperationTheme> = {
   BORROW: {
     label: "Borrowed",
     shortLabel: "Borrow",
@@ -110,7 +107,9 @@ export function resolveItemType(input: {
   seed: string;
   instanceId?: string;
 }): CatalogItemType {
-  return itemTypeFromInstanceId(input.instanceId) ?? itemTypeFromSeed(input.seed);
+  return (
+    itemTypeFromInstanceId(input.instanceId) ?? itemTypeFromSeed(input.seed)
+  );
 }
 
 export function showsLoanDetails(

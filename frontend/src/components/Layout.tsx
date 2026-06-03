@@ -31,7 +31,9 @@ const Layout = ({
   children,
 }: LayoutProps) => {
   return (
-    <div className={`flex h-screen min-h-0 flex-col overflow-hidden ${mainBgClass}`}>
+    <div
+      className={`flex h-screen min-h-0 flex-col overflow-hidden ${mainBgClass}`}
+    >
       <header className={TOP_BAR_HEADER_CLASS}>{topBar}</header>
 
       <div className={`${TOP_BAR_HEIGHT} shrink-0`} aria-hidden />

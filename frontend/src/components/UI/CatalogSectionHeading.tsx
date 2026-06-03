@@ -27,7 +27,10 @@ export default function CatalogSectionHeading({
       >
         {catalogSectionHeading(theme.label, count)}
       </h2>
-      <CatalogViewToggle mode={catalogView} onModeChange={onCatalogViewChange} />
+      <CatalogViewToggle
+        mode={catalogView}
+        onModeChange={onCatalogViewChange}
+      />
     </div>
   );
 }

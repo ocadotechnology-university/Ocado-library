@@ -45,9 +45,9 @@ export default function PreviewTagsRow({
       const pills = Array.from(measure.children) as HTMLElement[];
 
       if (maxLines === 2) {
-        const lineTops = [
-          ...new Set(pills.map((pill) => pill.offsetTop)),
-        ].sort((a, b) => a - b);
+        const lineTops = [...new Set(pills.map((pill) => pill.offsetTop))].sort(
+          (a, b) => a - b,
+        );
 
         if (lineTops.length <= 2) {
           setVisibleCount(tags.length);
@@ -131,7 +131,10 @@ export default function PreviewTagsRow({
         className={`flex h-full min-w-0 overflow-hidden ${wrapClass}`}
       >
         {tags.slice(0, visibleCount).map((tag) => (
-          <span key={tag} className={`${previewTagPillClass} max-w-full truncate`}>
+          <span
+            key={tag}
+            className={`${previewTagPillClass} max-w-full truncate`}
+          >
             {tag}
           </span>
         ))}
