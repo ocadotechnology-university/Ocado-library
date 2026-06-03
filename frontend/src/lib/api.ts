@@ -116,11 +116,13 @@ export type JournalEntry = {
 
 export class ApiError extends Error {
   readonly status: number;
+  readonly bodyText?: string;
 
-  constructor(message: string, status: number) {
+  constructor(message: string, status: number, bodyText?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.bodyText = bodyText;
   }
 }
 
@@ -148,7 +150,13 @@ async function apiJson<T>(
     throw new ApiError("Unauthorized", 401);
   }
   if (!response.ok) {
-    throw new ApiError(fallbackMessage, response.status);
+    const bodyText = await response.text().catch(() => "");
+    const suffix = bodyText ? `: ${bodyText.slice(0, 400)}` : "";
+    throw new ApiError(
+      `${fallbackMessage}${suffix}`,
+      response.status,
+      bodyText,
+    );
   }
   if (response.status === 204) {
     return undefined as T;
@@ -185,6 +193,30 @@ export async function fetchBookByIsbn(isbn: string): Promise<IsbnBookResponse> {
     throw new ApiError("Failed to fetch book data", response.status);
   }
   return (await response.json()) as IsbnBookResponse;
+}
+
+export async function fetchCatalogTags(
+  type: "Book" | "BoardGame" | "PSGame",
+): Promise<string[]> {
+  const payload = await apiJson<{ tags?: string[] }>(
+    `/api/descriptions/${type}/tags`,
+    {},
+    "Failed to load tags",
+  );
+  return payload.tags ?? [];
+}
+
+export async function updateDescriptionTags(
+  type: "Book" | "BoardGame" | "PSGame",
+  descriptionId: number,
+  tags: string[],
+): Promise<string[]> {
+  const payload = await apiJson<{ tags?: string[] }>(
+    `/api/descriptions/${type}/${descriptionId}/tags`,
+    { method: "POST", body: JSON.stringify({ tags }) },
+    "Failed to update tags",
+  );
+  return payload.tags ?? [];
 }
 
 export async function fetchBookDescriptions(): Promise<

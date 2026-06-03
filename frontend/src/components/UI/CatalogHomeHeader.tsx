@@ -26,26 +26,11 @@ export const CATEGORY_CHIPS = [
   "Prizes",
 ] as const;
 
-/** Demo corpus for partial-match suggestions. */
-const SEARCH_CORPUS: { id: string; text: string; hint: string }[] = [
-  { id: "1", text: "The Midnight Library", hint: "Book · Matt Haig" },
-  { id: "2", text: "Atomic Habits", hint: "Book · James Clear" },
-  {
-    id: "3",
-    text: "You Don't Know JS Yet",
-    hint: "Book · Kyle Simpson · JavaScript",
-  },
-  { id: "4", text: "Fluent Python", hint: "Book · Luciano Ramalho" },
-  {
-    id: "5",
-    text: "Designing Data-Intensive Applications",
-    hint: "Book · Martin Kleppmann",
-  },
-  { id: "6", text: "Pandemic Legacy Season 1", hint: "Board game" },
-  { id: "7", text: "Wingspan", hint: "Board game" },
-  { id: "8", text: "God of War Ragnarök", hint: "PS game" },
-  { id: "9", text: "Hollow Knight", hint: "PS / multi" },
-];
+export type CatalogSearchItem = {
+  key: string;
+  title: string;
+  hint: string;
+};
 
 export type CatalogHomeHeaderProps = {
   allTags: string[];
@@ -55,6 +40,10 @@ export type CatalogHomeHeaderProps = {
   onSectionChange: (s: MediaSection) => void;
   activeCategory: string;
   onCategoryChange: (c: string) => void;
+  searchQuery: string;
+  onSearchQueryChange: (query: string) => void;
+  searchItems: CatalogSearchItem[];
+  onSearchSelect: (key: string) => void;
   className?: string;
 };
 
@@ -66,23 +55,27 @@ const CatalogHomeHeader = ({
   onSectionChange,
   activeCategory,
   onCategoryChange,
+  searchQuery,
+  onSearchQueryChange,
+  searchItems,
+  onSearchSelect,
   className,
 }: CatalogHomeHeaderProps) => {
   const searchId = useId();
-  const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-
   const searchRef = useRef<HTMLDivElement>(null);
 
   const suggestions = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = searchQuery.trim().toLowerCase();
     if (q.length === 0) return [];
-    return SEARCH_CORPUS.filter(
-      (item) =>
-        item.text.toLowerCase().includes(q) ||
-        item.hint.toLowerCase().includes(q),
-    ).slice(0, 8);
-  }, [query]);
+    return searchItems
+      .filter(
+        (item) =>
+          item.title.toLowerCase().includes(q) ||
+          item.hint.toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [searchItems, searchQuery]);
 
   useEffect(() => {
     const close = (e: MouseEvent) => {
@@ -96,10 +89,14 @@ const CatalogHomeHeader = ({
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
-  const pickSuggestion = useCallback((text: string) => {
-    setQuery(text);
-    setSearchOpen(false);
-  }, []);
+  const pickSuggestion = useCallback(
+    (key: string, title: string) => {
+      onSearchQueryChange(title);
+      onSearchSelect(key);
+      setSearchOpen(false);
+    },
+    [onSearchQueryChange, onSearchSelect],
+  );
 
   return (
     <div className={`flex w-full flex-col gap-5 ${className ?? ""}`.trim()}>
@@ -142,33 +139,33 @@ const CatalogHomeHeader = ({
             <input
               id={searchId}
               type="search"
-              value={query}
+              value={searchQuery}
               onChange={(e) => {
-                setQuery(e.target.value);
+                onSearchQueryChange(e.target.value);
                 setSearchOpen(true);
               }}
               onFocus={() => setSearchOpen(true)}
-              placeholder="Search titles, authors…"
+              placeholder="Search titles, authors, tags…"
               autoComplete="off"
               className="w-full rounded-xl border border-[#b1b2b5] bg-white/90 px-4 py-2.5 text-sm text-[#43485e] shadow-sm outline-none ring-[#43485e]/20 transition placeholder:text-[#9e9eae] focus:border-[#43485e]/50 focus:ring-2"
             />
             {searchOpen &&
-              query.trim().length > 0 &&
+              searchQuery.trim().length > 0 &&
               suggestions.length > 0 && (
                 <ul
                   className="absolute top-full right-0 left-0 z-40 mt-1 max-h-52 overflow-y-auto rounded-xl border border-[#d8dce8] bg-white py-1 shadow-[0_12px_32px_-8px_rgb(67_72_94_/0.25)]"
                   role="listbox"
                 >
                   {suggestions.map((s) => (
-                    <li key={s.id} role="option">
+                    <li key={s.key} role="option">
                       <button
                         type="button"
                         className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm transition hover:bg-[#eeeef0]"
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => pickSuggestion(s.text)}
+                        onClick={() => pickSuggestion(s.key, s.title)}
                       >
                         <span className="font-medium text-[#43485e]">
-                          {s.text}
+                          {s.title}
                         </span>
                         <span className="text-xs text-[#9e9eae]">{s.hint}</span>
                       </button>
@@ -177,7 +174,7 @@ const CatalogHomeHeader = ({
                 </ul>
               )}
             {searchOpen &&
-              query.trim().length > 0 &&
+              searchQuery.trim().length > 0 &&
               suggestions.length === 0 && (
                 <div className="absolute top-full right-0 left-0 z-40 mt-1 rounded-xl border border-[#d8dce8] bg-white px-3 py-2 text-sm text-[#9e9eae] shadow-lg">
                   No matches — try another word.
