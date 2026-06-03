@@ -9,6 +9,15 @@ import {
   BOOK_FULL_COVER_INNER_WRAP_CLASS,
 } from "./bookFullViewCardShell";
 import {
+  BOOK_PREVIEW_AUTHOR_CLASS,
+  BOOK_PREVIEW_BODY_CLASS,
+  BOOK_PREVIEW_CARD_CLASS,
+  BOOK_PREVIEW_COVER_CLASS,
+  BOOK_PREVIEW_TAGS_SLOT_CLASS,
+  BOOK_PREVIEW_TITLE_CLASS,
+} from "./bookPreviewCardLayout";
+import PreviewTagsRow from "./PreviewTagsRow";
+import {
   BOOK_STATUS_COVER_LABEL,
   BOOK_STATUS_PREVIEW_COMPACT_CLASS,
   NEW_ARRIVAL_COVER_CLASS,
@@ -47,6 +56,8 @@ export type BookPreviewProps = {
   description?: string;
   /** List view — shown under author (same pattern as BookFullView). */
   bookId?: string;
+  /** Single-line tags; truncates with ellipsis when overflowing. */
+  tags?: string[];
 };
 
 const BookPreview = ({
@@ -61,6 +72,7 @@ const BookPreview = ({
   variant = "card",
   description,
   bookId,
+  tags,
 }: BookPreviewProps) => {
   const shell = cardShellByStatus[status];
   const borderClass = newArrival
@@ -79,7 +91,7 @@ const BookPreview = ({
   const isList = variant === "list";
   const layoutClass = isList
     ? "relative max-w-none w-full flex-row items-stretch"
-    : "max-w-[288px] flex-col sm:max-w-[304px]";
+    : BOOK_PREVIEW_CARD_CLASS;
 
   const listOuter = [
     BOOK_FULL_CARD_OUTER_CLASS,
@@ -94,6 +106,8 @@ const BookPreview = ({
   ]
     .join(" ")
     .trim();
+
+  const reserveTagSlot = tags !== undefined;
 
   if (isList) {
     return (
@@ -123,26 +137,33 @@ const BookPreview = ({
               <span
                 className={`absolute top-1 left-1 z-10 max-w-[calc(100%-3rem)] sm:top-2 sm:left-2 ${NEW_ARRIVAL_PREVIEW_COMPACT_CLASS}`}
               >
-                New arrival
+                New
               </span>
             )}
           </div>
           <span
-            className={`absolute top-4 right-4 z-10 max-w-[8rem] whitespace-normal text-right leading-tight sm:top-5 sm:right-5 ${BOOK_STATUS_PREVIEW_COMPACT_CLASS[status]}`}
+            className={`absolute top-4 right-4 z-10 max-w-[8rem] truncate text-right leading-tight sm:top-5 sm:right-5 ${BOOK_STATUS_PREVIEW_COMPACT_CLASS[status]}`}
           >
             {BOOK_STATUS_COVER_LABEL[status]}
           </span>
           <div
-            className={`flex min-w-0 flex-1 flex-col justify-center ${BOOK_LIST_TEXT_CELL_WITH_STATUS_CLASS} min-h-[6.5rem] py-1 sm:min-h-[7rem]`}
+            className={`flex min-w-0 flex-1 flex-col justify-center overflow-hidden ${BOOK_LIST_TEXT_CELL_WITH_STATUS_CLASS} min-h-[6.5rem] py-1 sm:min-h-[7rem]`}
           >
-            <h2 className="line-clamp-2 text-[1.15rem] font-semibold tracking-tight text-[#2a3142] sm:text-lg md:text-xl">
+            <h2
+              className="line-clamp-2 text-[1.15rem] font-semibold tracking-tight text-[#2a3142] sm:text-lg md:text-xl"
+              title={title}
+            >
               {title}
             </h2>
-            <p className="mt-1 line-clamp-1 text-sm text-[#6b7289] sm:text-base">
+            <p className="mt-1 truncate text-sm text-[#6b7289] sm:text-base" title={author}>
               {author}
             </p>
+            {tags != null && tags.length > 0 && <PreviewTagsRow tags={tags} />}
             {bookId != null && bookId.length > 0 && (
-              <p className="mt-2 inline-flex w-fit rounded-lg bg-[#43485e]/[0.06] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10 sm:text-xs">
+              <p
+                className="mt-2 inline-flex max-w-full truncate rounded-lg bg-[#43485e]/[0.06] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10 sm:text-xs"
+                title={bookId}
+              >
                 {bookId}
               </p>
             )}
@@ -176,7 +197,7 @@ const BookPreview = ({
       onKeyDown={interactive ? keyActivate : undefined}
       className={`flex w-full overflow-hidden rounded-xl ${borderClass} ${shell} ${layoutClass} ${interactive ? "cursor-pointer transition hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]" : ""} ${className ?? ""}`.trim()}
     >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#dcdfe6]">
+      <div className={BOOK_PREVIEW_COVER_CLASS}>
         <img
           src={coverSrc}
           alt=""
@@ -190,25 +211,37 @@ const BookPreview = ({
           <span
             className={`absolute top-1 left-1 z-10 max-w-[calc(100%-3rem)] sm:top-1.5 sm:left-1.5 ${NEW_ARRIVAL_COVER_CLASS}`}
           >
-            New arrival
+            New
           </span>
         )}
         <span
-          className={`absolute top-1 right-1 z-10 max-w-[min(62%,10rem)] text-center sm:top-1.5 sm:right-1.5 ${BOOK_STATUS_PREVIEW_COMPACT_CLASS[status]}`}
+          className={`absolute top-1 right-1 z-10 max-w-[min(62%,10rem)] truncate text-center sm:top-1.5 sm:right-1.5 ${BOOK_STATUS_PREVIEW_COMPACT_CLASS[status]}`}
         >
           {BOOK_STATUS_COVER_LABEL[status]}
         </span>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 p-2.5">
-        <h2 className="line-clamp-2 text-sm font-semibold leading-snug text-[#43485e] sm:text-[0.95rem]">
+      <div className={BOOK_PREVIEW_BODY_CLASS}>
+        <h2 className={BOOK_PREVIEW_TITLE_CLASS} title={title}>
           {title}
         </h2>
-        <p className="line-clamp-1 text-xs text-[#9e9eae]">{author}</p>
-        {bookId != null && bookId.length > 0 && (
-          <p className="mt-1 inline-flex w-fit rounded-md bg-[#43485e]/[0.06] px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
+        <p className={BOOK_PREVIEW_AUTHOR_CLASS} title={author}>
+          {author}
+        </p>
+        {reserveTagSlot ? (
+          <div className={BOOK_PREVIEW_TAGS_SLOT_CLASS}>
+            {tags.length > 0 ? (
+              <PreviewTagsRow tags={tags} compact maxLines={2} />
+            ) : null}
+          </div>
+        ) : null}
+        {!reserveTagSlot && bookId != null && bookId.length > 0 ? (
+          <p
+            className="mt-0.5 h-4 shrink-0 truncate font-mono text-[10px] font-semibold tracking-wider text-[#43485e]"
+            title={bookId}
+          >
             {bookId}
           </p>
-        )}
+        ) : null}
         {footer != null && (
           <div className="mt-1.5 border-t border-[#b1b2b5]/50 pt-1.5">
             {footer}

@@ -3,8 +3,9 @@ import Layout from "../components/Layout";
 import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
 import BookPreview from "../components/UI/BookPreview";
-import CatalogViewToggle from "../components/UI/CatalogViewToggle";
 import type { CatalogViewMode } from "../components/UI/CatalogViewToggle";
+import CatalogSectionHeading from "../components/UI/CatalogSectionHeading";
+import { CATALOG_SECTION_THEME } from "../components/UI/catalogSectionTheme";
 import type { BookStatus } from "../components/UI/BookPreview";
 import CatalogHomeHeader, {
   type MediaSection,
@@ -407,6 +408,15 @@ const Home = () => {
     filterTags,
     books,
   ]);
+
+  const catalogDisplayRows = useMemo(() => {
+    if (section === "board") return boardPreviewRows;
+    if (section === "ps") return psPreviewRows;
+    return filteredRows;
+  }, [section, boardPreviewRows, psPreviewRows, filteredRows]);
+
+  const catalogMainBgClass = CATALOG_SECTION_THEME[section].mainBgClass;
+  const catalogShowTags = section === "books";
 
   const resetDraft = useCallback(() => {
     setAdminDraft({
@@ -1034,6 +1044,7 @@ const Home = () => {
   return (
     <>
       <Layout
+        mainBgClass={catalogMainBgClass}
         topBar={
           <CatalogAppTopBar
             onLogoClick={() => {
@@ -1257,23 +1268,17 @@ const Home = () => {
                     Retry
                   </button>
                 </div>
-              ) : section === "board" || section === "ps" ? (
-                <>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">
-                      Browse
-                    </h2>
-                    <CatalogViewToggle
-                      mode={catalogView}
-                      onModeChange={setCatalogView}
-                    />
-                  </div>
+              ) : section !== "books" || filteredRows.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  <CatalogSectionHeading
+                    section={section}
+                    count={catalogDisplayRows.length}
+                    catalogView={catalogView}
+                    onCatalogViewChange={setCatalogView}
+                  />
                   {catalogView === "cards" ? (
                     <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                      {(section === "board"
-                        ? boardPreviewRows
-                        : psPreviewRows
-                      ).map((row) => (
+                      {catalogDisplayRows.map((row) => (
                         <li
                           key={row.key}
                           className="flex flex-col items-center gap-2"
@@ -1294,7 +1299,8 @@ const Home = () => {
                             author={row.author}
                             status={row.status}
                             newArrival={row.newArrival}
-                            bookId={row.bookId}
+                            bookId={catalogShowTags ? undefined : row.bookId}
+                            tags={catalogShowTags ? row.tags : undefined}
                             onOpen={() => openBook(row.key)}
                           />
                         </li>
@@ -1302,113 +1308,42 @@ const Home = () => {
                     </ul>
                   ) : (
                     <ul className="flex list-none flex-col gap-4">
-                      {(section === "board"
-                        ? boardPreviewRows
-                        : psPreviewRows
-                      ).map((row) => (
+                      {catalogDisplayRows.map((row) => (
                         <li key={row.key} className="w-full">
-                          <BookPreview
-                            variant="list"
-                            coverSrc={coverSrcFor(row)}
-                            title={row.title}
-                            author={row.author}
-                            status={row.status}
-                            newArrival={row.newArrival}
-                            bookId={row.bookId}
-                            description={row.description}
-                            onOpen={() => openBook(row.key)}
-                          />
+                          <div
+                            onContextMenu={(e) => {
+                              if (!isAdmin) return;
+                              e.preventDefault();
+                              setContextMenu({
+                                key: row.key,
+                                x: e.clientX,
+                                y: e.clientY,
+                              });
+                            }}
+                          >
+                            <BookPreview
+                              variant="list"
+                              coverSrc={coverSrcFor(row)}
+                              title={row.title}
+                              author={row.author}
+                              status={row.status}
+                              newArrival={row.newArrival}
+                              bookId={catalogShowTags ? undefined : row.bookId}
+                              description={row.description}
+                              tags={catalogShowTags ? row.tags : undefined}
+                              onOpen={() => openBook(row.key)}
+                            />
+                          </div>
                         </li>
                       ))}
                     </ul>
                   )}
-                </>
-              ) : filteredRows.length === 0 ? (
+                </div>
+              ) : (
                 <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
                   No items match these filters. Try another category or clear
                   the filters on the left.
                 </p>
-              ) : catalogView === "cards" ? (
-                <>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">
-                      Browse
-                    </h2>
-                    <CatalogViewToggle
-                      mode={catalogView}
-                      onModeChange={setCatalogView}
-                    />
-                  </div>
-                  <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                    {filteredRows.map((row) => (
-                      <li
-                        key={row.key}
-                        className="flex flex-col items-center gap-2"
-                        onContextMenu={(e) => {
-                          if (!isAdmin) return;
-                          e.preventDefault();
-                          setContextMenu({
-                            key: row.key,
-                            x: e.clientX,
-                            y: e.clientY,
-                          });
-                        }}
-                      >
-                        <BookPreview
-                          variant="card"
-                          coverSrc={coverSrcFor(row)}
-                          title={row.title}
-                          author={row.author}
-                          status={row.status}
-                          newArrival={row.newArrival}
-                          bookId={row.bookId}
-                          onOpen={() => openBook(row.key)}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <>
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <h2 className="text-lg font-semibold text-[#43485e]">
-                      Browse
-                    </h2>
-                    <CatalogViewToggle
-                      mode={catalogView}
-                      onModeChange={setCatalogView}
-                    />
-                  </div>
-                  <ul className="flex list-none flex-col gap-4">
-                    {filteredRows.map((row) => (
-                      <li key={row.key} className="w-full">
-                        <div
-                          onContextMenu={(e) => {
-                            if (!isAdmin) return;
-                            e.preventDefault();
-                            setContextMenu({
-                              key: row.key,
-                              x: e.clientX,
-                              y: e.clientY,
-                            });
-                          }}
-                        >
-                          <BookPreview
-                            variant="list"
-                            coverSrc={coverSrcFor(row)}
-                            title={row.title}
-                            author={row.author}
-                            status={row.status}
-                            newArrival={row.newArrival}
-                            bookId={row.bookId}
-                            description={row.description}
-                            onOpen={() => openBook(row.key)}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </>
               )}
             </div>
           ) : (
