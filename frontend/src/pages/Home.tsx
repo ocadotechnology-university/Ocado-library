@@ -434,7 +434,6 @@ const Home = () => {
   }, [catalogAuthors, authorQuery]);
 
   const catalogMainBgClass = CATALOG_SECTION_THEME[section].mainBgClass;
-  const catalogShowTags = section === "books";
 
   const resetDraft = useCallback(() => {
     setAdminDraft({
@@ -1379,8 +1378,7 @@ const Home = () => {
                             author={row.author}
                             status={row.status}
                             newArrival={row.newArrival}
-                            bookId={catalogShowTags ? undefined : row.bookId}
-                            tags={catalogShowTags ? row.tags : undefined}
+                            tags={row.tags}
                             onOpen={() => openBook(row.key)}
                           />
                         </li>
@@ -1408,9 +1406,8 @@ const Home = () => {
                               author={row.author}
                               status={row.status}
                               newArrival={row.newArrival}
-                              bookId={catalogShowTags ? undefined : row.bookId}
                               description={row.description}
-                              tags={catalogShowTags ? row.tags : undefined}
+                              tags={row.tags}
                               onOpen={() => openBook(row.key)}
                             />
                           </div>
