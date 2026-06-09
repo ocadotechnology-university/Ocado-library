@@ -28,7 +28,8 @@ public class ItemController {
             @PathVariable("description_id") Long descriptionId,
             @RequestParam(required = false) ItemStatus status) {
             
-        List<ItemSummary> summaries = itemService.getItemsByDescription(descriptionId, status).stream()
+        List<ItemSummary> summaries = itemService
+                .getItemsByDescription(descriptionId, status, CurrentUser.email()).stream()
                 .map(item -> new ItemSummary(item.getInternalId(), item.getStatus(), item.getBorrower()))
                 .collect(Collectors.toList());
                 

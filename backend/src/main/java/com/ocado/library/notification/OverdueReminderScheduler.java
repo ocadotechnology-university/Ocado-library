@@ -42,7 +42,8 @@ public class OverdueReminderScheduler {
                         item.getInternalId(),
                         NotificationType.OVERDUE_REMINDER,
                         item.getBorrower());
-                log.info("Sent overdue Slack reminder for item {}", item.getInternalId());
+                log.info("Sent overdue reminder for \"{}\" (copy {}) to {}",
+                        item.getDescription().getTitle(), item.getInternalId(), item.getBorrower());
             }
         }
     }

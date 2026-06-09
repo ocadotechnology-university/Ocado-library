@@ -23,10 +23,17 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
+
+logging:
+  level:
+    root: INFO
+    com.ocado.library: INFO
+    org.hibernate: WARN
+    org.springframework.security: WARN
 
 server:
   port: 8080
