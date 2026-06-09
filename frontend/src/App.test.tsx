@@ -110,7 +110,9 @@ describe("App", () => {
   it("redirects guests from account to login", async () => {
     renderAppAt("/account");
 
-    expect(await screen.findByText("Sign in to Ocado Library")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Sign in to Ocado Library"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Continue with Google")).toBeInTheDocument();
   });
 
@@ -120,7 +122,11 @@ describe("App", () => {
 
     renderAppAt("/account");
 
-    expect(await screen.findByRole("button", { name: "Log out" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Account sections" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: "Log out" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Account sections" }),
+    ).toBeInTheDocument();
   });
 });
