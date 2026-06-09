@@ -1,7 +1,6 @@
 package com.ocado.library.service;
 
 import com.ocado.library.exception.ConflictException;
-import com.ocado.library.exception.ForbiddenException;
 import com.ocado.library.exception.NotFoundException;
 import com.ocado.library.model.Item;
 import com.ocado.library.model.enums.ItemStatus;
