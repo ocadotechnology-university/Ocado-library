@@ -7,8 +7,11 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,7 @@ import java.util.Map;
 /**
  * Pomocnicze endpointy API — logowanie Google robi Spring automatycznie ({@code /oauth2/authorization/google}).
  */
+@Slf4j
 @RestController
 @Profile("!test")
 @RequestMapping("/api")
@@ -61,5 +65,24 @@ public class AuthController {
         }
 
         return ResponseEntity.status(401).build();
+    }
+
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(@AuthenticationPrincipal Object principal) {
+        String email = emailFromPrincipal(principal);
+        if (email != null && !email.isBlank()) {
+            log.info("User logged out: {}", email);
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    private static String emailFromPrincipal(Object principal) {
+        if (principal instanceof Jwt jwt) {
+            return jwt.getClaimAsString("email");
+        }
+        if (principal instanceof OidcUser oidcUser) {
+            return oidcUser.getEmail();
+        }
+        return null;
     }
 }

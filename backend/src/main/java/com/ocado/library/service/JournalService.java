@@ -9,6 +9,9 @@ import com.ocado.library.model.Journal;
 import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.JournalRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class JournalService {
     private final JournalRepository journalRepository;
@@ -34,7 +37,9 @@ public class JournalService {
         journal.setUser(userEmail);
         journal.setItemId(itemId);
         journal.setDescriptionId(descriptionId);
-        journalRepository.save(journal);
+        Journal saved = journalRepository.save(journal);
+        log.info("Journal entry saved (id={}): {} | {} by {}",
+                saved.getId(), operationType, description, userEmail);
     }
     
     public List<Journal> getEntries(

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ApiError, fetchMe, hasRole } from "../lib/api";
+import { ApiError, fetchMe, hasRole, logoutApi } from "../lib/api";
 import {
   clearStoredToken,
   readStoredToken,
@@ -26,7 +26,7 @@ type AuthContextValue = {
   authLoading: boolean;
   loginWithGoogle: () => void;
   completeLogin: (accessToken: string, remember: boolean) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -78,9 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [loadProfile],
   );
 
-  const logout = useCallback(() => {
-    clearStoredToken();
-    setUser(null);
+  const logout = useCallback(async () => {
+    try {
+      await logoutApi();
+    } finally {
+      clearStoredToken();
+      setUser(null);
+    }
   }, []);
 
   const value = useMemo(
