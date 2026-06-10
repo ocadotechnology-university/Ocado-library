@@ -46,7 +46,9 @@ describe("validateMigrationDescriptions", () => {
   });
 
   it("requires type on each entry", () => {
-    const result = validateMigrationDescriptions([{ ...validBook, type: undefined }]);
+    const result = validateMigrationDescriptions([
+      { ...validBook, type: undefined },
+    ]);
     expect(result.errors.some((e) => e.path.endsWith(".type"))).toBe(true);
   });
 
@@ -87,7 +89,9 @@ describe("validateMigrationDescriptions", () => {
         instances: [{ internalId: "OC-WRO-B-0104", status: "AVAILABLE" }],
       },
     ]);
-    expect(result.errors.some((e) => e.message.includes("duplicate"))).toBe(true);
+    expect(result.errors.some((e) => e.message.includes("duplicate"))).toBe(
+      true,
+    );
   });
 });
 
