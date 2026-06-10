@@ -17,8 +17,12 @@ export default function CatalogAppTopBar({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { isAdmin } = useAuth();
-  const { notificationsOpen, setNotificationsOpen, toggleNotifications } =
-    useAppChrome();
+  const {
+    notificationsOpen,
+    setNotificationsOpen,
+    toggleNotifications,
+    hasUnreadNotifications,
+  } = useAppChrome();
 
   return (
     <TopBar
@@ -28,6 +32,7 @@ export default function CatalogAppTopBar({
         navigate("/");
       }}
       notificationsPanelOpen={notificationsOpen}
+      hasUnreadNotifications={hasUnreadNotifications}
       onNotificationsClick={() => toggleNotifications()}
       accountPanelOpen={pathname === "/account"}
       roleBadgeText={isAdmin ? "Admin account" : null}

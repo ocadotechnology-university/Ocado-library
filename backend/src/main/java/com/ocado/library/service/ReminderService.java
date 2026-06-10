@@ -109,21 +109,30 @@ public class ReminderService {
             return PingOutcome.COOLDOWN;
         }
 
-        if (!notificationService.isEnabled()) {
+        boolean slackEnabled = notificationService.isEnabled();
+        boolean slackSent = slackEnabled
+                && notificationService.sendUserPing(item, normalizedPinger);
+
+        notificationLogService.record(
+                item.getInternalId(),
+                NotificationType.USER_PING,
+                borrower,
+                normalizedPinger);
+
+        if (!slackEnabled) {
+            log.info("Ping recorded for in-app panel for \"{}\" (copy {}) from {} to {} (Slack disabled)",
+                    item.getDescription().getTitle(), item.getInternalId(), normalizedPinger, borrower);
             return PingOutcome.NOTIFICATIONS_DISABLED;
         }
 
-        if (notificationService.sendUserPing(item, normalizedPinger)) {
-            notificationLogService.record(
-                    item.getInternalId(),
-                    NotificationType.USER_PING,
-                    borrower,
-                    normalizedPinger);
+        if (slackSent) {
             log.info("Ping sent for \"{}\" (copy {}) from {} to {}",
                     item.getDescription().getTitle(), item.getInternalId(), normalizedPinger, borrower);
             return PingOutcome.SENT;
         }
 
+        log.warn("Ping recorded for in-app panel but Slack delivery failed for \"{}\" (copy {}) to {}",
+                item.getDescription().getTitle(), item.getInternalId(), borrower);
         return PingOutcome.SEND_FAILED;
     }
 

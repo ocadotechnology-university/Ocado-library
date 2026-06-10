@@ -130,6 +130,26 @@ export type JournalEntry = {
   descriptionId: number | null;
 };
 
+export type NotificationType =
+  | "OVERDUE_REMINDER"
+  | "MANUAL_REMINDER"
+  | "USER_PING";
+
+export type NotificationLogEntry = {
+  id: number;
+  itemInternalId: string;
+  notificationType: NotificationType;
+  recipientEmail: string;
+  senderEmail: string | null;
+  sentAt: string;
+  itemTitle: string | null;
+  read: boolean;
+};
+
+export type UnreadNotificationCount = {
+  unreadCount: number;
+};
+
 export class ApiError extends Error {
   readonly status: number;
   readonly bodyText?: string;
@@ -294,7 +314,7 @@ export async function pingBorrower(internalId: string): Promise<void> {
   await apiJson<void>(
     `/api/items/${encodeURIComponent(internalId)}/ping`,
     { method: "POST" },
-    "Failed to send ping",
+    "Failed to send notification",
   );
 }
 
@@ -304,7 +324,7 @@ export async function pingDescriptionBorrowers(
   await apiJson<void>(
     `/api/items/description/${descriptionId}/ping`,
     { method: "POST" },
-    "Failed to send ping",
+    "Failed to send notification",
   );
 }
 
@@ -449,6 +469,30 @@ export async function updateItemStatus(
     `/api/admin/items/${encodeURIComponent(internalId)}/status`,
     { method: "PATCH", body: JSON.stringify({ status }) },
     "Failed to update item status",
+  );
+}
+
+export async function fetchNotifications(): Promise<NotificationLogEntry[]> {
+  return apiJson<NotificationLogEntry[]>(
+    "/api/notifications",
+    {},
+    "Failed to load your notifications",
+  );
+}
+
+export async function fetchUnreadNotificationCount(): Promise<UnreadNotificationCount> {
+  return apiJson<UnreadNotificationCount>(
+    "/api/notifications/unread-count",
+    {},
+    "Failed to load unread notification count",
+  );
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  await apiJson<void>(
+    `/api/notifications/${id}/read`,
+    { method: "PATCH" },
+    "Failed to mark the notification as read",
   );
 }
 

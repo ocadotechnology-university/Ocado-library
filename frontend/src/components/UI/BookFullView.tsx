@@ -48,7 +48,7 @@ export type BookFullViewProps = {
 
 const actionLabel: Record<BookStatus, string> = {
   free: "Borrow",
-  borrowed: "Ping",
+  borrowed: "Send reminder",
   "borrowed-by-me": "Return",
 };
 

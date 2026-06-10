@@ -18,6 +18,7 @@ type TopBarProps = {
   onLogoClick?: () => void;
   onNotificationsClick?: () => void;
   notificationsPanelOpen?: boolean;
+  hasUnreadNotifications?: boolean;
   onAccountClick?: () => void;
   accountPanelOpen?: boolean;
   roleBadgeText?: string | null;
@@ -27,6 +28,7 @@ const TopBar = ({
   onLogoClick,
   onNotificationsClick,
   notificationsPanelOpen = false,
+  hasUnreadNotifications = false,
   onAccountClick,
   accountPanelOpen = false,
   roleBadgeText = null,
@@ -64,13 +66,23 @@ const TopBar = ({
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
         <button
           type="button"
-          className={actionButtonClass}
-          aria-label="Notifications"
+          className={`${actionButtonClass} relative`}
+          aria-label={
+            hasUnreadNotifications
+              ? "Notifications (unread)"
+              : "Notifications"
+          }
           aria-expanded={notificationsPanelOpen}
           aria-haspopup="dialog"
           onClick={() => onNotificationsClick?.()}
         >
           🔔
+          {hasUnreadNotifications ? (
+            <span
+              className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#43485e] ring-2 ring-[#eeeef0]"
+              aria-hidden
+            />
+          ) : null}
         </button>
         <button
           type="button"

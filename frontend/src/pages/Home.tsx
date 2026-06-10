@@ -790,25 +790,29 @@ const Home = () => {
       try {
         await pingDescriptionBorrowers(book.id);
         setActionMessage(
-          "Ping wysłany na Slacka do osób, które trzymają wypożyczone egzemplarze tej książki.",
+          "Return reminder sent to people who are currently borrowing copies of this book.",
         );
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.status === 409) {
             setActionError(
-              "Nie można wysłać pinga (książka nie jest wypożyczona, pingujesz siebie lub wysłałeś go niedawno).",
+              "We could not send the notification. The item may not be borrowed, you may be notifying yourself, or you may have sent one recently.",
             );
           } else if (err.status === 404) {
-            setActionError("Nie znaleziono egzemplarza.");
+            setActionError("We could not find that copy. Please try again.");
           } else if (err.status === 401 || err.status === 403) {
             setActionError(
-              "Brak uprawnień do wysłania pinga. Zaloguj się ponownie.",
+              "You do not have permission to send this notification. Please sign in again.",
             );
           } else {
-            setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+            setActionError(
+              "We could not send the notification. Please try again later.",
+            );
           }
         } else {
-          setActionError("Nie udało się wysłać pinga. Spróbuj ponownie.");
+          setActionError(
+            "We could not send the notification. Please try again later.",
+          );
         }
       } finally {
         setPinging(false);
