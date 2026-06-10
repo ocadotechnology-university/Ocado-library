@@ -173,6 +173,29 @@ All three query parameters are optional and can be combined.
 
 ---
 
+## Flow 10 – Admin bulk-import catalog (Admin)
+
+**Goal:** create descriptions and physical copies from a JSON array in one operation (books, board games, PS games).
+
+| Step | Actor | Call |
+|------|-------|------|
+| 1 | FE | validate JSON client-side (`catalogImportValidation.ts`) |
+| 2 | FE → BE | `POST /api/admin/import` with `MigrationDescription[]` body |
+| 3 | BE | file-level validation (duplicates, DB conflicts, per-type rules) |
+| 4 | BE | per-row import: `createDescription` + `addPhysicalCopy` (separate transaction per row) |
+| 5 | BE → FE | `200` + `CatalogImportResponse` (`totalRows`, `imported`, `failed`, `results[]`) |
+| 6 | FE | refresh catalog on success |
+
+**Payload shape:** JSON array; each element has `type` (`Book` \| `BoardGame` \| `PSGame`), shared fields (`title`, `description`, `tags`, `instances`), and type-specific fields (`author`/`isbn`/`image` for books, `numberOfPlayers` for board games).
+
+**Instance ID prefixes:** `OC-WRO-B-…` (books), `OC-WRO-G-…` (board games), `OC-WRO-PS-…` (PS games). PS games: max one instance per row.
+
+**Error path:** `400` if the whole file fails validation (malformed JSON, duplicate IDs in file, ID already in DB, wrong prefix for type). Partial row failures are returned in `results` with `status: "FAILED"`.
+
+**Full format and UI guide:** `docs/instructions/catalog_import.md`
+
+---
+
 ## Error codes reference
 
 | Code | Meaning in this system |
