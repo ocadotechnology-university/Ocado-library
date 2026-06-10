@@ -98,6 +98,22 @@ export type CreateItemPayload = {
   status?: BackendItemStatus;
 };
 
+export type CatalogImportRowResult = {
+  rowIndex: number;
+  type: "Book" | "BoardGame" | "PSGame";
+  status: "IMPORTED" | "FAILED" | string;
+  descriptionId: number | null;
+  instancesCreated: number;
+  errors: string[];
+};
+
+export type CatalogImportResponse = {
+  totalRows: number;
+  imported: number;
+  failed: number;
+  results: CatalogImportRowResult[];
+};
+
 export type JournalOperationType =
   | "BORROW"
   | "RETURN"
@@ -387,6 +403,16 @@ export async function deletePSGameDescription(
     `/api/descriptions/PSGame/${descriptionId}`,
     { method: "DELETE" },
     "Failed to delete PS game",
+  );
+}
+
+export async function importCatalog(
+  descriptions: import("./catalogImportValidation").MigrationDescription[],
+): Promise<CatalogImportResponse> {
+  return apiJson<CatalogImportResponse>(
+    "/api/admin/import",
+    { method: "POST", body: JSON.stringify(descriptions) },
+    "Failed to import catalog",
   );
 }
 

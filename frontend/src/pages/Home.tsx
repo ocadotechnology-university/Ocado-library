@@ -11,6 +11,7 @@ import CatalogHomeHeader, {
   type CatalogSearchItem,
   type MediaSection,
 } from "../components/UI/CatalogHomeHeader";
+import CatalogImportPanel from "../components/UI/CatalogImportPanel";
 import EditTagsDialog from "../components/UI/EditTagsDialog";
 import TagsInput from "../components/UI/TagsInput";
 import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
@@ -271,6 +272,7 @@ const Home = () => {
   const [adminMode, setAdminMode] = useState<"browse" | "add" | "edit">(
     "browse",
   );
+  const [showCatalogImport, setShowCatalogImport] = useState(false);
   const [instanceTargetKey, setInstanceTargetKey] = useState<string | null>(
     null,
   );
@@ -942,6 +944,16 @@ const Home = () => {
                   className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
                 >
                   Add PS game
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAdminMode("browse");
+                    setShowCatalogImport(true);
+                  }}
+                  className="rounded-lg border border-[#43485e]/35 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-white"
+                >
+                  Import
                 </button>
                 {adminMode !== "browse" && (
                   <button
@@ -1721,6 +1733,15 @@ const Home = () => {
             </div>
           </div>
         </div>
+      )}
+      {showCatalogImport && (
+        <CatalogImportPanel
+          onClose={() => setShowCatalogImport(false)}
+          onImported={async () => {
+            await loadCatalog();
+            setActionMessage("Catalog imported successfully.");
+          }}
+        />
       )}
       {instanceTargetKey != null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/25 px-4">
