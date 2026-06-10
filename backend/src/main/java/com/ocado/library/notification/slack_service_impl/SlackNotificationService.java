@@ -37,7 +37,7 @@ public class SlackNotificationService implements NotificationService {
         long daysBorrowed = ChronoUnit.DAYS.between(item.getBorrowedAt(), LocalDateTime.now());
         String title = item.getDescription().getTitle();
         String message = String.format(
-                "Przypomnienie z Ocado Library: „%s” (egzemplarz %s) jest wypożyczony od %d dni — prosimy o zwrot.",
+                "Ocado Library reminder: \"%s\" (copy %s) has been on loan for %d days. Please return it when you can.",
                 title,
                 item.getInternalId(),
                 daysBorrowed);
@@ -56,7 +56,7 @@ public class SlackNotificationService implements NotificationService {
         }
         String title = item.getDescription().getTitle();
         String message = String.format(
-                "Ocado Library: %s prosi o zwrot „%s” (egzemplarz %s).",
+                "Ocado Library: %s has asked you to return \"%s\" (copy %s).",
                 pingerEmail.trim(),
                 title,
                 item.getInternalId());

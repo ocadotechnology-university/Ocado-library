@@ -27,23 +27,27 @@ public class OverdueReminderScheduler {
 
     @Scheduled(cron = "${app.notifications.cron}")
     public void sendOverdueReminders() {
-        if (!notificationService.isEnabled()) {
-            log.debug("Skipping overdue reminder cron: Notifications disabled");
-            return;
-        }
+        boolean slackEnabled = notificationService.isEnabled();
 
         for (Item item : overdueDetectionService.findOverdueItems()) {
             if (notificationLogService.wasRecentlySent(
                     item.getInternalId(), NotificationType.OVERDUE_REMINDER)) {
                 continue;
             }
-            if (notificationService.sendOverdueReminder(item)) {
+
+            boolean slackSent = slackEnabled && notificationService.sendOverdueReminder(item);
+            if (!slackEnabled || slackSent) {
                 notificationLogService.record(
                         item.getInternalId(),
                         NotificationType.OVERDUE_REMINDER,
                         item.getBorrower());
-                log.info("Sent overdue reminder for \"{}\" (copy {}) to {}",
-                        item.getDescription().getTitle(), item.getInternalId(), item.getBorrower());
+                if (slackSent) {
+                    log.info("Sent overdue reminder for \"{}\" (copy {}) to {}",
+                            item.getDescription().getTitle(), item.getInternalId(), item.getBorrower());
+                } else {
+                    log.info("Recorded overdue reminder for in-app panel for \"{}\" (copy {}) to {} (Slack disabled)",
+                            item.getDescription().getTitle(), item.getInternalId(), item.getBorrower());
+                }
             }
         }
     }

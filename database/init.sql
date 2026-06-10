@@ -6,6 +6,7 @@
 
 -- Clean up existing tables (in dependency order)
 DROP TABLE IF EXISTS description_tags CASCADE;
+DROP TABLE IF EXISTS notification_log CASCADE;
 DROP TABLE IF EXISTS item CASCADE;
 DROP TABLE IF EXISTS journal CASCADE;
 DROP TABLE IF EXISTS book_description CASCADE;
@@ -60,6 +61,19 @@ CREATE TABLE item (
     status VARCHAR(255) NOT NULL,
     borrower VARCHAR(255),
     description_id BIGINT NOT NULL REFERENCES description(id)
+);
+
+-- ===================
+-- In-app / Slack notification log
+-- ===================
+CREATE TABLE notification_log (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    item_internal_id VARCHAR(255) NOT NULL,
+    notification_type VARCHAR(255) NOT NULL,
+    recipient_email VARCHAR(255) NOT NULL,
+    sender_email VARCHAR(255),
+    sent_at TIMESTAMP NOT NULL,
+    is_read BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 -- ===================

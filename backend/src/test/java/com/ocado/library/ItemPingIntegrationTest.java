@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ocado.library.dto.request.AdminCreateItemRequest;
 import com.ocado.library.dto.request.CreateBookRequest;
 import com.ocado.library.model.enums.ItemStatus;
+import com.ocado.library.model.enums.NotificationType;
+import com.ocado.library.repository.NotificationLogRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -15,6 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,6 +33,9 @@ class ItemPingIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private NotificationLogRepository notificationLogRepository;
+
     @Test
     void pingBorrowerWhenBorrowedBySomeoneElseReturnsNoContent() throws Exception {
         String internalId = "OC-B-PING-001";
@@ -42,6 +48,14 @@ class ItemPingIntegrationTest {
         mockMvc.perform(post("/api/items/" + internalId + "/ping")
                         .header("X-User-Email", "pinger@example.com"))
                 .andExpect(status().isNoContent());
+
+        assertThat(notificationLogRepository.findAll()).anySatisfy(entry -> {
+            assertThat(entry.getItemInternalId()).isEqualTo(internalId);
+            assertThat(entry.getNotificationType()).isEqualTo(NotificationType.USER_PING);
+            assertThat(entry.getRecipientEmail()).isEqualTo("borrower@example.com");
+            assertThat(entry.getSenderEmail()).isEqualTo("pinger@example.com");
+            assertThat(entry.isReadByRecipient()).isFalse();
+        });
     }
 
     @Test

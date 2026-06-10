@@ -35,6 +35,14 @@ spring.datasource.username=${POSTGRES_USER}
 spring.datasource.password=${POSTGRES_PASSWORD}
  ```
 
+### Migracje schematu (istniejąca baza)
+Jeśli backend zgłasza błąd przy kolumnie `is_read` w `notification_log`, uruchom migrację:
+   ```bash
+   cd database
+   docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < migrations/001_notification_log_is_read.sql
+   ```
+(albo wykonaj plik `database/migrations/001_notification_log_is_read.sql` w swoim kliencie SQL).
+
 ### Przydatne komendy Dockera
 Zatrzymanie bazy danych:
    ```bash

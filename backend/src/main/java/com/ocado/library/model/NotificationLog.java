@@ -29,6 +29,9 @@ public class NotificationLog {
     @Column(nullable = false)
     private LocalDateTime sentAt;
 
+    @Column(name = "is_read", nullable = false, columnDefinition = "boolean not null default false")
+    private boolean readByRecipient = false;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getItemInternalId() { return itemInternalId; }
@@ -41,4 +44,6 @@ public class NotificationLog {
     public void setSenderEmail(String senderEmail) { this.senderEmail = senderEmail; }
     public LocalDateTime getSentAt() { return sentAt; }
     public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
+    public boolean isReadByRecipient() { return readByRecipient; }
+    public void setReadByRecipient(boolean readByRecipient) { this.readByRecipient = readByRecipient; }
 }

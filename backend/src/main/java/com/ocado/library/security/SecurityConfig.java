@@ -89,6 +89,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/items/*/ping").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/items/description/*/ping")
                                 .hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/notifications/*/read")
+                                .hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/descriptions/*/*/tags").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/descriptions/*/*/tags").hasAnyRole("USER", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/**").hasRole("ADMIN")
