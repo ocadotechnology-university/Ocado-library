@@ -50,8 +50,7 @@ function formatNotificationTime(sentAt: string): string {
 }
 
 function toNotificationItem(entry: NotificationLogEntry): NotificationItem {
-  const titleLabel =
-    entry.itemTitle ?? `Copy ${entry.itemInternalId}`;
+  const titleLabel = entry.itemTitle ?? `Copy ${entry.itemInternalId}`;
   const copyLabel = `copy ${entry.itemInternalId}`;
 
   let title = "Library notification";

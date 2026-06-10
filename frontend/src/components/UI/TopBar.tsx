@@ -68,9 +68,7 @@ const TopBar = ({
           type="button"
           className={`${actionButtonClass} relative`}
           aria-label={
-            hasUnreadNotifications
-              ? "Notifications (unread)"
-              : "Notifications"
+            hasUnreadNotifications ? "Notifications (unread)" : "Notifications"
           }
           aria-expanded={notificationsPanelOpen}
           aria-haspopup="dialog"
