@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ApiError, importCatalog, type CatalogImportResponse } from "../../lib/api";
+import {
+  ApiError,
+  importCatalog,
+  type CatalogImportResponse,
+} from "../../lib/api";
 import {
   validateMigrationDescriptionsText,
   type CatalogImportValidationError,
@@ -28,9 +32,8 @@ export default function CatalogImportPanel({
   >(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<CatalogImportResponse | null>(
-    null,
-  );
+  const [importResult, setImportResult] =
+    useState<CatalogImportResponse | null>(null);
 
   const summary = useMemo(() => {
     if (validatedDescriptions == null) {
@@ -125,7 +128,9 @@ export default function CatalogImportPanel({
     <div className="fixed inset-0 z-[85] flex items-center justify-center bg-black/25 px-4 py-6">
       <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[#b1b2b5]/80 bg-white shadow-lg">
         <div className="border-b border-[#e5e7eb] px-5 py-4">
-          <h3 className="text-lg font-semibold text-[#43485e]">Import catalog</h3>
+          <h3 className="text-lg font-semibold text-[#43485e]">
+            Import catalog
+          </h3>
           <p className="mt-1 text-sm text-[#6b7289]">
             Paste or upload a JSON array. Each entry needs a{" "}
             <span className="font-mono text-xs">type</span> (
@@ -145,7 +150,9 @@ export default function CatalogImportPanel({
                 type="file"
                 accept="application/json,.json"
                 className="hidden"
-                onChange={(event) => void handleFileUpload(event.target.files?.[0] ?? null)}
+                onChange={(event) =>
+                  void handleFileUpload(event.target.files?.[0] ?? null)
+                }
               />
             </label>
             <button

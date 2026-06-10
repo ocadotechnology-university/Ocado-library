@@ -141,7 +141,12 @@ function validateInstance(
 
   const internalIdRaw = value.internalId;
   if (typeof internalIdRaw !== "string" || internalIdRaw.trim() === "") {
-    pushError(errors, `${path}.internalId`, "required non-empty string", rowIndex);
+    pushError(
+      errors,
+      `${path}.internalId`,
+      "required non-empty string",
+      rowIndex,
+    );
     return null;
   }
 
@@ -167,12 +172,24 @@ function validateInstance(
 
   const statusRaw = value.status;
   if (typeof statusRaw !== "string") {
-    pushError(errors, `${path}.status`, "required (AVAILABLE or BORROWED)", rowIndex);
+    pushError(
+      errors,
+      `${path}.status`,
+      "required (AVAILABLE or BORROWED)",
+      rowIndex,
+    );
     return null;
   }
 
-  if (!ALLOWED_INSTANCE_STATUSES.has(statusRaw as MigrationInstance["status"])) {
-    pushError(errors, `${path}.status`, "must be AVAILABLE or BORROWED", rowIndex);
+  if (
+    !ALLOWED_INSTANCE_STATUSES.has(statusRaw as MigrationInstance["status"])
+  ) {
+    pushError(
+      errors,
+      `${path}.status`,
+      "must be AVAILABLE or BORROWED",
+      rowIndex,
+    );
     return null;
   }
 
@@ -195,7 +212,10 @@ function validateDescription(
   }
 
   const typeRaw = value.type;
-  if (typeof typeRaw !== "string" || !ALLOWED_TYPES.has(typeRaw as MigrationDescriptionType)) {
+  if (
+    typeof typeRaw !== "string" ||
+    !ALLOWED_TYPES.has(typeRaw as MigrationDescriptionType)
+  ) {
     pushError(
       errors,
       `${path}.type`,
@@ -211,7 +231,12 @@ function validateDescription(
     pushError(errors, `${path}.title`, "required non-empty string", rowIndex);
   }
 
-  validateOptionalString(value.description, `${path}.description`, errors, rowIndex);
+  validateOptionalString(
+    value.description,
+    `${path}.description`,
+    errors,
+    rowIndex,
+  );
   const tags = validateTags(value.tags, `${path}.tags`, errors, rowIndex);
 
   if (!("instances" in value)) {
@@ -310,7 +335,9 @@ function validateDescription(
       ...base,
       type: "BoardGame",
       numberOfPlayers:
-        typeof value.numberOfPlayers === "number" ? value.numberOfPlayers : null,
+        typeof value.numberOfPlayers === "number"
+          ? value.numberOfPlayers
+          : null,
     };
   }
 
@@ -328,14 +355,18 @@ export function validateMigrationDescriptions(
   if (!Array.isArray(input)) {
     return {
       descriptions: null,
-      errors: [{ path: "", message: "root must be a JSON array of descriptions" }],
+      errors: [
+        { path: "", message: "root must be a JSON array of descriptions" },
+      ],
     };
   }
 
   if (input.length === 0) {
     return {
       descriptions: null,
-      errors: [{ path: "", message: "import file must contain at least one entry" }],
+      errors: [
+        { path: "", message: "import file must contain at least one entry" },
+      ],
     };
   }
 
@@ -343,7 +374,12 @@ export function validateMigrationDescriptions(
   const descriptions: MigrationDescription[] = [];
 
   input.forEach((entry, rowIndex) => {
-    const description = validateDescription(entry, rowIndex, errors, seenInternalIds);
+    const description = validateDescription(
+      entry,
+      rowIndex,
+      errors,
+      seenInternalIds,
+    );
     if (description != null) {
       descriptions.push(description);
     }
