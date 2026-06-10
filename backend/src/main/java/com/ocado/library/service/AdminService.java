@@ -11,6 +11,7 @@ import com.ocado.library.model.enums.ItemType;
 import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.DescriptionRepository;
 import com.ocado.library.repository.ItemRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
+@Slf4j
 @Service
 public class AdminService {
     private final DescriptionRepository descriptionRepository;
@@ -63,6 +65,7 @@ public class AdminService {
         
         descriptionRepository.save(description);
         journalService.logAction(OperationType.ADD, userEmail, null, description.getId());
+        log.info("Created {} \"{}\" (id={}) by {}", type, description.getTitle(), description.getId(), userEmail);
         return description;
     }
 
@@ -96,6 +99,7 @@ public class AdminService {
 
         Description saved = descriptionRepository.save(description);
         journalService.logAction(OperationType.UPDATE, userEmail, null, saved.getId());
+        log.info("Updated {} \"{}\" (id={}) by {}", type, saved.getTitle(), saved.getId(), userEmail);
         return saved;
     }
 
@@ -121,6 +125,7 @@ public class AdminService {
 
         Description saved = descriptionRepository.save(description);
         journalService.logAction(OperationType.UPDATE, userEmail, null, saved.getId());
+        log.info("Updated tags for {} \"{}\" (id={}) by {}", type, saved.getTitle(), saved.getId(), userEmail);
         return saved;
     }
 
@@ -142,7 +147,9 @@ public class AdminService {
         
         itemRepository.save(item);
         journalService.logAction(OperationType.ADD, userEmail, item.getInternalId(), description.getId());
-        
+        log.info("Added copy {} for \"{}\" (id={}) by {}",
+                item.getInternalId(), description.getTitle(), description.getId(), userEmail);
+
         return item;
     }
 
@@ -156,6 +163,8 @@ public class AdminService {
         }
         Item saved = itemRepository.save(item);
         journalService.logAction(OperationType.UPDATE, userEmail, internalId, saved.getDescription().getId());
+        log.info("Changed copy {} status to {} for \"{}\" by {}",
+                internalId, status, saved.getDescription().getTitle(), userEmail);
         return saved;
     }
 
@@ -168,8 +177,10 @@ public class AdminService {
             throw new IllegalArgumentException("Description type mismatch");
         }
 
+        String title = description.getTitle();
         itemRepository.deleteByDescriptionId(descriptionId);
         descriptionRepository.delete(description);
         journalService.logAction(OperationType.DELETE, userEmail, null, descriptionId);
+        log.info("Deleted {} \"{}\" (id={}) by {}", type, title, descriptionId, userEmail);
     }
 }

@@ -193,6 +193,21 @@ export async function fetchMe(): Promise<MeResponse> {
   return (await response.json()) as MeResponse;
 }
 
+export async function logoutApi(): Promise<void> {
+  if (getAccessToken() == null) {
+    return;
+  }
+  try {
+    await apiJson<void>(
+      "/api/auth/logout",
+      { method: "POST" },
+      "Logout failed",
+    );
+  } catch {
+    // Token may already be invalid; local cleanup still runs in AuthContext.
+  }
+}
+
 export async function fetchBookByIsbn(isbn: string): Promise<IsbnBookResponse> {
   const normalized = encodeURIComponent(isbn.replace(/\s+/g, ""));
   const response = await fetch(`/api/isbn/${normalized}`, {

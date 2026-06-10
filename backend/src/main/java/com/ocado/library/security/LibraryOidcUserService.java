@@ -10,6 +10,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.LinkedHashSet;
@@ -18,6 +19,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class LibraryOidcUserService implements OAuth2UserService<OidcUserRequest, OidcUser> {
 
@@ -56,9 +58,11 @@ public class LibraryOidcUserService implements OAuth2UserService<OidcUserRequest
         if (adminEmails.contains(email.toLowerCase(Locale.ROOT))) {
             Set<GrantedAuthority> authorities = new LinkedHashSet<>(oidcUser.getAuthorities());
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            log.info("User logged in: {} (admin)", email);
             return new DefaultOidcUser(authorities, oidcUser.getIdToken(), oidcUser.getUserInfo());
         }
 
+        log.info("User logged in: {}", email);
         return oidcUser;
     }
 }

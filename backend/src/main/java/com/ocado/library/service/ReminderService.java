@@ -8,10 +8,12 @@ import com.ocado.library.model.enums.NotificationType;
 import com.ocado.library.notification.NotificationLogService;
 import com.ocado.library.notification.NotificationService;
 import com.ocado.library.repository.ItemRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class ReminderService {
 
@@ -117,6 +119,8 @@ public class ReminderService {
                     NotificationType.USER_PING,
                     borrower,
                     normalizedPinger);
+            log.info("Ping sent for \"{}\" (copy {}) from {} to {}",
+                    item.getDescription().getTitle(), item.getInternalId(), normalizedPinger, borrower);
             return PingOutcome.SENT;
         }
 

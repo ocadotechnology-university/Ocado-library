@@ -25,6 +25,10 @@ function createCatalogFetchMock(): typeof fetch {
       });
     }
 
+    if (url.includes("/api/admin/journal")) {
+      return jsonResponse([]);
+    }
+
     if (url.endsWith("/api/descriptions/Book/all")) {
       return jsonResponse([
         {
@@ -101,5 +105,28 @@ describe("App", () => {
     expect(await screen.findByText("Books(1)")).toBeInTheDocument();
     expect(await screen.findByText("TypeScript Deep Dive")).toBeInTheDocument();
     expect(screen.getAllByText("typescript").length).toBeGreaterThan(0);
+  });
+
+  it("redirects guests from account to login", async () => {
+    renderAppAt("/account");
+
+    expect(
+      await screen.findByText("Sign in to Ocado Library"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+  });
+
+  it("renders account page with log out for signed-in users", async () => {
+    localStorage.setItem(AUTH_TOKEN_KEY, "test-token");
+    vi.stubGlobal("fetch", createCatalogFetchMock());
+
+    renderAppAt("/account");
+
+    expect(
+      await screen.findByRole("button", { name: "Log out" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Account sections" }),
+    ).toBeInTheDocument();
   });
 });
