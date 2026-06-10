@@ -38,8 +38,9 @@ public class JournalService {
         journal.setItemId(itemId);
         journal.setDescriptionId(descriptionId);
         Journal saved = journalRepository.save(journal);
+        Long savedId = saved != null ? saved.getId() : null;
         log.info("Journal entry saved (id={}): {} | {} by {}",
-                saved.getId(), operationType, description, userEmail);
+                savedId, operationType, description, userEmail);
     }
     
     public List<Journal> getEntries(

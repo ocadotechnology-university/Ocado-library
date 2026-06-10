@@ -36,6 +36,11 @@ class ItemServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(journalRepository.save(any(Journal.class))).thenAnswer(invocation -> {
+            Journal journal = invocation.getArgument(0);
+            journal.setId(1L);
+            return journal;
+        });
         itemService = new ItemService(itemRepository, new JournalService(journalRepository));
     }
 

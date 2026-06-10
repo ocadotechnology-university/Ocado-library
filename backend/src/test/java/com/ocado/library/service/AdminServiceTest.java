@@ -44,6 +44,11 @@ class AdminServiceTest {
 
     @BeforeEach
     void setUp() {
+        when(journalRepository.save(any(Journal.class))).thenAnswer(invocation -> {
+            Journal journal = invocation.getArgument(0);
+            journal.setId(1L);
+            return journal;
+        });
         adminService = new AdminService(
                 descriptionRepository, itemRepository, new JournalService(journalRepository));
     }
