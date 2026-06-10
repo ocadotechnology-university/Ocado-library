@@ -21,12 +21,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: "17"
-          distribution: "zulu"
+          distribution: "temurin"
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
-      - name: Build backend tests
+      - name: Run backend tests
         working-directory: backend
-        run: mvn -B test
+        run: mvn -B clean test
 
       # - name: Update dependency graph
       #   uses: advanced-security/maven-dependency-submission-action@v4

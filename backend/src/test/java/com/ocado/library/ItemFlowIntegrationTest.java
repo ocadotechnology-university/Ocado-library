@@ -9,12 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -23,6 +25,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @Transactional
 class ItemFlowIntegrationTest {
+
+    private static final String BOOK_TITLE = "Clean Code";
+    private static final String INTERNAL_ID = "OC-WRO-B-FLOW-001";
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,7 +39,7 @@ class ItemFlowIntegrationTest {
     void testFullItemFlow() throws Exception {
         // 1. Admin creates a Book Description
         CreateBookRequest createBookRequest = new CreateBookRequest(
-                "Clean Code", "Robert C. Martin", "978-0132350884", 
+                BOOK_TITLE, "Robert C. Martin", "978-0132350884",
                 "A Handbook of Agile Software Craftsmanship", "sample_image_url", List.of("java", "best-practices"));
 
         String descResponse = mockMvc.perform(post("/api/descriptions/Book/add")
@@ -43,21 +48,21 @@ class ItemFlowIntegrationTest {
                 .content(objectMapper.writeValueAsString(createBookRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
-                .andExpect(jsonPath("$.title").value("Clean Code"))
+                .andExpect(jsonPath("$.title").value(BOOK_TITLE))
                 .andReturn().getResponse().getContentAsString();
 
         Long descriptionId = objectMapper.readTree(descResponse).get("id").asLong();
 
         // 2. Admin adds a Physical Copy
         AdminCreateItemRequest createItemRequest = new AdminCreateItemRequest(
-                "OC-B-WR-001", descriptionId, ItemStatus.AVAILABLE);
+                INTERNAL_ID, descriptionId, ItemStatus.AVAILABLE);
 
         mockMvc.perform(post("/api/admin/items/add")
                 .header("X-User-Email", "admin@example.com")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(createItemRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.internalId").value("OC-B-WR-001"))
+                .andExpect(jsonPath("$.internalId").value(INTERNAL_ID))
                 .andExpect(jsonPath("$.status").value("AVAILABLE"));
 
         // 3. Employee updates tags on the description
@@ -73,10 +78,10 @@ class ItemFlowIntegrationTest {
         mockMvc.perform(get("/api/descriptions/Book/all")
                 .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].descriptionStatus").value("AVAILABLE"));
+                .andExpect(jsonPath("$[?(@.id == " + descriptionId + ")].descriptionStatus", hasItem("AVAILABLE")));
 
         // 5. Employee borrows the item
-        mockMvc.perform(post("/api/items/OC-B-WR-001/borrow")
+        mockMvc.perform(post("/api/items/" + INTERNAL_ID + "/borrow")
                 .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk());
 
@@ -84,21 +89,21 @@ class ItemFlowIntegrationTest {
         mockMvc.perform(get("/api/descriptions/Book/all")
                 .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].descriptionStatus").value("BORROWED_BY_ME"));
+                .andExpect(jsonPath("$[?(@.id == " + descriptionId + ")].descriptionStatus", hasItem("BORROWED_BY_ME")));
 
         // 7. Another Employee views Catalog (should be BORROWED)
         mockMvc.perform(get("/api/descriptions/Book/all")
                 .header("X-User-Email", "other@example.com"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].descriptionStatus").value("BORROWED"));
+                .andExpect(jsonPath("$[?(@.id == " + descriptionId + ")].descriptionStatus", hasItem("BORROWED")));
 
         // 8. Employee returns the item
-        mockMvc.perform(post("/api/items/OC-B-WR-001/return")
+        mockMvc.perform(post("/api/items/" + INTERNAL_ID + "/return")
                 .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk());
 
-        // 9. Admin checks Journal
-        mockMvc.perform(get("/api/admin/journal")
+        // 9. Admin checks Journal for this description only
+        mockMvc.perform(get("/api/admin/journal?descriptionId=" + descriptionId)
                 .header("X-User-Email", "admin@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(5)); // desc, item, tag update, borrow, return

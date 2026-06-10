@@ -1,0 +1,47 @@
+[
+  {
+    "type": "Book",
+    "title": "TypeScript Deep Dive",
+    "author": "Basarat Ali Syed",
+    "isbn": null,
+    "description": "A comprehensive guide to TypeScript language features and tooling.",
+    "image": null,
+    "tags": ["typescript", "types", "Popular", "web"],
+    "instances": [{ "internalId": "OC-WRO-B-0101", "status": "AVAILABLE" }]
+  },
+  {
+    "type": "Book",
+    "title": "Untitled Local Manuscript",
+    "author": "",
+    "isbn": null,
+    "description": "Anonymous donation; author unknown.",
+    "tags": ["Non-fiction"],
+    "instances": [{ "internalId": "OC-WRO-B-0199", "status": "AVAILABLE" }]
+  },
+  {
+    "type": "BoardGame",
+    "title": "Catan",
+    "description": "Classic resource-trading board game for 3–4 players.",
+    "numberOfPlayers": 4,
+    "tags": ["strategy", "family", "Popular"],
+    "instances": [
+      { "internalId": "OC-WRO-G-0101", "status": "AVAILABLE" },
+      { "internalId": "OC-WRO-G-0102", "status": "BORROWED" }
+    ]
+  },
+  {
+    "type": "BoardGame",
+    "title": "Codenames",
+    "description": "Word-association party game.",
+    "numberOfPlayers": 8,
+    "tags": ["party", "word-game"],
+    "instances": [{ "internalId": "OC-WRO-G-0103", "status": "AVAILABLE" }]
+  },
+  {
+    "type": "PSGame",
+    "title": "Gran Turismo 7",
+    "description": "Racing simulation for PlayStation.",
+    "tags": ["racing", "ps5", "simulation"],
+    "instances": [{ "internalId": "OC-WRO-PS-0001", "status": "AVAILABLE" }]
+  }
+]
