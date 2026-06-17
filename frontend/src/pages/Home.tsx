@@ -63,9 +63,7 @@ const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
 ];
 const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
 
-function itemTypeFromTargetKey(
-  key: string,
-): "Book" | "BoardGame" | "PSGame" {
+function itemTypeFromTargetKey(key: string): "Book" | "BoardGame" | "PSGame" {
   if (key.startsWith("ps-")) return "PSGame";
   if (key.startsWith("board-")) return "BoardGame";
   return "Book";
