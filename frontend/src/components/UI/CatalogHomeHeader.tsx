@@ -16,14 +16,14 @@ const SECTIONS: { id: MediaSection; label: string }[] = [
   { id: "ps", label: "PS Games" },
 ];
 
-export const CATEGORY_CHIPS = [
-  "All",
-  "New arrivals",
-  "Popular",
-  "Bestsellers",
-  "Fiction",
-  "Non-fiction",
-  "Prizes",
+export const CATEGORY_TAG_FILTERS = [
+  "New",
+  "Languages",
+  "Algorithms",
+  "Architecture",
+  "Design & UX",
+  "Databases",
+  "AI",
 ] as const;
 
 export type CatalogSearchItem = {
@@ -197,13 +197,13 @@ const CatalogHomeHeader = ({
         className="flex flex-wrap gap-2 border-b border-[#c5c9d6]/80 pb-3"
         aria-label="Browse categories"
       >
-        {CATEGORY_CHIPS.map((name) => {
+        {CATEGORY_TAG_FILTERS.map((name) => {
           const selected = activeCategory === name;
           return (
             <button
               key={name}
               type="button"
-              onClick={() => onCategoryChange(name)}
+              onClick={() => onCategoryChange(selected ? "" : name)}
               className={[
                 "rounded-full px-3 py-1.5 text-sm font-medium transition",
                 selected

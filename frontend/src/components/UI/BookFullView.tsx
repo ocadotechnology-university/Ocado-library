@@ -74,9 +74,7 @@ const BookFullView = ({
   className,
 }: BookFullViewProps) => {
   const largeSrc = coverSrcLarge ?? coverSrc;
-  const [tagsMenuOpen, setTagsMenuOpen] = useState(false);
   const [panelIn, setPanelIn] = useState(false);
-  const tagsMenuRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
 
@@ -110,30 +108,13 @@ const BookFullView = ({
   }, []);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        tagsMenuRef.current &&
-        !tagsMenuRef.current.contains(e.target as Node)
-      ) {
-        setTagsMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (tagsMenuOpen) {
-        setTagsMenuOpen(false);
-        return;
-      }
       requestClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [requestClose, tagsMenuOpen]);
+  }, [requestClose]);
 
   useEffect(
     () => () => {
@@ -234,36 +215,16 @@ const BookFullView = ({
                 </span>
               ))}
             </div>
-            <div className="relative shrink-0" ref={tagsMenuRef}>
+            {onEditTags != null && (
               <button
                 type="button"
-                aria-expanded={tagsMenuOpen}
-                aria-haspopup="menu"
-                aria-label="Tag options"
-                onClick={() => setTagsMenuOpen((o) => !o)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#c5c9d6] bg-white/90 text-lg font-bold leading-none text-[#43485e] shadow-sm transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+                aria-label="Edit tags"
+                onClick={() => onEditTags()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c5c9d6] bg-white/90 text-lg font-bold leading-none text-[#43485e] shadow-sm transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
               >
                 ⋮
               </button>
-              {tagsMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-20 mt-1.5 min-w-[11rem] overflow-hidden rounded-xl border border-[#e2e5ee] bg-white/95 py-1 shadow-[0_12px_30px_-8px_rgb(67_72_94_/0.25)] backdrop-blur-md"
-                >
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full px-3 py-2.5 text-left text-sm text-[#43485e] transition hover:bg-[#43485e]/[0.06]"
-                    onClick={() => {
-                      setTagsMenuOpen(false);
-                      onEditTags?.();
-                    }}
-                  >
-                    Edit tags
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="mt-auto flex min-h-[7.5rem] flex-1 flex-col justify-center sm:min-h-[9rem]">

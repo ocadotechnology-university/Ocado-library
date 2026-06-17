@@ -18,7 +18,6 @@ import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
 import {
-  SidebarAccentTitle,
   SidebarSectionLabel,
   SidebarTemplate,
 } from "../components/UI/SidebarTemplate";
@@ -274,7 +273,7 @@ const Home = () => {
   const [instancesDialog, setInstancesDialog] =
     useState<InstancesDialogState | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("");
   const [catalogView, setCatalogView] = useState<CatalogViewMode>("cards");
   const [adminMode, setAdminMode] = useState<"browse" | "add" | "edit">(
     "browse",
@@ -949,7 +948,6 @@ const Home = () => {
   const leftSidebar = useMemo(
     () => (
       <SidebarTemplate>
-        <SidebarAccentTitle>Filters</SidebarAccentTitle>
 
         <div className="flex flex-col gap-4 pt-1">
           {isAdmin && (
@@ -992,7 +990,7 @@ const Home = () => {
                     setAdminMode("browse");
                     setShowCatalogImport(true);
                   }}
-                  className="rounded-lg border border-[#43485e]/35 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-white"
+                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
                 >
                   Import
                 </button>
