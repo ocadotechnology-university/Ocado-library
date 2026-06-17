@@ -6,6 +6,7 @@ import {
 } from "../components/UI/bookListLayout";
 import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
+import CatalogCoverImage from "../components/UI/CatalogCoverImage";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import JournalEventCard from "../components/UI/JournalEventCard";
 import {
@@ -46,6 +47,8 @@ type UserOrderRow = {
   title: string;
   author: string;
   seed: string;
+  imageUrl?: string | null;
+  isbn?: string | null;
   description: string;
   eventDate: string;
   borrowedOn?: string;
@@ -63,6 +66,8 @@ type JournalDescriptionView = {
   author: string;
   description: string;
   seed: string;
+  imageUrl?: string | null;
+  isbn?: string | null;
   itemType: CatalogItemType;
   descriptionStatus?: BackendDescriptionStatus;
   tags?: string[];
@@ -130,6 +135,8 @@ function eventRow(
     title,
     author,
     seed: `history-${book?.seed ?? fallback}`,
+    imageUrl: book?.imageUrl,
+    isbn: book?.isbn,
     description: book?.description ?? "",
     eventDate: entry.datetime,
     borrowedOn:
@@ -204,19 +211,18 @@ function buildAdminRows(
 }
 
 function OrderListRow({ row }: { row: UserOrderRow }) {
-  const coverSrc = `https://picsum.photos/seed/${encodeURIComponent(row.seed)}/272/181`;
-
   return (
     <li className="list-none">
       <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
         <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
-          <img
-            src={coverSrc}
-            alt=""
-            className="h-full w-full object-cover"
+          <CatalogCoverImage
+            imageUrl={row.imageUrl}
+            isbn={row.isbn}
+            size="preview"
             width={272}
             height={181}
             loading="lazy"
+            className="h-full w-full object-cover"
           />
         </div>
         <div
@@ -340,6 +346,8 @@ const Account = () => {
         author: book.author || "Unknown author",
         description: book.description ?? "",
         seed: book.isbn ?? String(book.id),
+        imageUrl: book.image,
+        isbn: book.isbn,
         itemType: "book" as const,
         descriptionStatus: book.descriptionStatus,
         tags: book.tags ?? [],
@@ -771,12 +779,12 @@ const Account = () => {
             </p>
           ) : null}
           <BookFullView
-            coverSrc={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/272/181`}
-            coverSrcLarge={`https://picsum.photos/seed/${encodeURIComponent(selectedDescription.seed)}/640/960`}
+            coverImageUrl={selectedDescription.imageUrl}
+            coverIsbn={selectedDescription.isbn}
             title={selectedDescription.title}
             author={selectedDescription.author}
             description={selectedDescription.description}
-            bookId={selectedDescription.seed}
+            bookId={selectedDescription.isbn ?? selectedDescription.seed}
             tags={selectedDescription.tags ?? []}
             status={selectedDescriptionUiStatus ?? "borrowed"}
             newArrival={false}

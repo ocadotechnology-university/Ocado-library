@@ -11,6 +11,7 @@ import {
   BOOK_FULL_CARD_RADIAL_CLASS,
   BOOK_FULL_COVER_INNER_WRAP_CLASS,
 } from "./bookFullViewCardShell";
+import CatalogCoverImage from "./CatalogCoverImage";
 import {
   BOOK_STATUS_COVER_CLASS,
   BOOK_STATUS_COVER_LABEL,
@@ -22,9 +23,8 @@ import {
 const ANIM_MS = 300;
 
 export type BookFullViewProps = {
-  coverSrc: string;
-  /** Larger cover; defaults to `coverSrc` if omitted. */
-  coverSrcLarge?: string;
+  coverImageUrl?: string | null;
+  coverIsbn?: string | null;
   title: string;
   author: string;
   description: string;
@@ -53,8 +53,8 @@ const actionLabel: Record<BookStatus, string> = {
 };
 
 const BookFullView = ({
-  coverSrc,
-  coverSrcLarge,
+  coverImageUrl,
+  coverIsbn,
   title,
   author,
   description,
@@ -73,7 +73,6 @@ const BookFullView = ({
   primaryActionPending = false,
   className,
 }: BookFullViewProps) => {
-  const largeSrc = coverSrcLarge ?? coverSrc;
   const [panelIn, setPanelIn] = useState(false);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
@@ -149,9 +148,10 @@ const BookFullView = ({
       <div className="relative flex min-h-[min(72vh,36rem)] flex-col gap-5 p-4 sm:p-5 lg:flex-row lg:items-stretch lg:gap-8 lg:p-6">
         <div className="relative mx-auto w-full max-w-[min(92vw,260px)] shrink-0 sm:max-w-[min(88vw,300px)] lg:mx-0 lg:max-w-[min(44%,380px)]">
           <div className={BOOK_FULL_COVER_INNER_WRAP_CLASS}>
-            <img
-              src={largeSrc}
-              alt=""
+            <CatalogCoverImage
+              imageUrl={coverImageUrl}
+              isbn={coverIsbn}
+              size="large"
               width={640}
               height={960}
               loading="eager"

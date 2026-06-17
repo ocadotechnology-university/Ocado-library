@@ -83,7 +83,6 @@ type AdminBook = {
   bookId: string;
   description: string;
   tags: string[];
-  placeholderSeed: string;
   imageUrl?: string;
 };
 
@@ -139,14 +138,6 @@ function pillClass(active: boolean): string {
   ].join(" ");
 }
 
-function coverSrcFor(row: AdminBook): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/272/181`;
-}
-
-function coverSrcLargeFor(row: AdminBook): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/640/960`;
-}
-
 function toUiStatus(status: BackendDescriptionStatus): BookStatus {
   if (status === "AVAILABLE") return "free";
   if (status === "BORROWED_BY_ME") return "borrowed-by-me";
@@ -182,13 +173,11 @@ function mapBook(row: BackendBookDescription, index: number): AdminBook {
     bookId: isbn,
     description: row.description ?? "",
     tags,
-    placeholderSeed: `book-${isbn}`,
     imageUrl: row.image ?? "",
   };
 }
 
 function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
-  const seed = `board-${row.id}`;
   const status = toUiStatus(
     (row.descriptionStatus ?? "AVAILABLE") as BackendDescriptionStatus,
   );
@@ -212,13 +201,11 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
     bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
     description: row.description || "",
     tags,
-    placeholderSeed: seed,
     imageUrl: undefined,
   };
 }
 
 function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
-  const seed = `ps-${row.id}`;
   const tags = row.tags || [];
   return {
     id: row.id,
@@ -235,7 +222,6 @@ function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
     bookId: row.internalId ?? "",
     description: row.description || "",
     tags,
-    placeholderSeed: seed,
     imageUrl: undefined,
   };
 }
@@ -1462,7 +1448,8 @@ const Home = () => {
                         >
                           <BookPreview
                             variant="card"
-                            coverSrc={coverSrcFor(row)}
+                            coverImageUrl={row.imageUrl}
+                            coverIsbn={row.isbn}
                             title={row.title}
                             author={row.author}
                             status={row.status}
@@ -1490,7 +1477,8 @@ const Home = () => {
                           >
                             <BookPreview
                               variant="list"
-                              coverSrc={coverSrcFor(row)}
+                              coverImageUrl={row.imageUrl}
+                              coverIsbn={row.isbn}
                               title={row.title}
                               author={row.author}
                               status={row.status}
@@ -1514,8 +1502,8 @@ const Home = () => {
         <BookClientWindow onBackdropClick={close}>
           <div className="relative w-full">
             <BookFullView
-              coverSrc={coverSrcFor(selected)}
-              coverSrcLarge={coverSrcLargeFor(selected)}
+              coverImageUrl={selected.imageUrl}
+              coverIsbn={selected.isbn}
               title={selected.title}
               author={selected.author}
               description={selected.description}
