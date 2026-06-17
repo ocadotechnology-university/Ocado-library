@@ -40,6 +40,7 @@ import {
   fetchCatalogTags,
   fetchItemsByDescription,
   fetchJournalEntries,
+  fetchNextInternalId,
   fetchPSGameDescriptions,
   returnItem,
   updateBoardGameDescription,
@@ -61,6 +62,14 @@ const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "borrowed-by-me", label: "Borrowed by me" },
 ];
 const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
+
+function itemTypeFromTargetKey(
+  key: string,
+): "Book" | "BoardGame" | "PSGame" {
+  if (key.startsWith("ps-")) return "PSGame";
+  if (key.startsWith("board-")) return "BoardGame";
+  return "Book";
+}
 
 type AdminBook = {
   id: number;
@@ -277,6 +286,7 @@ const Home = () => {
     null,
   );
   const [instanceInput, setInstanceInput] = useState("");
+  const [instanceInputLoading, setInstanceInputLoading] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
   const [selectedStatuses, setSelectedStatuses] = useState<BookStatus[]>([]);
@@ -312,6 +322,35 @@ const Home = () => {
       : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
+
+  useEffect(() => {
+    if (instanceTargetKey == null) {
+      setInstanceInput("");
+      setInstanceInputLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setInstanceInputLoading(true);
+
+    fetchNextInternalId(itemTypeFromTargetKey(instanceTargetKey))
+      .then(({ internalId }) => {
+        if (!cancelled) {
+          setInstanceInput(internalId);
+          setInstanceInputLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setInstanceInput("");
+          setInstanceInputLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [instanceTargetKey]);
 
   const openBook = useCallback(
     (key: string) => {
@@ -1759,18 +1798,20 @@ const Home = () => {
                 : instanceTargetKey?.startsWith("board-")
                   ? "Use format: OC-WRO-G-num"
                   : "Use format: OC-WRO-B-num"}
+              {instanceInputLoading ? " Loading suggestion…" : null}
             </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}
               placeholder={
                 instanceTargetKey?.startsWith("ps-")
-                  ? "OC-WRO-PS-0001"
+                  ? "OC-WRO-PS-0300"
                   : instanceTargetKey?.startsWith("board-")
-                    ? "OC-WRO-G-0101"
-                    : "OC-WRO-B-0109"
+                    ? "OC-WRO-G-0300"
+                    : "OC-WRO-B-0300"
               }
-              className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+              disabled={instanceInputLoading}
+              className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm disabled:bg-[#f3f4f6]"
             />
             <div className="mt-3 flex justify-end gap-2">
               <button
@@ -1778,6 +1819,7 @@ const Home = () => {
                 onClick={() => {
                   setInstanceTargetKey(null);
                   setInstanceInput("");
+                  setInstanceInputLoading(false);
                 }}
                 className="rounded-md border border-[#43485e]/30 bg-[#eeeef0] px-3 py-1.5 text-sm text-[#43485e]"
               >
