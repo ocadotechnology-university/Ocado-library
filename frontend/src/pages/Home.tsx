@@ -934,7 +934,6 @@ const Home = () => {
   const leftSidebar = useMemo(
     () => (
       <SidebarTemplate>
-
         <div className="flex flex-col gap-4 pt-1">
           {isAdmin && (
             <div>

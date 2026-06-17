@@ -16,7 +16,12 @@ function StatCard({
   return (
     <div className="flex items-center gap-3 rounded-xl border border-[#b1b2b5]/60 bg-[#eeeef0]/90 px-3 py-2.5 shadow-sm">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#43485e]/10">
-        <img src={iconSrc} alt="" className="h-6 w-6 object-contain" aria-hidden />
+        <img
+          src={iconSrc}
+          alt=""
+          className="h-6 w-6 object-contain"
+          aria-hidden
+        />
       </span>
       <div className="min-w-0">
         <p className="text-lg font-semibold tabular-nums text-[#43485e]">
@@ -54,11 +59,7 @@ export default function LayoutRightStaticPanel({
           className="mx-auto mt-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#43485e]/10"
           aria-hidden
         >
-          <img
-            src={learningIcon}
-            alt=""
-            className="h-9 w-9 object-contain"
-          />
+          <img src={learningIcon} alt="" className="h-9 w-9 object-contain" />
         </div>
       </div>
 
