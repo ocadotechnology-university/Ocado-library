@@ -3,6 +3,7 @@ package com.ocado.library.service;
 import com.ocado.library.dto.request.MigrationDescriptionRequest;
 import com.ocado.library.dto.request.MigrationInstanceRequest;
 import com.ocado.library.dto.response.CatalogImportResponse;
+import com.ocado.library.dto.response.CatalogImportValidateResponse;
 import com.ocado.library.dto.response.CatalogImportRowResult;
 import com.ocado.library.exception.BadRequestException;
 import com.ocado.library.repository.ItemRepository;
@@ -24,6 +25,18 @@ public class CatalogImportService {
             ItemRepository itemRepository) {
         this.catalogImportRowService = catalogImportRowService;
         this.itemRepository = itemRepository;
+    }
+
+    public CatalogImportValidateResponse validateDescriptions(
+            List<MigrationDescriptionRequest> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return new CatalogImportValidateResponse(
+                    false,
+                    List.of("Import payload must be a non-empty JSON array of descriptions"));
+        }
+
+        List<String> errors = validateFile(entries);
+        return new CatalogImportValidateResponse(errors.isEmpty(), errors);
     }
 
     public CatalogImportResponse importDescriptions(

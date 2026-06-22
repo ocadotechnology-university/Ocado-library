@@ -163,7 +163,7 @@ function validateInstance(
     pushError(
       errors,
       `${path}.internalId`,
-      `duplicate internalId in file: ${internalId}`,
+      `Duplicate instance ID in import file: ${internalId}`,
       rowIndex,
     );
   } else {

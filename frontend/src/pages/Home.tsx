@@ -460,6 +460,7 @@ const Home = () => {
     resetDraft();
     setActionError(null);
     setActionMessage(null);
+    setShowCatalogImport(false);
     setAdminMode("add");
   }, [resetDraft]);
 
@@ -1161,24 +1162,34 @@ const Home = () => {
         rightSidebar={<LayoutRightStaticPanel stats={libraryStats} />}
       >
         <div className="flex w-full flex-col gap-8">
-          <CatalogHomeHeader
-            allTags={catalogAllTags}
-            selectedTags={filterTags}
-            onToggleFilterTag={toggleFilterTag}
-            section={section}
-            onSectionChange={(next) => {
-              setSection(next);
-              setCatalogSearchQuery("");
-            }}
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            searchQuery={catalogSearchQuery}
-            onSearchQueryChange={setCatalogSearchQuery}
-            searchItems={searchItems}
-            onSearchSelect={(key) => openBook(key)}
-          />
+          {showCatalogImport ? (
+            <CatalogImportPanel
+              onClose={() => setShowCatalogImport(false)}
+              onImported={async () => {
+                await loadCatalog();
+                setActionMessage("Catalog imported successfully.");
+              }}
+            />
+          ) : (
+            <>
+              <CatalogHomeHeader
+                allTags={catalogAllTags}
+                selectedTags={filterTags}
+                onToggleFilterTag={toggleFilterTag}
+                section={section}
+                onSectionChange={(next) => {
+                  setSection(next);
+                  setCatalogSearchQuery("");
+                }}
+                activeCategory={activeCategory}
+                onCategoryChange={setActiveCategory}
+                searchQuery={catalogSearchQuery}
+                onSearchQueryChange={setCatalogSearchQuery}
+                searchItems={searchItems}
+                onSearchSelect={(key) => openBook(key)}
+              />
 
-          {actionError ? (
+              {actionError ? (
             <p className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
               {actionError}
             </p>
@@ -1473,6 +1484,8 @@ const Home = () => {
               )}
             </div>
           ) : null}
+            </>
+          )}
         </div>
       </Layout>
       {selected != null && (
@@ -1737,15 +1750,6 @@ const Home = () => {
             </div>
           </div>
         </div>
-      )}
-      {showCatalogImport && (
-        <CatalogImportPanel
-          onClose={() => setShowCatalogImport(false)}
-          onImported={async () => {
-            await loadCatalog();
-            setActionMessage("Catalog imported successfully.");
-          }}
-        />
       )}
       {instanceTargetKey != null && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/25 px-4">

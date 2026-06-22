@@ -104,6 +104,42 @@ class CatalogImportIntegrationTest {
     }
 
     @Test
+    void validateImportReportsDuplicateInternalIdsWithoutImporting() throws Exception {
+        List<MigrationDescriptionRequest> payload = List.of(
+                new MigrationDescriptionRequest(
+                        ItemType.BoardGame,
+                        "Game A",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of(),
+                        List.of(new MigrationInstanceRequest("OC-WRO-G-9101", ItemStatus.AVAILABLE))
+                ),
+                new MigrationDescriptionRequest(
+                        ItemType.BoardGame,
+                        "Game B",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of(),
+                        List.of(new MigrationInstanceRequest("OC-WRO-G-9101", ItemStatus.AVAILABLE))
+                )
+        );
+
+        mockMvc.perform(post("/api/admin/import/validate")
+                        .header("X-User-Email", "admin@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(false))
+                .andExpect(jsonPath("$.errors[0]").value(containsString("Duplicate internalId")));
+    }
+
+    @Test
     void importDescriptionsRejectsDuplicateInternalIdsInFile() throws Exception {
         List<MigrationDescriptionRequest> payload = List.of(
                 new MigrationDescriptionRequest(

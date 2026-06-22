@@ -89,7 +89,7 @@ describe("validateMigrationDescriptions", () => {
         instances: [{ internalId: "OC-WRO-B-0104", status: "AVAILABLE" }],
       },
     ]);
-    expect(result.errors.some((e) => e.message.includes("duplicate"))).toBe(
+    expect(result.errors.some((e) => e.message.includes("Duplicate instance ID"))).toBe(
       true,
     );
   });
