@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ApiError,
   formatUserFacingErrorMessage,
@@ -77,12 +77,7 @@ export default function CatalogImportPanel({
   onImported,
 }: CatalogImportPanelProps) {
   const [jsonText, setJsonText] = useState("");
-  const [validationErrors, setValidationErrors] = useState<
-    CatalogImportValidationError[]
-  >([]);
-  const [validatedDescriptions, setValidatedDescriptions] = useState<
-    MigrationDescription[] | null
-  >(null);
+  const [debouncedJsonText, setDebouncedJsonText] = useState("");
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] =
@@ -92,6 +87,19 @@ export default function CatalogImportPanel({
   const [templatesVisible, setTemplatesVisible] = useState(true);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [serverChecking, setServerChecking] = useState(false);
+
+  const clientValidation = useMemo(() => {
+    if (!debouncedJsonText.trim()) {
+      return {
+        errors: [] as CatalogImportValidationError[],
+        descriptions: null as MigrationDescription[] | null,
+      };
+    }
+    return validateMigrationDescriptionsText(debouncedJsonText);
+  }, [debouncedJsonText]);
+
+  const validationErrors = clientValidation.errors;
+  const validatedDescriptions = clientValidation.descriptions;
 
   const selectedTemplate = CATALOG_IMPORT_TEMPLATES[selectedTemplateType];
   const emptyTemplateText = useMemo(
@@ -138,44 +146,30 @@ export default function CatalogImportPanel({
     };
   }, [validatedDescriptions]);
 
-  const runValidation = useCallback((text: string) => {
-    const result = validateMigrationDescriptionsText(text);
-    setValidationErrors(result.errors);
-    setValidatedDescriptions(result.descriptions);
-    setServerErrors([]);
-    setImportResult(null);
-    setImportError(null);
-    return result;
-  }, []);
-
   useEffect(() => {
-    if (!jsonText.trim()) {
-      setValidationErrors([]);
-      setValidatedDescriptions(null);
-      setServerErrors([]);
-      setServerChecking(false);
-      return;
-    }
-
+    const delay = jsonText.trim() ? 350 : 0;
     const handle = window.setTimeout(() => {
-      runValidation(jsonText);
-    }, 350);
+      setDebouncedJsonText(jsonText);
+      if (!jsonText.trim()) {
+        setServerErrors([]);
+        setServerChecking(false);
+      }
+    }, delay);
 
     return () => window.clearTimeout(handle);
-  }, [jsonText, runValidation]);
+  }, [jsonText]);
 
   useEffect(() => {
     if (validatedDescriptions == null || validationErrors.length > 0) {
-      setServerErrors([]);
-      setServerChecking(false);
       return;
     }
 
     let cancelled = false;
-    setServerChecking(true);
-    setServerErrors([]);
 
     const handle = window.setTimeout(() => {
+      setServerChecking(true);
+      setServerErrors([]);
+
       void validateCatalogImport(validatedDescriptions)
         .then((response) => {
           if (cancelled) {
@@ -261,7 +255,7 @@ export default function CatalogImportPanel({
           <span className="font-mono text-xs">BoardGame</span>, or{" "}
           <span className="font-mono text-xs">PSGame</span>) and type-specific
           fields. Physical copies use{" "}
-          <span className="font-mono text-xs">OC-WRO-B/G/PS-…</span> IDs.
+          <span className="font-mono text-xs">OC-B/G/PS-WR-000</span> IDs.
         </p>
       </div>
 

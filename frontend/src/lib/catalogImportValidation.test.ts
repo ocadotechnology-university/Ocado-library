@@ -53,7 +53,8 @@ describe("validateMigrationDescriptions", () => {
   });
 
   it("enforces book author", () => {
-    const { author: _author, ...withoutAuthor } = validBook;
+    const withoutAuthor = { ...validBook };
+    delete (withoutAuthor as Partial<typeof validBook>).author;
     const result = validateMigrationDescriptions([withoutAuthor]);
     expect(result.errors.some((e) => e.path.endsWith(".author"))).toBe(true);
   });

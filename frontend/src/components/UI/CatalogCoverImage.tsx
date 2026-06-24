@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CATALOG_COVER_PLACEHOLDER_CLASS,
   normalizeIsbn,
@@ -18,7 +18,7 @@ type CatalogCoverImageProps = {
   decoding?: "async" | "auto" | "sync";
 };
 
-export default function CatalogCoverImage({
+function CatalogCoverImageInner({
   imageUrl,
   isbn,
   size = "preview",
@@ -32,10 +32,6 @@ export default function CatalogCoverImage({
   const [mode, setMode] = useState<"stored" | "isbn" | "none">(() =>
     resolveInitialCoverMode(imageUrl, isbn),
   );
-
-  useEffect(() => {
-    setMode(resolveInitialCoverMode(imageUrl, isbn));
-  }, [imageUrl, isbn]);
 
   const src = resolveCoverSrc(mode, imageUrl, normalizedIsbn, size);
 
@@ -68,4 +64,9 @@ export default function CatalogCoverImage({
       className={className}
     />
   );
+}
+
+export default function CatalogCoverImage(props: CatalogCoverImageProps) {
+  const resetKey = `${props.imageUrl ?? ""}\0${props.isbn ?? ""}`;
+  return <CatalogCoverImageInner key={resetKey} {...props} />;
 }

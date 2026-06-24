@@ -308,13 +308,17 @@ const Home = () => {
 
   useEffect(() => {
     if (instanceTargetKey == null) {
-      setInstanceInput("");
-      setInstanceInputLoading(false);
-      return;
+      const handle = window.setTimeout(() => {
+        setInstanceInput("");
+        setInstanceInputLoading(false);
+      }, 0);
+      return () => window.clearTimeout(handle);
     }
 
     let cancelled = false;
-    setInstanceInputLoading(true);
+    const startHandle = window.setTimeout(() => {
+      setInstanceInputLoading(true);
+    }, 0);
 
     fetchNextInternalId(itemTypeFromTargetKey(instanceTargetKey))
       .then(({ internalId }) => {
@@ -332,6 +336,7 @@ const Home = () => {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(startHandle);
     };
   }, [instanceTargetKey]);
 
@@ -388,7 +393,11 @@ const Home = () => {
   }, [isAdmin]);
 
   useEffect(() => {
-    void loadCatalog();
+    const handle = window.setTimeout(() => {
+      void loadCatalog();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
   }, [loadCatalog]);
 
   const catalogAuthors = useMemo(
@@ -541,7 +550,7 @@ const Home = () => {
     const isBook = section === "books";
     const isBoard = section === "board";
     const isPs = section === "ps";
-    let tags = [...adminDraft.tags];
+    const tags = [...adminDraft.tags];
     if (isBook) {
       const lang = adminDraft.language.trim();
       if (lang && !tags.some((t) => t.toLowerCase() === lang.toLowerCase())) {
@@ -1355,12 +1364,48 @@ const Home = () => {
                               }
                               placeholder="https://..."
                               className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                            className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
-                          />
-                          Mark as new arrival
-                        </label>
-                      </>
-                    )}
+                            />
+                          </div>
+                        )}
+                        {section === "books" && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                                Status
+                              </label>
+                              <select
+                                value={adminDraft.status}
+                                onChange={(e) =>
+                                  setAdminDraft((d) => ({
+                                    ...d,
+                                    status: e.target.value as BookStatus,
+                                  }))
+                                }
+                                className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option key={s.status} value={s.status}>
+                                    {s.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
+                              <input
+                                type="checkbox"
+                                checked={adminDraft.newArrival}
+                                onChange={(e) =>
+                                  setAdminDraft((d) => ({
+                                    ...d,
+                                    newArrival: e.target.checked,
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
+                              />
+                              Mark as new arrival
+                            </label>
+                          </>
+                        )}
                   </div>
                   <div className="mt-4 flex gap-2">
                     <button
@@ -1466,157 +1511,14 @@ const Home = () => {
                               onOpen={() => openBook(row.key)}
                             />
                           </div>
-                        )}
-                        {section === "books" && (
-                          <>
-                            <div>
-                              <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                                Status
-                              </label>
-                              <select
-                                value={adminDraft.status}
-                                onChange={(e) =>
-                                  setAdminDraft((d) => ({
-                                    ...d,
-                                    status: e.target.value as BookStatus,
-                                  }))
-                                }
-                                className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                              >
-                                {STATUS_OPTIONS.map((s) => (
-                                  <option key={s.status} value={s.status}>
-                                    {s.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
-                              <input
-                                type="checkbox"
-                                checked={adminDraft.newArrival}
-                                onChange={(e) =>
-                                  setAdminDraft((d) => ({
-                                    ...d,
-                                    newArrival: e.target.checked,
-                                  }))
-                                }
-                                className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
-                              />
-                              Mark as new arrival
-                            </label>
-                          </>
-                        )}
-                      </div>
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={saveAdminDraft}
-                          disabled={adminSaving}
-                          className="rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
-                        >
-                          {adminSaving ? "Saving..." : "Save"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAdminMode("browse")}
-                          className="rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-4 py-2 text-sm font-medium text-[#43485e]"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : catalogLoading ? (
-                    <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
-                      Loading real catalog data...
-                    </p>
-                  ) : catalogError ? (
-                    <div className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-8 text-center text-sm text-[#b91c1c]">
-                      <p>{catalogError}</p>
-                      <button
-                        type="button"
-                        onClick={() => void loadCatalog()}
-                        className="mt-3 rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
-                      >
-                        Retry
-                      </button>
-                    </div>
-                  ) : displayRows.length === 0 ? (
-                    <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
-                      No items match these filters. Try another category or
-                      clear the filters on the left.
-                    </p>
-                  ) : (
-                    <div className="flex flex-col gap-4">
-                      <CatalogSectionHeading
-                        section={section}
-                        count={displayRows.length}
-                        catalogView={catalogView}
-                        onCatalogViewChange={setCatalogView}
-                      />
-                      {catalogView === "cards" ? (
-                        <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                          {displayRows.map((row) => (
-                            <li
-                              key={row.key}
-                              className="flex flex-col items-center gap-2"
-                              onContextMenu={(e) => {
-                                if (!isAdmin) return;
-                                e.preventDefault();
-                                setContextMenu({
-                                  key: row.key,
-                                  x: e.clientX,
-                                  y: e.clientY,
-                                });
-                              }}
-                            >
-                              <BookPreview
-                                variant="card"
-                                coverSrc={coverSrcFor(row)}
-                                title={row.title}
-                                author={row.author}
-                                status={row.status}
-                                newArrival={row.newArrival}
-                                tags={row.tags}
-                                onOpen={() => openBook(row.key)}
-                              />
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <ul className="flex list-none flex-col gap-4">
-                          {displayRows.map((row) => (
-                            <li key={row.key} className="w-full">
-                              <div
-                                onContextMenu={(e) => {
-                                  if (!isAdmin) return;
-                                  e.preventDefault();
-                                  setContextMenu({
-                                    key: row.key,
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                  });
-                                }}
-                              >
-                                <BookPreview
-                                  variant="list"
-                                  coverSrc={coverSrcFor(row)}
-                                  title={row.title}
-                                  author={row.author}
-                                  status={row.status}
-                                  newArrival={row.newArrival}
-                                  description={row.description}
-                                  tags={row.tags}
-                                  onOpen={() => openBook(row.key)}
-                                />
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
-              ) : null}
+              )}
+            </div>
+          ) : null}
             </>
           )}
         </div>
@@ -1710,6 +1612,7 @@ const Home = () => {
       )}
       {tagsEditTarget != null && (
         <EditTagsDialog
+          key={tagsEditTarget.key}
           title={tagsEditTarget.title}
           initialTags={tagsEditTarget.tags}
           allTagSuggestions={catalogAllTags}

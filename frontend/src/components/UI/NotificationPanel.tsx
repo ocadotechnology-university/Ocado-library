@@ -123,7 +123,11 @@ export default function NotificationPanel({
       return;
     }
 
-    void loadNotifications();
+    const handle = window.setTimeout(() => {
+      void loadNotifications();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
   }, [open, itemsOverride, isAuthenticated, loadNotifications]);
 
   const displayItems = useMemo(

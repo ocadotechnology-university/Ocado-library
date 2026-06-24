@@ -389,7 +389,11 @@ const Account = () => {
   }, [isAdmin, user]);
 
   useEffect(() => {
-    void loadHistory();
+    const handle = window.setTimeout(() => {
+      void loadHistory();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
   }, [loadHistory]);
 
   const descriptionsById = useMemo(

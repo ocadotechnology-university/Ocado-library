@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ApiError } from "../../lib/api";
 import TagsInput from "./TagsInput";
 
@@ -20,10 +20,6 @@ export default function EditTagsDialog({
   const [tags, setTags] = useState(initialTags);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setTags(initialTags);
-  }, [initialTags]);
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/25 px-4">
