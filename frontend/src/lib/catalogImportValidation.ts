@@ -48,15 +48,15 @@ export type CatalogImportValidationResult = {
 };
 
 export const INTERNAL_ID_REGEX: Record<MigrationDescriptionType, RegExp> = {
-  Book: /^OC-WRO-B-[A-Z0-9]+$/,
-  BoardGame: /^OC-WRO-G-[A-Z0-9]+$/,
-  PSGame: /^OC-WRO-PS-[A-Z0-9]+$/,
+  Book: /^OC-B-WR-\d{3}$/,
+  BoardGame: /^OC-G-WR-\d{3}$/,
+  PSGame: /^OC-PS-WR-\d{3}$/,
 };
 
 export const INTERNAL_ID_HINT: Record<MigrationDescriptionType, string> = {
-  Book: "OC-WRO-B-<ID> (e.g. OC-WRO-B-0109)",
-  BoardGame: "OC-WRO-G-<ID> (e.g. OC-WRO-G-0101)",
-  PSGame: "OC-WRO-PS-<ID> (e.g. OC-WRO-PS-0001)",
+  Book: "OC-B-WR-000 (e.g. OC-B-WR-109)",
+  BoardGame: "OC-G-WR-000 (e.g. OC-G-WR-101)",
+  PSGame: "OC-PS-WR-000 (e.g. OC-PS-WR-001)",
 };
 
 const ALLOWED_TYPES = new Set<MigrationDescriptionType>([

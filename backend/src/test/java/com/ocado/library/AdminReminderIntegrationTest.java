@@ -32,7 +32,7 @@ class AdminReminderIntegrationTest {
 
     @Test
     void manualReminderWhenBorrowedReturnsNoContent() throws Exception {
-        String internalId = "OC-B-RM-001";
+        String internalId = "OC-B-WR-611";
         createBookAndItem(internalId);
 
         mockMvc.perform(post("/api/items/" + internalId + "/borrow")
@@ -46,7 +46,7 @@ class AdminReminderIntegrationTest {
 
     @Test
     void manualReminderWhenNotBorrowedReturnsConflict() throws Exception {
-        String internalId = "OC-B-RM-002";
+        String internalId = "OC-B-WR-612";
         createBookAndItem(internalId);
 
         mockMvc.perform(post("/api/admin/reminders/" + internalId)
@@ -56,7 +56,7 @@ class AdminReminderIntegrationTest {
 
     @Test
     void manualReminderWhenItemMissingReturnsNotFound() throws Exception {
-        mockMvc.perform(post("/api/admin/reminders/OC-B-MISSING")
+        mockMvc.perform(post("/api/admin/reminders/OC-B-WR-699")
                         .header("X-User-Email", "admin@example.com"))
                 .andExpect(status().isNotFound());
     }

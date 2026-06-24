@@ -8,11 +8,11 @@ describe("parseApiErrorBody", () => {
         JSON.stringify({
           status: 400,
           error: "Bad Request",
-          message: "Duplicate internalId in file: OC-WRO-B-0104",
+          message: "Duplicate internalId in file: OC-B-WR-104",
         }),
         "Failed to import catalog",
       ),
-    ).toBe("Duplicate internalId in file: OC-WRO-B-0104");
+    ).toBe("Duplicate internalId in file: OC-B-WR-104");
   });
 
   it("falls back when body is empty", () => {

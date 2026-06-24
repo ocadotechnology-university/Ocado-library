@@ -28,7 +28,7 @@ export type BookFullViewProps = {
   title: string;
   author: string;
   description: string;
-  /** e.g. OC-WRO-B-0001 */
+  /** e.g. OC-B-WR-001 */
   bookId: string;
   tags: string[];
   status: BookStatus;

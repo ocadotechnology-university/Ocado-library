@@ -54,6 +54,7 @@ import {
   pingDescriptionBorrowers,
 } from "../lib/api";
 import { applyCatalogFilters, mergeUniqueTags } from "../lib/catalogFilters";
+import { INTERNAL_ID_REGEX } from "../lib/catalogImportValidation";
 
 const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "free", label: "Available" },
@@ -203,7 +204,7 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
       "AVAILABLE") as BackendDescriptionStatus,
     newArrival: false,
     caption: captionFor(status),
-    bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
+    bookId: `OC-G-WR-${String(row.id).padStart(3, "0")}`,
     description: row.description || "",
     tags,
     placeholderSeed: seed,
@@ -615,9 +616,9 @@ const Home = () => {
 
   const addInstance = useCallback(async () => {
     const value = instanceInput.trim().toUpperCase();
-    const isValidBoard = /^OC-WRO-G-[A-Z0-9]+$/.test(value);
-    const isValidBook = /^OC-WRO-B-[A-Z0-9]+$/.test(value);
-    const isValidPs = /^OC-WRO-PS-[A-Z0-9]+$/.test(value);
+    const isValidBoard = INTERNAL_ID_REGEX.BoardGame.test(value);
+    const isValidBook = INTERNAL_ID_REGEX.Book.test(value);
+    const isValidPs = INTERNAL_ID_REGEX.PSGame.test(value);
     if ((!isValidBook && !isValidBoard && !isValidPs) || !instanceTargetKey)
       return;
 
@@ -1759,20 +1760,20 @@ const Home = () => {
             </h3>
             <p className="mt-1 text-xs text-[#6b7289]">
               {instanceTargetKey?.startsWith("ps-")
-                ? "Use format: OC-WRO-PS-num"
+                ? "Use format: OC-PS-WR-000"
                 : instanceTargetKey?.startsWith("board-")
-                  ? "Use format: OC-WRO-G-num"
-                  : "Use format: OC-WRO-B-num"}
+                  ? "Use format: OC-G-WR-000"
+                  : "Use format: OC-B-WR-000"}
             </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}
               placeholder={
                 instanceTargetKey?.startsWith("ps-")
-                  ? "OC-WRO-PS-0001"
+                  ? "OC-PS-WR-001"
                   : instanceTargetKey?.startsWith("board-")
-                    ? "OC-WRO-G-0101"
-                    : "OC-WRO-B-0109"
+                    ? "OC-G-WR-101"
+                    : "OC-B-WR-109"
               }
               className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
             />

@@ -115,15 +115,15 @@ class AdminServiceTest {
         description.setType(ItemType.Book);
 
         Item item = new Item();
-        item.setInternalId("OC-B-003");
+        item.setInternalId("OC-B-WR-003");
         item.setStatus(ItemStatus.BORROWED);
         item.setBorrower("user@example.com");
         item.setDescription(description);
 
-        when(itemRepository.findByInternalId("OC-B-003")).thenReturn(Optional.of(item));
+        when(itemRepository.findByInternalId("OC-B-WR-003")).thenReturn(Optional.of(item));
         when(itemRepository.save(item)).thenReturn(item);
 
-        Item result = adminService.updatePhysicalCopyStatus("OC-B-003", ItemStatus.AVAILABLE, "admin@example.com");
+        Item result = adminService.updatePhysicalCopyStatus("OC-B-WR-003", ItemStatus.AVAILABLE, "admin@example.com");
 
         assertEquals(ItemStatus.AVAILABLE, result.getStatus());
         assertNull(result.getBorrower());

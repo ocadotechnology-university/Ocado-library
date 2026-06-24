@@ -264,7 +264,7 @@ export default function CatalogImportPanel({
           <span className="font-mono text-xs">BoardGame</span>, or{" "}
           <span className="font-mono text-xs">PSGame</span>) and type-specific
           fields. Physical copies use{" "}
-          <span className="font-mono text-xs">OC-WRO-B/G/PS-…</span> IDs.
+          <span className="font-mono text-xs">OC-B/G/PS-WR-000</span> IDs.
         </p>
       </div>
 
