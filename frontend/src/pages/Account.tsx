@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import IncrementalListSentinel from "../components/UI/IncrementalListSentinel";
+import { useIncrementalList } from "../hooks/useIncrementalList";
 import Layout from "../components/Layout";
 import {
   BOOK_LIST_COVER_FRAME_CLASS,
@@ -85,6 +87,9 @@ const NAV: { id: AccountSectionId; label: string }[] = [
   { id: "borrowed", label: "Borrowed by me" },
   { id: "waiting", label: "Waiting for" },
 ];
+
+const JOURNAL_LOG_PAGE_SIZE = 100;
+const DESCRIPTION_CARD_PAGE_SIZE = 50;
 
 function formatDate(value: string): string {
   const date = new Date(value);
@@ -292,6 +297,20 @@ function isJournalEventRow(row: UserOrderRow): boolean {
   return row.kind === "history" || row.kind === "log";
 }
 
+function descriptionIdsFromJournal(entries: JournalEntry[]): Set<number> {
+  const ids = new Set<number>();
+  for (const entry of entries) {
+    if (entry.descriptionId != null) ids.add(entry.descriptionId);
+  }
+  return ids;
+}
+
+function rowPageSize(isAdminView: boolean, section: AccountSectionId): number {
+  return isAdminView || section === "history"
+    ? JOURNAL_LOG_PAGE_SIZE
+    : DESCRIPTION_CARD_PAGE_SIZE;
+}
+
 function AccountStatsSidebar({
   counts,
 }: {
@@ -410,7 +429,13 @@ const Account = () => {
         seed: `ps-${ps.id}`,
         itemType: "ps" as const,
       }));
-      setDescriptions([...mappedBooks, ...mappedBoards, ...mappedPs]);
+      const referencedDescriptionIds = descriptionIdsFromJournal(entries);
+      const allDescriptions = [...mappedBooks, ...mappedBoards, ...mappedPs];
+      setDescriptions(
+        referencedDescriptionIds.size === 0
+          ? []
+          : allDescriptions.filter((d) => referencedDescriptionIds.has(d.id)),
+      );
       setJournal(entries);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -468,7 +493,7 @@ const Account = () => {
     };
   }, [adminRows, borrowedRows, historyRows, isAdmin]);
 
-  const rows = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const q = findQuery.trim().toLowerCase();
     const baseRows = isAdmin
       ? adminRows
@@ -544,6 +569,38 @@ const Account = () => {
     personFilter,
     section,
   ]);
+
+  const accountListResetKey = useMemo(
+    () =>
+      [
+        isAdmin ? "admin" : section,
+        findQuery,
+        personFilter,
+        bookFilter,
+        instanceFilter,
+        periodFrom,
+        periodTo,
+        adminStatus,
+      ].join("|"),
+    [
+      isAdmin,
+      section,
+      findQuery,
+      personFilter,
+      bookFilter,
+      instanceFilter,
+      periodFrom,
+      periodTo,
+      adminStatus,
+    ],
+  );
+
+  const pageSize = rowPageSize(isAdmin, section);
+  const {
+    visibleItems: visibleRows,
+    hasMore: hasMoreRows,
+    onMainScroll: onAccountMainScroll,
+  } = useIncrementalList(filteredRows, pageSize, accountListResetKey);
 
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
 
@@ -758,6 +815,7 @@ const Account = () => {
       topBar={<CatalogAppTopBar />}
       leftSidebar={leftSidebar}
       rightSidebar={<AccountStatsSidebar counts={counts} />}
+      onMainScroll={onAccountMainScroll}
     >
       <h1 id={titleId} className="sr-only">
         {isAdmin ? "History" : "My loans and holds"}
@@ -808,7 +866,7 @@ const Account = () => {
               Retry
             </button>
           </div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[#b1b2b5] bg-white/60 px-4 py-14 text-center text-base text-[#6b7289]">
             {findQuery.trim().length > 0
               ? "No matches — try another word."
@@ -817,8 +875,9 @@ const Account = () => {
                 : "Nothing here yet."}
           </p>
         ) : (
-          <ul className="flex flex-col gap-4">
-            {rows.map((row) => {
+          <>
+            <ul className="flex flex-col gap-4">
+              {visibleRows.map((row) => {
               if (isJournalEventRow(row)) {
                 return (
                   <JournalEventCard
@@ -845,7 +904,9 @@ const Account = () => {
                 />
               );
             })}
-          </ul>
+            </ul>
+            <IncrementalListSentinel hasMore={hasMoreRows} />
+          </>
         )}
       </div>
 

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, UIEvent } from "react";
 
 /** Matches fixed header height (Tailwind spacing scale). */
 export const TOP_BAR_HEIGHT = "h-24";
@@ -13,6 +13,7 @@ type LayoutProps = {
   rightSidebar?: ReactNode | null;
   /** Tailwind background class for the scrollable main column (e.g. section tint on Home). */
   mainBgClass?: string;
+  onMainScroll?: (event: UIEvent<HTMLElement>) => void;
   children: ReactNode;
 };
 
@@ -28,6 +29,7 @@ const Layout = ({
   leftSidebar,
   rightSidebar = null,
   mainBgClass = "bg-[#eeeef0]",
+  onMainScroll,
   children,
 }: LayoutProps) => {
   return (
@@ -42,6 +44,7 @@ const Layout = ({
         <aside className={`${asideClass} border-r`}>{leftSidebar}</aside>
 
         <main
+          onScroll={onMainScroll}
           className={`min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain ${mainBgClass} px-4 py-6 sm:px-6 lg:px-8 lg:py-8`}
         >
           <div className="mx-auto w-full max-w-6xl">{children}</div>
