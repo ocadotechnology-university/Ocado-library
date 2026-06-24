@@ -1211,302 +1211,306 @@ const Home = () => {
               />
 
               {actionError ? (
-            <p className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
-              {actionError}
-            </p>
-          ) : null}
-          {actionMessage ? (
-            <p className="rounded-xl border border-[#b7d9bc] bg-[#eefbf0] px-4 py-3 text-sm text-[#166534]">
-              {actionMessage}
-            </p>
-          ) : null}
+                <p className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-3 text-sm text-[#b91c1c]">
+                  {actionError}
+                </p>
+              ) : null}
+              {actionMessage ? (
+                <p className="rounded-xl border border-[#b7d9bc] bg-[#eefbf0] px-4 py-3 text-sm text-[#166534]">
+                  {actionMessage}
+                </p>
+              ) : null}
 
-          {section === "books" || section === "board" || section === "ps" ? (
-            <div className="flex flex-col gap-4">
-              {isAdmin && adminMode !== "browse" ? (
-                <div className="rounded-2xl border border-[#b1b2b5]/80 bg-white p-5 shadow-sm">
-                  <h2 className="text-xl font-semibold text-[#43485e]">
-                    {adminMode === "add"
-                      ? section === "board"
-                        ? "Add new board game"
-                        : section === "ps"
-                          ? "Add new PS game"
-                          : "Add new book"
-                      : section === "board"
-                        ? "Edit board game"
-                        : section === "ps"
-                          ? "Edit PS game"
-                          : "Edit book"}
-                  </h2>
-                  <p className="mt-1 text-xs text-[#6b7289]">
-                    {section === "books"
-                      ? "Tip: First load data from ISBN, then you can correct the fields below. ISBN and Title are required; the rest are optional."
-                      : "No autocomplete for this type. Title is required; rest optional. Cards use entity-specific fields (e.g. numberOfPlayers for board)."}
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {section === "books" && (
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                          ISBN <span className="text-[#b91c1c]">*</span>
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            value={adminDraft.isbn}
-                            onChange={(e) => {
-                              setAdminDraft((d) => ({
-                                ...d,
-                                isbn: e.target.value,
-                              }));
-                              if (isbnError) setIsbnError(null);
-                            }}
-                            className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => void loadFromRepoByIsbn()}
-                            disabled={isbnLoading}
-                            className="shrink-0 rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] disabled:opacity-60"
-                          >
-                            {isbnLoading ? "Loading…" : "Autofill from ISBN"}
-                          </button>
-                        </div>
-                        {isbnError ? (
-                          <p className="mt-1 text-sm text-[#b91c1c]">
-                            {isbnError}
-                          </p>
-                        ) : null}
-                      </div>
-                    )}
-                    {(section === "books"
-                      ? ([
-                          ["Title *", "title"],
-                          ["Author", "author"],
-                          ["Language", "language"],
-                        ] as const)
-                      : section === "board"
-                        ? ([
-                            ["Title *", "title"],
-                            ["# Players (optional)", "language"],
-                          ] as const)
-                        : ([["Title *", "title"]] as const)
-                    ).map(([label, field]) => (
-                      <div key={field}>
-                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                          {label}
-                        </label>
-                        <input
-                          value={adminDraft[field]}
-                          onChange={(e) =>
-                            setAdminDraft((d) => ({
-                              ...d,
-                              [field]: e.target.value,
-                            }))
-                          }
-                          className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                        />
-                      </div>
-                    ))}
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                        Tags
-                      </label>
-                      <TagsInput
-                        value={adminDraft.tags}
-                        onChange={(tags) =>
-                          setAdminDraft((d) => ({
-                            ...d,
-                            tags,
-                          }))
-                        }
-                        suggestions={catalogAllTags}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                        Description
-                      </label>
-                      <textarea
-                        value={adminDraft.description}
-                        onChange={(e) =>
-                          setAdminDraft((d) => ({
-                            ...d,
-                            description: e.target.value,
-                          }))
-                        }
-                        rows={4}
-                        className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                      />
-                    </div>
-                    {section === "books" && (
-                      <div className="sm:col-span-2">
-                        <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                          Image URL
-                        </label>
-                        <input
-                          value={adminDraft.imageUrl}
-                          onChange={(e) =>
-                            setAdminDraft((d) => ({
-                              ...d,
-                              imageUrl: e.target.value,
-                            }))
-                          }
-                          placeholder="https://..."
-                          className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                        />
-                      </div>
-                    )}
-                    {section === "books" && (
-                      <>
-                        <div>
-                          <label className="mb-1 block text-sm font-medium text-[#43485e]">
-                            Status
-                          </label>
-                          <select
-                            value={adminDraft.status}
-                            onChange={(e) =>
-                              setAdminDraft((d) => ({
-                                ...d,
-                                status: e.target.value as BookStatus,
-                              }))
-                            }
-                            className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
-                          >
-                            {STATUS_OPTIONS.map((s) => (
-                              <option key={s.status} value={s.status}>
-                                {s.label}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
-                          <input
-                            type="checkbox"
-                            checked={adminDraft.newArrival}
-                            onChange={(e) =>
-                              setAdminDraft((d) => ({
-                                ...d,
-                                newArrival: e.target.checked,
-                              }))
-                            }
-                            className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
-                          />
-                          Mark as new arrival
-                        </label>
-                      </>
-                    )}
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <button
-                      type="button"
-                      onClick={saveAdminDraft}
-                      disabled={adminSaving}
-                      className="rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
-                    >
-                      {adminSaving ? "Saving..." : "Save"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAdminMode("browse")}
-                      className="rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-4 py-2 text-sm font-medium text-[#43485e]"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : catalogLoading ? (
-                <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
-                  Loading real catalog data...
-                </p>
-              ) : catalogError ? (
-                <div className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-8 text-center text-sm text-[#b91c1c]">
-                  <p>{catalogError}</p>
-                  <button
-                    type="button"
-                    onClick={() => void loadCatalog()}
-                    className="mt-3 rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
-                  >
-                    Retry
-                  </button>
-                </div>
-              ) : displayRows.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
-                  No items match these filters. Try another category or clear
-                  the filters on the left.
-                </p>
-              ) : (
+              {section === "books" ||
+              section === "board" ||
+              section === "ps" ? (
                 <div className="flex flex-col gap-4">
-                  <CatalogSectionHeading
-                    section={section}
-                    count={displayRows.length}
-                    catalogView={catalogView}
-                    onCatalogViewChange={setCatalogView}
-                  />
-                  {catalogView === "cards" ? (
-                    <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                      {displayRows.map((row) => (
-                        <li
-                          key={row.key}
-                          className="flex flex-col items-center gap-2"
-                          onContextMenu={(e) => {
-                            if (!isAdmin) return;
-                            e.preventDefault();
-                            setContextMenu({
-                              key: row.key,
-                              x: e.clientX,
-                              y: e.clientY,
-                            });
-                          }}
-                        >
-                          <BookPreview
-                            variant="card"
-                            coverImageUrl={row.imageUrl}
-                            coverIsbn={row.isbn}
-                            title={row.title}
-                            author={row.author}
-                            status={row.status}
-                            newArrival={row.newArrival}
-                            tags={row.tags}
-                            onOpen={() => openBook(row.key)}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <ul className="flex list-none flex-col gap-4">
-                      {displayRows.map((row) => (
-                        <li key={row.key} className="w-full">
-                          <div
-                            onContextMenu={(e) => {
-                              if (!isAdmin) return;
-                              e.preventDefault();
-                              setContextMenu({
-                                key: row.key,
-                                x: e.clientX,
-                                y: e.clientY,
-                              });
-                            }}
-                          >
-                            <BookPreview
-                              variant="list"
-                              coverImageUrl={row.imageUrl}
-                              coverIsbn={row.isbn}
-                              title={row.title}
-                              author={row.author}
-                              status={row.status}
-                              newArrival={row.newArrival}
-                              description={row.description}
-                              tags={row.tags}
-                              onOpen={() => openBook(row.key)}
+                  {isAdmin && adminMode !== "browse" ? (
+                    <div className="rounded-2xl border border-[#b1b2b5]/80 bg-white p-5 shadow-sm">
+                      <h2 className="text-xl font-semibold text-[#43485e]">
+                        {adminMode === "add"
+                          ? section === "board"
+                            ? "Add new board game"
+                            : section === "ps"
+                              ? "Add new PS game"
+                              : "Add new book"
+                          : section === "board"
+                            ? "Edit board game"
+                            : section === "ps"
+                              ? "Edit PS game"
+                              : "Edit book"}
+                      </h2>
+                      <p className="mt-1 text-xs text-[#6b7289]">
+                        {section === "books"
+                          ? "Tip: First load data from ISBN, then you can correct the fields below. ISBN and Title are required; the rest are optional."
+                          : "No autocomplete for this type. Title is required; rest optional. Cards use entity-specific fields (e.g. numberOfPlayers for board)."}
+                      </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {section === "books" && (
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                              ISBN <span className="text-[#b91c1c]">*</span>
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                value={adminDraft.isbn}
+                                onChange={(e) => {
+                                  setAdminDraft((d) => ({
+                                    ...d,
+                                    isbn: e.target.value,
+                                  }));
+                                  if (isbnError) setIsbnError(null);
+                                }}
+                                className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => void loadFromRepoByIsbn()}
+                                disabled={isbnLoading}
+                                className="shrink-0 rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] disabled:opacity-60"
+                              >
+                                {isbnLoading
+                                  ? "Loading…"
+                                  : "Autofill from ISBN"}
+                              </button>
+                            </div>
+                            {isbnError ? (
+                              <p className="mt-1 text-sm text-[#b91c1c]">
+                                {isbnError}
+                              </p>
+                            ) : null}
+                          </div>
+                        )}
+                        {(section === "books"
+                          ? ([
+                              ["Title *", "title"],
+                              ["Author", "author"],
+                              ["Language", "language"],
+                            ] as const)
+                          : section === "board"
+                            ? ([
+                                ["Title *", "title"],
+                                ["# Players (optional)", "language"],
+                              ] as const)
+                            : ([["Title *", "title"]] as const)
+                        ).map(([label, field]) => (
+                          <div key={field}>
+                            <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                              {label}
+                            </label>
+                            <input
+                              value={adminDraft[field]}
+                              onChange={(e) =>
+                                setAdminDraft((d) => ({
+                                  ...d,
+                                  [field]: e.target.value,
+                                }))
+                              }
+                              className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
                             />
                           </div>
-                        </li>
-                      ))}
-                    </ul>
+                        ))}
+                        <div className="sm:col-span-2">
+                          <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                            Tags
+                          </label>
+                          <TagsInput
+                            value={adminDraft.tags}
+                            onChange={(tags) =>
+                              setAdminDraft((d) => ({
+                                ...d,
+                                tags,
+                              }))
+                            }
+                            suggestions={catalogAllTags}
+                          />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                            Description
+                          </label>
+                          <textarea
+                            value={adminDraft.description}
+                            onChange={(e) =>
+                              setAdminDraft((d) => ({
+                                ...d,
+                                description: e.target.value,
+                              }))
+                            }
+                            rows={4}
+                            className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                          />
+                        </div>
+                        {section === "books" && (
+                          <div className="sm:col-span-2">
+                            <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                              Image URL
+                            </label>
+                            <input
+                              value={adminDraft.imageUrl}
+                              onChange={(e) =>
+                                setAdminDraft((d) => ({
+                                  ...d,
+                                  imageUrl: e.target.value,
+                                }))
+                              }
+                              placeholder="https://..."
+                              className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                            />
+                          </div>
+                        )}
+                        {section === "books" && (
+                          <>
+                            <div>
+                              <label className="mb-1 block text-sm font-medium text-[#43485e]">
+                                Status
+                              </label>
+                              <select
+                                value={adminDraft.status}
+                                onChange={(e) =>
+                                  setAdminDraft((d) => ({
+                                    ...d,
+                                    status: e.target.value as BookStatus,
+                                  }))
+                                }
+                                className="w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+                              >
+                                {STATUS_OPTIONS.map((s) => (
+                                  <option key={s.status} value={s.status}>
+                                    {s.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <label className="sm:col-span-2 flex items-center gap-2 text-sm text-[#43485e]">
+                              <input
+                                type="checkbox"
+                                checked={adminDraft.newArrival}
+                                onChange={(e) =>
+                                  setAdminDraft((d) => ({
+                                    ...d,
+                                    newArrival: e.target.checked,
+                                  }))
+                                }
+                                className="h-4 w-4 rounded border-[#43485e]/40 text-[#43485e]"
+                              />
+                              Mark as new arrival
+                            </label>
+                          </>
+                        )}
+                      </div>
+                      <div className="mt-4 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={saveAdminDraft}
+                          disabled={adminSaving}
+                          className="rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
+                        >
+                          {adminSaving ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setAdminMode("browse")}
+                          className="rounded-lg border border-[#43485e]/30 bg-[#eeeef0] px-4 py-2 text-sm font-medium text-[#43485e]"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : catalogLoading ? (
+                    <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
+                      Loading real catalog data...
+                    </p>
+                  ) : catalogError ? (
+                    <div className="rounded-xl border border-[#f3b4b4] bg-[#fef2f2] px-4 py-8 text-center text-sm text-[#b91c1c]">
+                      <p>{catalogError}</p>
+                      <button
+                        type="button"
+                        onClick={() => void loadCatalog()}
+                        className="mt-3 rounded-lg bg-[#43485e] px-4 py-2 text-sm font-medium text-[#eeeef0]"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : displayRows.length === 0 ? (
+                    <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
+                      No items match these filters. Try another category or
+                      clear the filters on the left.
+                    </p>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <CatalogSectionHeading
+                        section={section}
+                        count={displayRows.length}
+                        catalogView={catalogView}
+                        onCatalogViewChange={setCatalogView}
+                      />
+                      {catalogView === "cards" ? (
+                        <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                          {displayRows.map((row) => (
+                            <li
+                              key={row.key}
+                              className="flex flex-col items-center gap-2"
+                              onContextMenu={(e) => {
+                                if (!isAdmin) return;
+                                e.preventDefault();
+                                setContextMenu({
+                                  key: row.key,
+                                  x: e.clientX,
+                                  y: e.clientY,
+                                });
+                              }}
+                            >
+                              <BookPreview
+                                variant="card"
+                                coverImageUrl={row.imageUrl}
+                                coverIsbn={row.isbn}
+                                title={row.title}
+                                author={row.author}
+                                status={row.status}
+                                newArrival={row.newArrival}
+                                tags={row.tags}
+                                onOpen={() => openBook(row.key)}
+                              />
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <ul className="flex list-none flex-col gap-4">
+                          {displayRows.map((row) => (
+                            <li key={row.key} className="w-full">
+                              <div
+                                onContextMenu={(e) => {
+                                  if (!isAdmin) return;
+                                  e.preventDefault();
+                                  setContextMenu({
+                                    key: row.key,
+                                    x: e.clientX,
+                                    y: e.clientY,
+                                  });
+                                }}
+                              >
+                                <BookPreview
+                                  variant="list"
+                                  coverImageUrl={row.imageUrl}
+                                  coverIsbn={row.isbn}
+                                  title={row.title}
+                                  author={row.author}
+                                  status={row.status}
+                                  newArrival={row.newArrival}
+                                  description={row.description}
+                                  tags={row.tags}
+                                  onOpen={() => openBook(row.key)}
+                                />
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          ) : null}
+              ) : null}
             </>
           )}
         </div>

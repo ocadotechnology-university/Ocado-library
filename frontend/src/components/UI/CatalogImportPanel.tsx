@@ -22,7 +22,6 @@ export type CatalogImportPanelProps = {
   onImported: () => void | Promise<void>;
 };
 
-
 function formatJson(value: unknown): string {
   return JSON.stringify(value, null, 2);
 }
@@ -190,9 +189,7 @@ export default function CatalogImportPanel({
             return;
           }
           if (error instanceof ApiError) {
-            setServerErrors([
-              formatUserFacingErrorMessage(error.message),
-            ]);
+            setServerErrors([formatUserFacingErrorMessage(error.message)]);
           } else {
             setServerErrors([
               "Could not verify import against the catalog. Try again.",
@@ -257,8 +254,8 @@ export default function CatalogImportPanel({
         </h2>
         <p className="mt-2 max-w-3xl text-sm text-[#6b7289]">
           Edit JSON manually in the editor below, or use{" "}
-          <span className="font-medium text-[#43485e]">Import from json</span> to
-          load a file into the editor. Each entry needs a{" "}
+          <span className="font-medium text-[#43485e]">Import from json</span>{" "}
+          to load a file into the editor. Each entry needs a{" "}
           <span className="font-mono text-xs">type</span> (
           <span className="font-mono text-xs">Book</span>,{" "}
           <span className="font-mono text-xs">BoardGame</span>, or{" "}
@@ -359,9 +356,7 @@ export default function CatalogImportPanel({
               type="button"
               onClick={() => void handleImport()}
               disabled={
-                importing ||
-                !readyToImport ||
-                validatedDescriptions == null
+                importing || !readyToImport || validatedDescriptions == null
               }
               className="rounded-lg bg-[#43485e] px-4 py-2 text-sm text-[#eeeef0] disabled:opacity-60"
             >
