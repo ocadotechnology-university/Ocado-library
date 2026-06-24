@@ -42,7 +42,11 @@ export function AppChromeProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    void refreshNotificationUnreadStatus();
+    const handle = window.setTimeout(() => {
+      void refreshNotificationUnreadStatus();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
   }, [refreshNotificationUnreadStatus]);
 
   const toggleNotifications = useCallback(

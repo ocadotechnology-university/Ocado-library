@@ -309,13 +309,17 @@ const Home = () => {
 
   useEffect(() => {
     if (instanceTargetKey == null) {
-      setInstanceInput("");
-      setInstanceInputLoading(false);
-      return;
+      const handle = window.setTimeout(() => {
+        setInstanceInput("");
+        setInstanceInputLoading(false);
+      }, 0);
+      return () => window.clearTimeout(handle);
     }
 
     let cancelled = false;
-    setInstanceInputLoading(true);
+    const startHandle = window.setTimeout(() => {
+      setInstanceInputLoading(true);
+    }, 0);
 
     fetchNextInternalId(itemTypeFromTargetKey(instanceTargetKey))
       .then(({ internalId }) => {
@@ -333,6 +337,7 @@ const Home = () => {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(startHandle);
     };
   }, [instanceTargetKey]);
 
@@ -389,7 +394,11 @@ const Home = () => {
   }, [isAdmin]);
 
   useEffect(() => {
-    void loadCatalog();
+    const handle = window.setTimeout(() => {
+      void loadCatalog();
+    }, 0);
+
+    return () => window.clearTimeout(handle);
   }, [loadCatalog]);
 
   const catalogAuthors = useMemo(
@@ -542,7 +551,7 @@ const Home = () => {
     const isBook = section === "books";
     const isBoard = section === "board";
     const isPs = section === "ps";
-    let tags = [...adminDraft.tags];
+    const tags = [...adminDraft.tags];
     if (isBook) {
       const lang = adminDraft.language.trim();
       if (lang && !tags.some((t) => t.toLowerCase() === lang.toLowerCase())) {
@@ -1604,6 +1613,7 @@ const Home = () => {
       )}
       {tagsEditTarget != null && (
         <EditTagsDialog
+          key={tagsEditTarget.key}
           title={tagsEditTarget.title}
           initialTags={tagsEditTarget.tags}
           allTagSuggestions={catalogAllTags}
