@@ -15,7 +15,7 @@ describe("catalogCoverImage", () => {
 
   it("builds Open Library cover URLs", () => {
     expect(openLibraryCoverUrl("9780134685991", "large")).toBe(
-      "https://covers.openlibrary.org/b/isbn/9780134685991-L.jpg?default=false",
+      "https://covers.openlibrary.org/b/isbn/9780134685991-L.jpg?default=true",
     );
   });
 

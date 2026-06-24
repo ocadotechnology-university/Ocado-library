@@ -145,6 +145,15 @@ const BookFullView = ({
     >
       <div className={BOOK_FULL_CARD_RADIAL_CLASS} />
 
+      <button
+        type="button"
+        onClick={requestClose}
+        aria-label="Close"
+        className="absolute top-4 right-4 z-20 flex h-8 w-8 items-center justify-center rounded-lg border border-[#43485e]/20 bg-white/90 text-lg leading-none text-[#43485e] shadow-sm backdrop-blur-sm transition hover:border-[#43485e]/25 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+      >
+        ×
+      </button>
+
       <div className="relative flex min-h-[min(72vh,36rem)] flex-col gap-5 p-4 sm:p-5 lg:flex-row lg:items-stretch lg:gap-8 lg:p-6">
         <div className="relative mx-auto w-full max-w-[min(92vw,260px)] shrink-0 sm:max-w-[min(88vw,300px)] lg:mx-0 lg:max-w-[min(44%,380px)]">
           <div className={BOOK_FULL_COVER_INNER_WRAP_CLASS}>
@@ -174,31 +183,22 @@ const BookFullView = ({
         </div>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:min-h-[min(72vh,36rem)]">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="min-w-0 flex-1">
-              <h2
-                id={`${menuId}-title`}
-                className="text-[1.35rem] font-semibold tracking-tight text-[#2a3142] sm:text-2xl"
-              >
-                {title}
-              </h2>
-              <p className="mt-1.5 text-base text-[#6b7289]">{author}</p>
-              {bookId.trim().length > 0 && (
-                <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
-                  {bookId}
-                </p>
-              )}
-              <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">
-                {description}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={requestClose}
-              className="shrink-0 rounded-xl border border-[#c5c9d6] bg-white/90 px-4 py-2 text-sm font-medium text-[#43485e] shadow-sm backdrop-blur-sm transition hover:border-[#43485e]/25 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+          <div className="min-w-0 flex-1 pr-8">
+            <h2
+              id={`${menuId}-title`}
+              className="text-[1.35rem] font-semibold tracking-tight text-[#2a3142] sm:text-2xl"
             >
-              Close
-            </button>
+              {title}
+            </h2>
+            <p className="mt-1.5 text-base text-[#6b7289]">{author}</p>
+            {bookId.trim().length > 0 && (
+              <p className="mt-3 inline-flex rounded-lg bg-[#43485e]/[0.06] px-2.5 py-1 font-mono text-xs font-semibold tracking-wider text-[#43485e] ring-1 ring-[#43485e]/10">
+                {bookId}
+              </p>
+            )}
+            <p className="mt-4 text-sm leading-relaxed text-[#3d4659] sm:text-base">
+              {description}
+            </p>
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">

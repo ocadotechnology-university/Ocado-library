@@ -956,7 +956,7 @@ const Home = () => {
                     setSection("books");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add book
                 </button>
@@ -966,7 +966,7 @@ const Home = () => {
                     setSection("board");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add board game
                 </button>
@@ -976,7 +976,7 @@ const Home = () => {
                     setSection("ps");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add PS game
                 </button>
@@ -986,7 +986,7 @@ const Home = () => {
                     setAdminMode("browse");
                     setShowCatalogImport(true);
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Import
                 </button>

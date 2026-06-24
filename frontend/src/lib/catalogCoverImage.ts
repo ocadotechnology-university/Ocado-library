@@ -12,19 +12,33 @@ export function normalizeIsbn(raw: string | null | undefined): string | null {
   return null;
 }
 
+function normalizeStoredCoverUrl(
+  imageUrl: string | null | undefined,
+): string | null {
+  const trimmed = imageUrl?.trim();
+  if (!trimmed) return null;
+  if (
+    trimmed.includes("covers.openlibrary.org") &&
+    trimmed.includes("default=false")
+  ) {
+    return trimmed.replace("default=false", "default=true");
+  }
+  return trimmed;
+}
+
 export function openLibraryCoverUrl(
   isbn: string,
   size: CoverImageSize = "preview",
 ): string {
   const suffix = size === "large" ? "L" : "M";
-  return `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-${suffix}.jpg?default=false`;
+  return `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-${suffix}.jpg?default=true`;
 }
 
 export function resolveInitialCoverMode(
   imageUrl: string | null | undefined,
   isbn: string | null | undefined,
 ): "stored" | "isbn" | "none" {
-  if (imageUrl?.trim()) return "stored";
+  if (normalizeStoredCoverUrl(imageUrl)) return "stored";
   if (normalizeIsbn(isbn)) return "isbn";
   return "none";
 }
@@ -35,7 +49,7 @@ export function resolveCoverSrc(
   isbn: string | null | undefined,
   size: CoverImageSize = "preview",
 ): string | null {
-  if (mode === "stored") return imageUrl?.trim() || null;
+  if (mode === "stored") return normalizeStoredCoverUrl(imageUrl);
   if (mode === "isbn") {
     const normalized = normalizeIsbn(isbn);
     return normalized ? openLibraryCoverUrl(normalized, size) : null;

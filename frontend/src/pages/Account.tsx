@@ -23,6 +23,7 @@ import {
   fetchBookDescriptions,
   fetchJournalEntries,
   fetchPSGameDescriptions,
+  returnItem,
   pingDescriptionBorrowers,
   type BackendDescriptionStatus,
   type JournalEntry,
@@ -210,10 +211,40 @@ function buildAdminRows(
     );
 }
 
-function OrderListRow({ row }: { row: UserOrderRow }) {
+function OrderListRow({
+  row,
+  onClick,
+}: {
+  row: UserOrderRow;
+  onClick?: () => void;
+}) {
+  const interactive = onClick != null;
+
   return (
     <li className="list-none">
-      <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
+      <div
+        role={interactive ? "button" : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        onClick={onClick}
+        onKeyDown={
+          interactive
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onClick();
+                }
+              }
+            : undefined
+        }
+        className={[
+          "flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3",
+          interactive
+            ? "cursor-pointer transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
           <CatalogCoverImage
             imageUrl={row.imageUrl}
@@ -318,6 +349,10 @@ const Account = () => {
   const [bookActionMessage, setBookActionMessage] = useState<string | null>(
     null,
   );
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
+    null,
+  );
+  const [returning, setReturning] = useState(false);
   const [pinging, setPinging] = useState(false);
 
   const [personFilter, setPersonFilter] = useState("");
@@ -519,9 +554,44 @@ const Account = () => {
 
   const closeSelectedDescription = useCallback(() => {
     setSelectedDescription(null);
+    setSelectedInstanceId(null);
     setBookActionError(null);
     setBookActionMessage(null);
   }, []);
+
+  const openActiveLoanDescription = useCallback(
+    (row: UserOrderRow) => {
+      if (row.descriptionId == null) return;
+      const desc = descriptionsById.get(row.descriptionId);
+      if (!desc) return;
+      setBookActionError(null);
+      setBookActionMessage(null);
+      setSelectedInstanceId(row.instanceId ?? null);
+      setSelectedDescription(desc);
+    },
+    [descriptionsById],
+  );
+
+  const returnSelectedInstance = useCallback(async () => {
+    if (selectedInstanceId == null) return;
+    setBookActionError(null);
+    setBookActionMessage(null);
+    setReturning(true);
+    try {
+      await returnItem(selectedInstanceId);
+      setBookActionMessage("Item returned successfully.");
+      await loadHistory();
+      closeSelectedDescription();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setBookActionError("Session expired. Please sign in again.");
+      } else {
+        setBookActionError("Could not return this item. Try again.");
+      }
+    } finally {
+      setReturning(false);
+    }
+  }, [closeSelectedDescription, loadHistory, selectedInstanceId]);
 
   const pingSelectedDescription = useCallback(async () => {
     if (
@@ -584,7 +654,6 @@ const Account = () => {
 
           {isAdmin ? (
             <>
-              <SidebarAccentTitle>Admin history</SidebarAccentTitle>
               <SidebarSectionLabel>Person</SidebarSectionLabel>
               <input
                 value={personFilter}
@@ -691,15 +760,19 @@ const Account = () => {
       rightSidebar={<AccountStatsSidebar counts={counts} />}
     >
       <h1 id={titleId} className="sr-only">
-        {isAdmin ? "All users history" : "My loans and holds"}
+        {isAdmin ? "History" : "My loans and holds"}
       </h1>
       <div className="flex w-full flex-col gap-6">
         <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
-            {isAdmin
-              ? "All journal logs"
-              : NAV.find((n) => n.id === section)?.label}
-          </p>
+          {isAdmin ? (
+            <h2 className="text-2xl font-bold tracking-tight text-[#43485e] sm:text-3xl">
+              History
+            </h2>
+          ) : (
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
+              {NAV.find((n) => n.id === section)?.label}
+            </p>
+          )}
           <div className="w-full sm:max-w-md sm:flex-1 sm:pl-4 lg:max-w-lg">
             <label htmlFor={searchId} className="sr-only">
               Find in this list
@@ -747,24 +820,30 @@ const Account = () => {
           <ul className="flex flex-col gap-4">
             {rows.map((row) => {
               if (isJournalEventRow(row)) {
-                const handleClick =
-                  row.descriptionId != null
-                    ? () => {
-                        const desc = descriptionsById.get(row.descriptionId!);
-                        if (desc) setSelectedDescription(desc);
-                      }
-                    : undefined;
                 return (
                   <JournalEventCard
                     key={row.id}
                     row={row}
                     formattedWhen={formatDateTime(row.eventDate)}
                     showUserInMeta={isAdmin}
-                    onClick={handleClick}
                   />
                 );
               }
-              return <OrderListRow key={row.id} row={row} />;
+              const canOpenDescription =
+                !isAdmin &&
+                (section === "borrowed" || section === "waiting") &&
+                row.descriptionId != null;
+              return (
+                <OrderListRow
+                  key={row.id}
+                  row={row}
+                  onClick={
+                    canOpenDescription
+                      ? () => openActiveLoanDescription(row)
+                      : undefined
+                  }
+                />
+              );
             })}
           </ul>
         )}
@@ -788,27 +867,37 @@ const Account = () => {
             title={selectedDescription.title}
             author={selectedDescription.author}
             description={selectedDescription.description}
-            bookId={selectedDescription.isbn ?? selectedDescription.seed}
+            bookId={selectedInstanceId ?? selectedDescription.isbn ?? selectedDescription.seed}
             tags={selectedDescription.tags ?? []}
-            status={selectedDescriptionUiStatus ?? "borrowed"}
+            status={
+              selectedInstanceId != null
+                ? "borrowed-by-me"
+                : (selectedDescriptionUiStatus ?? "borrowed")
+            }
             newArrival={false}
             onClose={closeSelectedDescription}
-            onBorrow={() => {
-              /* borrow action can be wired later if needed */
-            }}
+            onReturn={
+              selectedInstanceId != null &&
+              selectedDescription.itemType !== "ps"
+                ? () => void returnSelectedInstance()
+                : undefined
+            }
             onPing={
-              selectedDescription.itemType === "book"
+              selectedDescription.itemType === "book" && selectedInstanceId == null
                 ? () => void pingSelectedDescription()
                 : undefined
             }
             showPrimaryAction={
-              selectedDescription.itemType === "book" &&
-              (selectedDescriptionUiStatus === "free" ||
-                selectedDescriptionUiStatus === "borrowed" ||
-                selectedDescriptionUiStatus === "borrowed-by-me")
+              selectedInstanceId != null
+                ? selectedDescription.itemType !== "ps"
+                : selectedDescription.itemType === "book" &&
+                  (selectedDescriptionUiStatus === "free" ||
+                    selectedDescriptionUiStatus === "borrowed" ||
+                    selectedDescriptionUiStatus === "borrowed-by-me")
             }
             primaryActionPending={
-              pinging && selectedDescriptionUiStatus === "borrowed"
+              (returning && selectedInstanceId != null) ||
+              (pinging && selectedDescriptionUiStatus === "borrowed")
             }
           />
         </BookClientWindow>
