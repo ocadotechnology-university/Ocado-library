@@ -78,12 +78,6 @@ export default function CatalogImportPanel({
 }: CatalogImportPanelProps) {
   const [jsonText, setJsonText] = useState("");
   const [debouncedJsonText, setDebouncedJsonText] = useState("");
-  const [validationErrors, setValidationErrors] = useState<
-    CatalogImportValidationError[]
-  >([]);
-  const [validatedDescriptions, setValidatedDescriptions] = useState<
-    MigrationDescription[] | null
-  >(null);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] =
@@ -167,22 +161,6 @@ export default function CatalogImportPanel({
 
   useEffect(() => {
     if (validatedDescriptions == null || validationErrors.length > 0) {
-  const runValidation = useCallback((text: string) => {
-    const result = validateMigrationDescriptionsText(text);
-    setValidationErrors(result.errors);
-    setValidatedDescriptions(result.descriptions);
-    setServerErrors([]);
-    setImportResult(null);
-    setImportError(null);
-    return result;
-  }, []);
-
-  useEffect(() => {
-    if (!jsonText.trim()) {
-      setValidationErrors([]);
-      setValidatedDescriptions(null);
-      setServerErrors([]);
-      setServerChecking(false);
       return;
     }
 
@@ -192,47 +170,6 @@ export default function CatalogImportPanel({
       setServerChecking(true);
       setServerErrors([]);
 
-      void validateCatalogImport(validatedDescriptions)
-        .then((response) => {
-          if (cancelled) {
-            return;
-          }
-          setServerErrors(response.valid ? [] : response.errors);
-          setServerChecking(false);
-        })
-        .catch((error) => {
-          if (cancelled) {
-            return;
-          }
-          if (error instanceof ApiError) {
-            setServerErrors([formatUserFacingErrorMessage(error.message)]);
-          } else {
-            setServerErrors([
-              "Could not verify import against the catalog. Try again.",
-            ]);
-          }
-          setServerChecking(false);
-        });
-    }, 400);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(handle);
-    };
-  }, [validatedDescriptions, validationErrors]);
-
-  useEffect(() => {
-    if (validatedDescriptions == null || validationErrors.length > 0) {
-      setServerErrors([]);
-      setServerChecking(false);
-      return;
-    }
-
-    let cancelled = false;
-    setServerChecking(true);
-    setServerErrors([]);
-
-    const handle = window.setTimeout(() => {
       void validateCatalogImport(validatedDescriptions)
         .then((response) => {
           if (cancelled) {
