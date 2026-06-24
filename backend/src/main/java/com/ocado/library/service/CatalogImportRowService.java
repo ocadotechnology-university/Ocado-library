@@ -23,9 +23,9 @@ import java.util.regex.Pattern;
 @Service
 public class CatalogImportRowService {
 
-    static final Pattern BOOK_INTERNAL_ID = Pattern.compile("^OC-WRO-B-[A-Z0-9]+$");
-    static final Pattern BOARD_GAME_INTERNAL_ID = Pattern.compile("^OC-WRO-G-[A-Z0-9]+$");
-    static final Pattern PS_GAME_INTERNAL_ID = Pattern.compile("^OC-WRO-PS-[A-Z0-9]+$");
+    static final Pattern BOOK_INTERNAL_ID = Pattern.compile("^OC-B-WR-\\d{3}$");
+    static final Pattern BOARD_GAME_INTERNAL_ID = Pattern.compile("^OC-G-WR-\\d{3}$");
+    static final Pattern PS_GAME_INTERNAL_ID = Pattern.compile("^OC-PS-WR-\\d{3}$");
 
     private static final Set<ItemStatus> ALLOWED_IMPORT_STATUSES = Set.of(
             ItemStatus.AVAILABLE,
@@ -189,9 +189,9 @@ public class CatalogImportRowService {
 
     private static String internalIdHint(ItemType type) {
         return switch (type) {
-            case Book -> "must match OC-WRO-B-<ID> (e.g. OC-WRO-B-0109)";
-            case BoardGame -> "must match OC-WRO-G-<ID> (e.g. OC-WRO-G-0101)";
-            case PSGame -> "must match OC-WRO-PS-<ID> (e.g. OC-WRO-PS-0001)";
+            case Book -> "must match OC-B-WR-000 (e.g. OC-B-WR-109)";
+            case BoardGame -> "must match OC-G-WR-000 (e.g. OC-G-WR-101)";
+            case PSGame -> "must match OC-PS-WR-000 (e.g. OC-PS-WR-001)";
         };
     }
 }

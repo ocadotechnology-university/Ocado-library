@@ -2,6 +2,7 @@ package com.ocado.library.controller;
 
 import com.ocado.library.dto.request.MigrationDescriptionRequest;
 import com.ocado.library.dto.response.CatalogImportResponse;
+import com.ocado.library.dto.response.CatalogImportValidateResponse;
 import com.ocado.library.security.CurrentUser;
 import com.ocado.library.service.CatalogImportService;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,12 @@ public class AdminImportController {
 
     public AdminImportController(CatalogImportService catalogImportService) {
         this.catalogImportService = catalogImportService;
+    }
+
+    @PostMapping("/validate")
+    public ResponseEntity<CatalogImportValidateResponse> validateImport(
+            @RequestBody List<MigrationDescriptionRequest> entries) {
+        return ResponseEntity.ok(catalogImportService.validateDescriptions(entries));
     }
 
     @PostMapping

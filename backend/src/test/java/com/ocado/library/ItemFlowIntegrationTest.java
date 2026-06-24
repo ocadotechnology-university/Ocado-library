@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ItemFlowIntegrationTest {
 
     private static final String BOOK_TITLE = "Clean Code";
-    private static final String INTERNAL_ID = "OC-WRO-B-FLOW-001";
+    private static final String INTERNAL_ID = "OC-B-WR-701";
 
     @Autowired
     private MockMvc mockMvc;

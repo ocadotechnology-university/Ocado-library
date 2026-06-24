@@ -47,8 +47,8 @@ class CatalogImportIntegrationTest {
                         null,
                         List.of("python", "Popular"),
                         List.of(
-                                new MigrationInstanceRequest("OC-WRO-B-9001", ItemStatus.AVAILABLE),
-                                new MigrationInstanceRequest("OC-WRO-B-9002", ItemStatus.BORROWED)
+                                new MigrationInstanceRequest("OC-B-WR-901", ItemStatus.AVAILABLE),
+                                new MigrationInstanceRequest("OC-B-WR-902", ItemStatus.BORROWED)
                         )
                 ),
                 new MigrationDescriptionRequest(
@@ -60,7 +60,7 @@ class CatalogImportIntegrationTest {
                         null,
                         4,
                         List.of("strategy", "family"),
-                        List.of(new MigrationInstanceRequest("OC-WRO-G-9001", ItemStatus.AVAILABLE))
+                        List.of(new MigrationInstanceRequest("OC-G-WR-901", ItemStatus.AVAILABLE))
                 ),
                 new MigrationDescriptionRequest(
                         ItemType.PSGame,
@@ -71,7 +71,7 @@ class CatalogImportIntegrationTest {
                         null,
                         null,
                         List.of("racing", "ps5"),
-                        List.of(new MigrationInstanceRequest("OC-WRO-PS-9001", ItemStatus.AVAILABLE))
+                        List.of(new MigrationInstanceRequest("OC-PS-WR-901", ItemStatus.AVAILABLE))
                 )
         );
 
@@ -104,6 +104,42 @@ class CatalogImportIntegrationTest {
     }
 
     @Test
+    void validateImportReportsDuplicateInternalIdsWithoutImporting() throws Exception {
+        List<MigrationDescriptionRequest> payload = List.of(
+                new MigrationDescriptionRequest(
+                        ItemType.BoardGame,
+                        "Game A",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of(),
+                        List.of(new MigrationInstanceRequest("OC-G-WR-911", ItemStatus.AVAILABLE))
+                ),
+                new MigrationDescriptionRequest(
+                        ItemType.BoardGame,
+                        "Game B",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        List.of(),
+                        List.of(new MigrationInstanceRequest("OC-G-WR-911", ItemStatus.AVAILABLE))
+                )
+        );
+
+        mockMvc.perform(post("/api/admin/import/validate")
+                        .header("X-User-Email", "admin@example.com")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(false))
+                .andExpect(jsonPath("$.errors[0]").value(containsString("Duplicate internalId")));
+    }
+
+    @Test
     void importDescriptionsRejectsDuplicateInternalIdsInFile() throws Exception {
         List<MigrationDescriptionRequest> payload = List.of(
                 new MigrationDescriptionRequest(
@@ -115,7 +151,7 @@ class CatalogImportIntegrationTest {
                         null,
                         null,
                         List.of(),
-                        List.of(new MigrationInstanceRequest("OC-WRO-B-9101", ItemStatus.AVAILABLE))
+                        List.of(new MigrationInstanceRequest("OC-B-WR-911", ItemStatus.AVAILABLE))
                 ),
                 new MigrationDescriptionRequest(
                         ItemType.BoardGame,
@@ -126,7 +162,7 @@ class CatalogImportIntegrationTest {
                         null,
                         null,
                         List.of(),
-                        List.of(new MigrationInstanceRequest("OC-WRO-B-9101", ItemStatus.AVAILABLE))
+                        List.of(new MigrationInstanceRequest("OC-B-WR-911", ItemStatus.AVAILABLE))
                 )
         );
 
@@ -150,7 +186,7 @@ class CatalogImportIntegrationTest {
                         null,
                         null,
                         List.of(),
-                        List.of(new MigrationInstanceRequest("OC-WRO-B-9201", ItemStatus.AVAILABLE))
+                        List.of(new MigrationInstanceRequest("OC-B-WR-921", ItemStatus.AVAILABLE))
                 )
         );
 
@@ -159,7 +195,7 @@ class CatalogImportIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value(containsString("OC-WRO-G")));
+                .andExpect(jsonPath("$.message").value(containsString("OC-G-WR")));
     }
 
     @Test
@@ -175,8 +211,8 @@ class CatalogImportIntegrationTest {
                         null,
                         List.of(),
                         List.of(
-                                new MigrationInstanceRequest("OC-WRO-PS-9301", ItemStatus.AVAILABLE),
-                                new MigrationInstanceRequest("OC-WRO-PS-9302", ItemStatus.AVAILABLE)
+                                new MigrationInstanceRequest("OC-PS-WR-931", ItemStatus.AVAILABLE),
+                                new MigrationInstanceRequest("OC-PS-WR-932", ItemStatus.AVAILABLE)
                         )
                 )
         );

@@ -44,12 +44,12 @@ class NotificationLogIntegrationTest {
     @Test
     void getNotificationsReturnsOnlyEntriesForCurrentUser() throws Exception {
         notificationLogRepository.save(log(
-                "OC-B-NOTIF-001",
+                "OC-B-WR-801",
                 NotificationType.USER_PING,
                 "borrower@example.com",
                 "pinger@example.com"));
         notificationLogRepository.save(log(
-                "OC-B-NOTIF-002",
+                "OC-B-WR-802",
                 NotificationType.OVERDUE_REMINDER,
                 "other@example.com",
                 null));
@@ -63,7 +63,7 @@ class NotificationLogIntegrationTest {
 
         JsonNode entries = objectMapper.readTree(response);
         assertThat(entries).hasSize(1);
-        assertThat(entries.get(0).get("itemInternalId").asText()).isEqualTo("OC-B-NOTIF-001");
+        assertThat(entries.get(0).get("itemInternalId").asText()).isEqualTo("OC-B-WR-801");
         assertThat(entries.get(0).get("notificationType").asText()).isEqualTo("USER_PING");
         assertThat(entries.get(0).get("recipientEmail").asText()).isEqualTo("borrower@example.com");
         assertThat(entries.get(0).get("senderEmail").asText()).isEqualTo("pinger@example.com");
@@ -73,7 +73,7 @@ class NotificationLogIntegrationTest {
     @Test
     void getNotificationsMatchesRecipientEmailCaseInsensitively() throws Exception {
         notificationLogRepository.save(log(
-                "OC-B-NOTIF-CASE",
+                "OC-B-WR-803",
                 NotificationType.USER_PING,
                 "Borrower@Example.com",
                 "pinger@example.com"));
@@ -91,7 +91,7 @@ class NotificationLogIntegrationTest {
     @Test
     void markNotificationAsReadPersistsAndUpdatesUnreadCount() throws Exception {
         NotificationLog saved = notificationLogRepository.save(log(
-                "OC-B-NOTIF-READ-001",
+                "OC-B-WR-811",
                 NotificationType.USER_PING,
                 "borrower@example.com",
                 "pinger@example.com"));
@@ -125,7 +125,7 @@ class NotificationLogIntegrationTest {
     @Test
     void markNotificationAsReadForAnotherUserReturnsForbidden() throws Exception {
         NotificationLog saved = notificationLogRepository.save(log(
-                "OC-B-NOTIF-READ-002",
+                "OC-B-WR-812",
                 NotificationType.USER_PING,
                 "borrower@example.com",
                 "pinger@example.com"));

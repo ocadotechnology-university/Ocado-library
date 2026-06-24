@@ -14,7 +14,7 @@ const validBook: MigrationBookEntry = {
   isbn: "978-0134685991",
   description: "Best practices for the Java platform.",
   tags: ["java"],
-  instances: [{ internalId: "OC-WRO-B-0104", status: "AVAILABLE" }],
+  instances: [{ internalId: "OC-B-WR-104", status: "AVAILABLE" }],
 };
 
 const validBoardGame: MigrationBoardGameEntry = {
@@ -23,7 +23,7 @@ const validBoardGame: MigrationBoardGameEntry = {
   description: "Resource-trading classic.",
   numberOfPlayers: 4,
   tags: ["strategy"],
-  instances: [{ internalId: "OC-WRO-G-0101", status: "AVAILABLE" }],
+  instances: [{ internalId: "OC-G-WR-101", status: "AVAILABLE" }],
 };
 
 const validPsGame: MigrationPSGameEntry = {
@@ -31,7 +31,7 @@ const validPsGame: MigrationPSGameEntry = {
   title: "Gran Turismo 7",
   description: "Racing sim.",
   tags: ["racing"],
-  instances: [{ internalId: "OC-WRO-PS-0001", status: "AVAILABLE" }],
+  instances: [{ internalId: "OC-PS-WR-001", status: "AVAILABLE" }],
 };
 
 describe("validateMigrationDescriptions", () => {
@@ -62,7 +62,7 @@ describe("validateMigrationDescriptions", () => {
     const result = validateMigrationDescriptions([
       {
         ...validBoardGame,
-        instances: [{ internalId: "OC-WRO-B-0101", status: "AVAILABLE" }],
+        instances: [{ internalId: "OC-B-WR-101", status: "AVAILABLE" }],
       },
     ]);
     expect(result.errors.some((e) => e.path.includes("internalId"))).toBe(true);
@@ -73,8 +73,8 @@ describe("validateMigrationDescriptions", () => {
       {
         ...validPsGame,
         instances: [
-          { internalId: "OC-WRO-PS-0001", status: "AVAILABLE" },
-          { internalId: "OC-WRO-PS-0002", status: "AVAILABLE" },
+          { internalId: "OC-PS-WR-001", status: "AVAILABLE" },
+          { internalId: "OC-PS-WR-002", status: "AVAILABLE" },
         ],
       },
     ]);
@@ -86,12 +86,12 @@ describe("validateMigrationDescriptions", () => {
       validBook,
       {
         ...validBoardGame,
-        instances: [{ internalId: "OC-WRO-B-0104", status: "AVAILABLE" }],
+        instances: [{ internalId: "OC-B-WR-104", status: "AVAILABLE" }],
       },
     ]);
-    expect(result.errors.some((e) => e.message.includes("duplicate"))).toBe(
-      true,
-    );
+    expect(
+      result.errors.some((e) => e.message.includes("Duplicate instance ID")),
+    ).toBe(true);
   });
 });
 

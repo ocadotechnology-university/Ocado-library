@@ -7,7 +7,7 @@
     "description": "A comprehensive guide to TypeScript language features and tooling.",
     "image": null,
     "tags": ["typescript", "types", "Popular", "web"],
-    "instances": [{ "internalId": "OC-WRO-B-0101", "status": "AVAILABLE" }]
+    "instances": [{ "internalId": "OC-B-WR-101", "status": "AVAILABLE" }]
   },
   {
     "type": "Book",
@@ -16,7 +16,7 @@
     "isbn": null,
     "description": "Anonymous donation; author unknown.",
     "tags": ["Non-fiction"],
-    "instances": [{ "internalId": "OC-WRO-B-0199", "status": "AVAILABLE" }]
+    "instances": [{ "internalId": "OC-B-WR-199", "status": "AVAILABLE" }]
   },
   {
     "type": "BoardGame",
@@ -25,8 +25,8 @@
     "numberOfPlayers": 4,
     "tags": ["strategy", "family", "Popular"],
     "instances": [
-      { "internalId": "OC-WRO-G-0101", "status": "AVAILABLE" },
-      { "internalId": "OC-WRO-G-0102", "status": "BORROWED" }
+      { "internalId": "OC-G-WR-101", "status": "AVAILABLE" },
+      { "internalId": "OC-G-WR-102", "status": "BORROWED" }
     ]
   },
   {
@@ -35,13 +35,13 @@
     "description": "Word-association party game.",
     "numberOfPlayers": 8,
     "tags": ["party", "word-game"],
-    "instances": [{ "internalId": "OC-WRO-G-0103", "status": "AVAILABLE" }]
+    "instances": [{ "internalId": "OC-G-WR-103", "status": "AVAILABLE" }]
   },
   {
     "type": "PSGame",
     "title": "Gran Turismo 7",
     "description": "Racing simulation for PlayStation.",
     "tags": ["racing", "ps5", "simulation"],
-    "instances": [{ "internalId": "OC-WRO-PS-0001", "status": "AVAILABLE" }]
+    "instances": [{ "internalId": "OC-PS-WR-001", "status": "AVAILABLE" }]
   }
 ]

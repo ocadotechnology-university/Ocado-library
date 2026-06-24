@@ -52,14 +52,14 @@ class ItemServiceTest {
         description.setTitle("Clean Code");
 
         Item item = new Item();
-        item.setInternalId("OC-B-001");
+        item.setInternalId("OC-B-WR-001");
         item.setStatus(ItemStatus.AVAILABLE);
         item.setDescription(description);
 
-        when(itemRepository.findByInternalId("OC-B-001")).thenReturn(Optional.of(item));
+        when(itemRepository.findByInternalId("OC-B-WR-001")).thenReturn(Optional.of(item));
         when(itemRepository.save(item)).thenReturn(item);
 
-        itemService.borrowItem("OC-B-001", "employee@example.com");
+        itemService.borrowItem("OC-B-WR-001", "employee@example.com");
 
         ArgumentCaptor<Item> saved = ArgumentCaptor.forClass(Item.class);
         verify(itemRepository).save(saved.capture());
@@ -79,15 +79,15 @@ class ItemServiceTest {
         description.setType(ItemType.Book);
 
         Item item = new Item();
-        item.setInternalId("OC-B-002");
+        item.setInternalId("OC-B-WR-002");
         item.setStatus(ItemStatus.BORROWED);
         item.setBorrower("employee@example.com");
         item.setDescription(description);
 
-        when(itemRepository.findByInternalId("OC-B-002")).thenReturn(Optional.of(item));
+        when(itemRepository.findByInternalId("OC-B-WR-002")).thenReturn(Optional.of(item));
         when(itemRepository.save(item)).thenReturn(item);
 
-        itemService.returnItem("OC-B-002", "employee@example.com");
+        itemService.returnItem("OC-B-WR-002", "employee@example.com");
 
         ArgumentCaptor<Item> saved = ArgumentCaptor.forClass(Item.class);
         verify(itemRepository).save(saved.capture());

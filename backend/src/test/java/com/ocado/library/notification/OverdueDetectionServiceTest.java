@@ -74,7 +74,7 @@ class OverdueDetectionServiceTest {
         description.setTitle("Clean Code");
 
         Item item = new Item();
-        item.setInternalId("OC-B-001");
+        item.setInternalId("OC-B-WR-001");
         item.setStatus(ItemStatus.BORROWED);
         item.setBorrower("user@example.com");
         item.setBorrowedAt(borrowedAt);
@@ -88,7 +88,7 @@ class OverdueDetectionServiceTest {
         description.setTitle("Catan");
 
         Item item = new Item();
-        item.setInternalId("OC-G-001");
+        item.setInternalId("OC-G-WR-001");
         item.setStatus(ItemStatus.BORROWED);
         item.setBorrower("user@example.com");
         item.setBorrowedAt(borrowedAt);

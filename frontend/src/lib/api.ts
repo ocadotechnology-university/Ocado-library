@@ -118,6 +118,42 @@ export type CatalogImportResponse = {
   results: CatalogImportRowResult[];
 };
 
+export type CatalogImportValidateResponse = {
+  valid: boolean;
+  errors: string[];
+};
+
+export function parseApiErrorBody(
+  bodyText: string,
+  fallbackMessage: string,
+): string {
+  const trimmed = bodyText.trim();
+  if (!trimmed) {
+    return fallbackMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as { message?: unknown };
+    if (typeof parsed.message === "string" && parsed.message.trim()) {
+      return parsed.message.trim();
+    }
+  } catch {
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) {
+      return trimmed.slice(0, 500);
+    }
+  }
+
+  return fallbackMessage;
+}
+
+export function formatUserFacingErrorMessage(message: string): string {
+  const trimmed = message.trim();
+  if (!trimmed) {
+    return "Something went wrong. Try again.";
+  }
+  return trimmed;
+}
+
 export type JournalOperationType =
   | "BORROW"
   | "RETURN"
@@ -191,9 +227,8 @@ async function apiJson<T>(
   }
   if (!response.ok) {
     const bodyText = await response.text().catch(() => "");
-    const suffix = bodyText ? `: ${bodyText.slice(0, 400)}` : "";
     throw new ApiError(
-      `${fallbackMessage}${suffix}`,
+      parseApiErrorBody(bodyText, fallbackMessage),
       response.status,
       bodyText,
     );
@@ -442,6 +477,16 @@ export async function deletePSGameDescription(
     `/api/descriptions/PSGame/${descriptionId}`,
     { method: "DELETE" },
     "Failed to delete PS game",
+  );
+}
+
+export async function validateCatalogImport(
+  descriptions: import("./catalogImportValidation").MigrationDescription[],
+): Promise<CatalogImportValidateResponse> {
+  return apiJson<CatalogImportValidateResponse>(
+    "/api/admin/import/validate",
+    { method: "POST", body: JSON.stringify(descriptions) },
+    "Failed to validate import",
   );
 }
 
