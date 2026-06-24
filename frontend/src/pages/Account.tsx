@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
+import IncrementalListSentinel from "../components/UI/IncrementalListSentinel";
+import { useIncrementalList } from "../hooks/useIncrementalList";
 import Layout from "../components/Layout";
 import {
   BOOK_LIST_COVER_FRAME_CLASS,
@@ -23,6 +25,7 @@ import {
   fetchBookDescriptions,
   fetchJournalEntries,
   fetchPSGameDescriptions,
+  returnItem,
   pingDescriptionBorrowers,
   type BackendDescriptionStatus,
   type JournalEntry,
@@ -84,6 +87,9 @@ const NAV: { id: AccountSectionId; label: string }[] = [
   { id: "borrowed", label: "Borrowed by me" },
   { id: "waiting", label: "Waiting for" },
 ];
+
+const JOURNAL_LOG_PAGE_SIZE = 100;
+const DESCRIPTION_CARD_PAGE_SIZE = 50;
 
 function formatDate(value: string): string {
   const date = new Date(value);
@@ -210,10 +216,40 @@ function buildAdminRows(
     );
 }
 
-function OrderListRow({ row }: { row: UserOrderRow }) {
+function OrderListRow({
+  row,
+  onClick,
+}: {
+  row: UserOrderRow;
+  onClick?: () => void;
+}) {
+  const interactive = onClick != null;
+
   return (
     <li className="list-none">
-      <div className="flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3">
+      <div
+        role={interactive ? "button" : undefined}
+        tabIndex={interactive ? 0 : undefined}
+        onClick={onClick}
+        onKeyDown={
+          interactive
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onClick();
+                }
+              }
+            : undefined
+        }
+        className={[
+          "flex w-full gap-4 rounded-xl border border-[#b1b2b5]/80 bg-white/95 p-2.5 shadow-sm sm:gap-5 sm:p-3",
+          interactive
+            ? "cursor-pointer transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
         <div className={`${BOOK_LIST_COVER_FRAME_CLASS} rounded-lg`}>
           <CatalogCoverImage
             imageUrl={row.imageUrl}
@@ -259,6 +295,20 @@ function OrderListRow({ row }: { row: UserOrderRow }) {
 
 function isJournalEventRow(row: UserOrderRow): boolean {
   return row.kind === "history" || row.kind === "log";
+}
+
+function descriptionIdsFromJournal(entries: JournalEntry[]): Set<number> {
+  const ids = new Set<number>();
+  for (const entry of entries) {
+    if (entry.descriptionId != null) ids.add(entry.descriptionId);
+  }
+  return ids;
+}
+
+function rowPageSize(isAdminView: boolean, section: AccountSectionId): number {
+  return isAdminView || section === "history"
+    ? JOURNAL_LOG_PAGE_SIZE
+    : DESCRIPTION_CARD_PAGE_SIZE;
 }
 
 function AccountStatsSidebar({
@@ -318,6 +368,10 @@ const Account = () => {
   const [bookActionMessage, setBookActionMessage] = useState<string | null>(
     null,
   );
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
+    null,
+  );
+  const [returning, setReturning] = useState(false);
   const [pinging, setPinging] = useState(false);
 
   const [personFilter, setPersonFilter] = useState("");
@@ -375,7 +429,13 @@ const Account = () => {
         seed: `ps-${ps.id}`,
         itemType: "ps" as const,
       }));
-      setDescriptions([...mappedBooks, ...mappedBoards, ...mappedPs]);
+      const referencedDescriptionIds = descriptionIdsFromJournal(entries);
+      const allDescriptions = [...mappedBooks, ...mappedBoards, ...mappedPs];
+      setDescriptions(
+        referencedDescriptionIds.size === 0
+          ? []
+          : allDescriptions.filter((d) => referencedDescriptionIds.has(d.id)),
+      );
       setJournal(entries);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -433,7 +493,7 @@ const Account = () => {
     };
   }, [adminRows, borrowedRows, historyRows, isAdmin]);
 
-  const rows = useMemo(() => {
+  const filteredRows = useMemo(() => {
     const q = findQuery.trim().toLowerCase();
     const baseRows = isAdmin
       ? adminRows
@@ -510,6 +570,38 @@ const Account = () => {
     section,
   ]);
 
+  const accountListResetKey = useMemo(
+    () =>
+      [
+        isAdmin ? "admin" : section,
+        findQuery,
+        personFilter,
+        bookFilter,
+        instanceFilter,
+        periodFrom,
+        periodTo,
+        adminStatus,
+      ].join("|"),
+    [
+      isAdmin,
+      section,
+      findQuery,
+      personFilter,
+      bookFilter,
+      instanceFilter,
+      periodFrom,
+      periodTo,
+      adminStatus,
+    ],
+  );
+
+  const pageSize = rowPageSize(isAdmin, section);
+  const {
+    visibleItems: visibleRows,
+    hasMore: hasMoreRows,
+    onMainScroll: onAccountMainScroll,
+  } = useIncrementalList(filteredRows, pageSize, accountListResetKey);
+
   const onNav = useCallback((id: AccountSectionId) => setSection(id), []);
 
   const selectedDescriptionUiStatus =
@@ -519,9 +611,44 @@ const Account = () => {
 
   const closeSelectedDescription = useCallback(() => {
     setSelectedDescription(null);
+    setSelectedInstanceId(null);
     setBookActionError(null);
     setBookActionMessage(null);
   }, []);
+
+  const openActiveLoanDescription = useCallback(
+    (row: UserOrderRow) => {
+      if (row.descriptionId == null) return;
+      const desc = descriptionsById.get(row.descriptionId);
+      if (!desc) return;
+      setBookActionError(null);
+      setBookActionMessage(null);
+      setSelectedInstanceId(row.instanceId ?? null);
+      setSelectedDescription(desc);
+    },
+    [descriptionsById],
+  );
+
+  const returnSelectedInstance = useCallback(async () => {
+    if (selectedInstanceId == null) return;
+    setBookActionError(null);
+    setBookActionMessage(null);
+    setReturning(true);
+    try {
+      await returnItem(selectedInstanceId);
+      setBookActionMessage("Item returned successfully.");
+      await loadHistory();
+      closeSelectedDescription();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setBookActionError("Session expired. Please sign in again.");
+      } else {
+        setBookActionError("Could not return this item. Try again.");
+      }
+    } finally {
+      setReturning(false);
+    }
+  }, [closeSelectedDescription, loadHistory, selectedInstanceId]);
 
   const pingSelectedDescription = useCallback(async () => {
     if (
@@ -584,7 +711,6 @@ const Account = () => {
 
           {isAdmin ? (
             <>
-              <SidebarAccentTitle>Admin history</SidebarAccentTitle>
               <SidebarSectionLabel>Person</SidebarSectionLabel>
               <input
                 value={personFilter}
@@ -689,17 +815,22 @@ const Account = () => {
       topBar={<CatalogAppTopBar />}
       leftSidebar={leftSidebar}
       rightSidebar={<AccountStatsSidebar counts={counts} />}
+      onMainScroll={onAccountMainScroll}
     >
       <h1 id={titleId} className="sr-only">
-        {isAdmin ? "All users history" : "My loans and holds"}
+        {isAdmin ? "History" : "My loans and holds"}
       </h1>
       <div className="flex w-full flex-col gap-6">
         <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
-            {isAdmin
-              ? "All journal logs"
-              : NAV.find((n) => n.id === section)?.label}
-          </p>
+          {isAdmin ? (
+            <h2 className="text-2xl font-bold tracking-tight text-[#43485e] sm:text-3xl">
+              History
+            </h2>
+          ) : (
+            <p className="text-sm font-semibold uppercase tracking-wide text-[#6b7289] sm:text-base">
+              {NAV.find((n) => n.id === section)?.label}
+            </p>
+          )}
           <div className="w-full sm:max-w-md sm:flex-1 sm:pl-4 lg:max-w-lg">
             <label htmlFor={searchId} className="sr-only">
               Find in this list
@@ -735,7 +866,7 @@ const Account = () => {
               Retry
             </button>
           </div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-[#b1b2b5] bg-white/60 px-4 py-14 text-center text-base text-[#6b7289]">
             {findQuery.trim().length > 0
               ? "No matches — try another word."
@@ -744,29 +875,38 @@ const Account = () => {
                 : "Nothing here yet."}
           </p>
         ) : (
-          <ul className="flex flex-col gap-4">
-            {rows.map((row) => {
-              if (isJournalEventRow(row)) {
-                const handleClick =
-                  row.descriptionId != null
-                    ? () => {
-                        const desc = descriptionsById.get(row.descriptionId!);
-                        if (desc) setSelectedDescription(desc);
-                      }
-                    : undefined;
+          <>
+            <ul className="flex flex-col gap-4">
+              {visibleRows.map((row) => {
+                if (isJournalEventRow(row)) {
+                  return (
+                    <JournalEventCard
+                      key={row.id}
+                      row={row}
+                      formattedWhen={formatDateTime(row.eventDate)}
+                      showUserInMeta={isAdmin}
+                    />
+                  );
+                }
+                const canOpenDescription =
+                  !isAdmin &&
+                  (section === "borrowed" || section === "waiting") &&
+                  row.descriptionId != null;
                 return (
-                  <JournalEventCard
+                  <OrderListRow
                     key={row.id}
                     row={row}
-                    formattedWhen={formatDateTime(row.eventDate)}
-                    showUserInMeta={isAdmin}
-                    onClick={handleClick}
+                    onClick={
+                      canOpenDescription
+                        ? () => openActiveLoanDescription(row)
+                        : undefined
+                    }
                   />
                 );
-              }
-              return <OrderListRow key={row.id} row={row} />;
-            })}
-          </ul>
+              })}
+            </ul>
+            <IncrementalListSentinel hasMore={hasMoreRows} />
+          </>
         )}
       </div>
 
@@ -788,27 +928,42 @@ const Account = () => {
             title={selectedDescription.title}
             author={selectedDescription.author}
             description={selectedDescription.description}
-            bookId={selectedDescription.isbn ?? selectedDescription.seed}
+            bookId={
+              selectedInstanceId ??
+              selectedDescription.isbn ??
+              selectedDescription.seed
+            }
             tags={selectedDescription.tags ?? []}
-            status={selectedDescriptionUiStatus ?? "borrowed"}
+            status={
+              selectedInstanceId != null
+                ? "borrowed-by-me"
+                : (selectedDescriptionUiStatus ?? "borrowed")
+            }
             newArrival={false}
             onClose={closeSelectedDescription}
-            onBorrow={() => {
-              /* borrow action can be wired later if needed */
-            }}
+            onReturn={
+              selectedInstanceId != null &&
+              selectedDescription.itemType !== "ps"
+                ? () => void returnSelectedInstance()
+                : undefined
+            }
             onPing={
-              selectedDescription.itemType === "book"
+              selectedDescription.itemType === "book" &&
+              selectedInstanceId == null
                 ? () => void pingSelectedDescription()
                 : undefined
             }
             showPrimaryAction={
-              selectedDescription.itemType === "book" &&
-              (selectedDescriptionUiStatus === "free" ||
-                selectedDescriptionUiStatus === "borrowed" ||
-                selectedDescriptionUiStatus === "borrowed-by-me")
+              selectedInstanceId != null
+                ? selectedDescription.itemType !== "ps"
+                : selectedDescription.itemType === "book" &&
+                  (selectedDescriptionUiStatus === "free" ||
+                    selectedDescriptionUiStatus === "borrowed" ||
+                    selectedDescriptionUiStatus === "borrowed-by-me")
             }
             primaryActionPending={
-              pinging && selectedDescriptionUiStatus === "borrowed"
+              (returning && selectedInstanceId != null) ||
+              (pinging && selectedDescriptionUiStatus === "borrowed")
             }
           />
         </BookClientWindow>

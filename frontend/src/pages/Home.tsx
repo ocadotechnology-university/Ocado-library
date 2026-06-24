@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import IncrementalListSentinel from "../components/UI/IncrementalListSentinel";
+import { useIncrementalList } from "../hooks/useIncrementalList";
 import Layout from "../components/Layout";
 import BookClientWindow from "../components/UI/BookClientWindow";
 import BookFullView from "../components/UI/BookFullView";
@@ -62,6 +64,7 @@ const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
   { status: "borrowed-by-me", label: "Borrowed by me" },
 ];
 const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
+const CATALOG_PAGE_SIZE = 50;
 
 function itemTypeFromTargetKey(key: string): "Book" | "BoardGame" | "PSGame" {
   if (key.startsWith("ps-")) return "PSGame";
@@ -430,7 +433,7 @@ const Home = () => {
     return books;
   }, [section, books, boardPreviewRows, psPreviewRows]);
 
-  const displayRows = useMemo(
+  const filteredRows = useMemo(
     () =>
       sectionRows.filter((row) =>
         applyCatalogFilters(row, {
@@ -452,6 +455,36 @@ const Home = () => {
       catalogSearchQuery,
     ],
   );
+
+  const catalogListResetKey = useMemo(
+    () =>
+      [
+        catalogLoading ? "loading" : "ready",
+        section,
+        activeCategory,
+        catalogSearchQuery,
+        selectedStatuses.join("\u0000"),
+        selectedLanguages.join("\u0000"),
+        selectedAuthors.join("\u0000"),
+        filterTags.join("\u0000"),
+      ].join("|"),
+    [
+      catalogLoading,
+      section,
+      activeCategory,
+      catalogSearchQuery,
+      selectedStatuses,
+      selectedLanguages,
+      selectedAuthors,
+      filterTags,
+    ],
+  );
+
+  const {
+    visibleItems: visibleCatalogRows,
+    hasMore: hasMoreCatalogRows,
+    onMainScroll: onCatalogMainScroll,
+  } = useIncrementalList(filteredRows, CATALOG_PAGE_SIZE, catalogListResetKey);
 
   const searchItems = useMemo<CatalogSearchItem[]>(
     () =>
@@ -956,7 +989,7 @@ const Home = () => {
                     setSection("books");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add book
                 </button>
@@ -966,7 +999,7 @@ const Home = () => {
                     setSection("board");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add board game
                 </button>
@@ -976,7 +1009,7 @@ const Home = () => {
                     setSection("ps");
                     startAddBook();
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Add PS game
                 </button>
@@ -986,7 +1019,7 @@ const Home = () => {
                     setAdminMode("browse");
                     setShowCatalogImport(true);
                   }}
-                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
+                  className="rounded-lg border border-[#43485e]/30 bg-white px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-[#eeeef0]"
                 >
                   Import
                 </button>
@@ -1181,6 +1214,7 @@ const Home = () => {
     <>
       <Layout
         mainBgClass={catalogMainBgClass}
+        onMainScroll={catalogLoading ? undefined : onCatalogMainScroll}
         topBar={
           <CatalogAppTopBar
             onLogoClick={() => {
@@ -1441,7 +1475,7 @@ const Home = () => {
                         Retry
                       </button>
                     </div>
-                  ) : displayRows.length === 0 ? (
+                  ) : filteredRows.length === 0 ? (
                     <p className="rounded-xl border border-dashed border-[#b1b2b5] bg-[#eeeef0]/60 px-4 py-8 text-center text-sm text-[#6b7289]">
                       No items match these filters. Try another category or
                       clear the filters on the left.
@@ -1450,13 +1484,13 @@ const Home = () => {
                     <div className="flex flex-col gap-4">
                       <CatalogSectionHeading
                         section={section}
-                        count={displayRows.length}
+                        count={filteredRows.length}
                         catalogView={catalogView}
                         onCatalogViewChange={setCatalogView}
                       />
                       {catalogView === "cards" ? (
                         <ul className="grid list-none grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                          {displayRows.map((row) => (
+                          {visibleCatalogRows.map((row) => (
                             <li
                               key={row.key}
                               className="flex flex-col items-center gap-2"
@@ -1486,7 +1520,7 @@ const Home = () => {
                         </ul>
                       ) : (
                         <ul className="flex list-none flex-col gap-4">
-                          {displayRows.map((row) => (
+                          {visibleCatalogRows.map((row) => (
                             <li key={row.key} className="w-full">
                               <div
                                 onContextMenu={(e) => {
@@ -1516,6 +1550,7 @@ const Home = () => {
                           ))}
                         </ul>
                       )}
+                      <IncrementalListSentinel hasMore={hasMoreCatalogRows} />
                     </div>
                   )}
                 </div>

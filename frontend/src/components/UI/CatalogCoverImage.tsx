@@ -37,6 +37,11 @@ function CatalogCoverImageInner({
 
   const handleError = () => {
     if (mode === "stored" && normalizedIsbn) {
+      const stored = imageUrl?.trim() ?? "";
+      if (stored.includes(`/isbn/${normalizedIsbn}`)) {
+        setMode("none");
+        return;
+      }
       setMode("isbn");
       return;
     }
