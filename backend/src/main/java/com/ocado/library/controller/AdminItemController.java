@@ -3,6 +3,8 @@ package com.ocado.library.controller;
 import com.ocado.library.dto.request.AdminCreateItemRequest;
 import com.ocado.library.dto.request.AdminUpdateItemStatusRequest;
 import com.ocado.library.dto.response.ItemDetail;
+import com.ocado.library.dto.response.ProposedInternalIdResponse;
+import com.ocado.library.model.enums.ItemType;
 import com.ocado.library.security.CurrentUser;
 import com.ocado.library.model.Item;
 import com.ocado.library.service.AdminService;
@@ -18,6 +20,13 @@ public class AdminItemController {
 
     public AdminItemController(AdminService adminService) {
         this.adminService = adminService;
+    }
+
+    @GetMapping("/next-internal-id")
+    public ResponseEntity<ProposedInternalIdResponse> proposeNextInternalId(
+            @RequestParam("type") ItemType type) {
+        String internalId = adminService.proposeNextInternalId(type);
+        return ResponseEntity.ok(new ProposedInternalIdResponse(internalId));
     }
 
     @PostMapping("/add")
