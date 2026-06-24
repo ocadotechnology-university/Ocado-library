@@ -98,6 +98,10 @@ export type CreateItemPayload = {
   status?: BackendItemStatus;
 };
 
+export type ProposedInternalIdResponse = {
+  internalId: string;
+};
+
 export type CatalogImportRowResult = {
   rowIndex: number;
   type: "Book" | "BoardGame" | "PSGame";
@@ -503,6 +507,16 @@ export async function createItem(
     "/api/admin/items/add",
     { method: "POST", body: JSON.stringify(payload) },
     "Failed to create item",
+  );
+}
+
+export async function fetchNextInternalId(
+  type: "Book" | "BoardGame" | "PSGame",
+): Promise<ProposedInternalIdResponse> {
+  return apiJson<ProposedInternalIdResponse>(
+    `/api/admin/items/next-internal-id?type=${encodeURIComponent(type)}`,
+    {},
+    "Failed to load next internal ID",
   );
 }
 

@@ -79,15 +79,17 @@ export function matchesCategory(
   row: CatalogFilterableRow,
   cat: string,
 ): boolean {
-  if (cat === "All") return true;
-  if (cat === "New arrivals") return row.newArrival;
-  if (cat === "Popular") return row.tags.some((t) => /popular/i.test(t));
-  if (cat === "Bestsellers") return row.tags.some((t) => /best/i.test(t));
-  if (cat === "Fiction") return row.tags.some((t) => /^fiction$/i.test(t));
-  if (cat === "Non-fiction")
-    return row.tags.some((t) => /non-?fiction/i.test(t));
-  if (cat === "Prizes") return row.tags.some((t) => /prize/i.test(t));
-  return true;
+  const normalized = cat.trim();
+  if (normalized.length === 0) return true;
+  if (normalized === "New") return row.newArrival;
+  const needle = normalized.replace(/^#/, "").toLowerCase();
+  return row.tags.some((tag) => {
+    const lower = tag.toLowerCase();
+    if (needle === "ai") {
+      return lower === "ai" || lower === "ai & math";
+    }
+    return lower === needle;
+  });
 }
 
 export function applyCatalogFilters(

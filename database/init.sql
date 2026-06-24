@@ -7,6 +7,7 @@
 -- Clean up existing tables (in dependency order)
 DROP TABLE IF EXISTS description_tags CASCADE;
 DROP TABLE IF EXISTS notification_log CASCADE;
+DROP TABLE IF EXISTS item_internal_id_sequence CASCADE;
 DROP TABLE IF EXISTS item CASCADE;
 DROP TABLE IF EXISTS journal CASCADE;
 DROP TABLE IF EXISTS book_description CASCADE;
@@ -62,6 +63,13 @@ CREATE TABLE item (
     borrower VARCHAR(255),
     description_id BIGINT NOT NULL REFERENCES description(id)
 );
+
+CREATE TABLE item_internal_id_sequence (
+    id BIGINT PRIMARY KEY,
+    next_number INTEGER NOT NULL
+);
+
+INSERT INTO item_internal_id_sequence (id, next_number) VALUES (1, 300);
 
 -- ===================
 -- In-app / Slack notification log

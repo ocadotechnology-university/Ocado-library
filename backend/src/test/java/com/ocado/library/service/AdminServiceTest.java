@@ -10,6 +10,7 @@ import com.ocado.library.model.enums.ItemStatus;
 import com.ocado.library.model.enums.ItemType;
 import com.ocado.library.model.enums.OperationType;
 import com.ocado.library.repository.DescriptionRepository;
+import com.ocado.library.repository.ItemInternalIdSequenceRepository;
 import com.ocado.library.repository.ItemRepository;
 import com.ocado.library.repository.JournalRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,9 @@ class AdminServiceTest {
     @Mock
     private JournalRepository journalRepository;
 
+    @Mock
+    private ItemInternalIdSequenceRepository itemInternalIdSequenceRepository;
+
     private AdminService adminService;
 
     @BeforeEach
@@ -49,8 +53,13 @@ class AdminServiceTest {
             journal.setId(1L);
             return journal;
         });
+        ItemInternalIdService itemInternalIdService =
+                new ItemInternalIdService(itemInternalIdSequenceRepository);
         adminService = new AdminService(
-                descriptionRepository, itemRepository, new JournalService(journalRepository));
+                descriptionRepository,
+                itemRepository,
+                new JournalService(journalRepository),
+                itemInternalIdService);
     }
 
     @Test
