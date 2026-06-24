@@ -878,32 +878,32 @@ const Account = () => {
           <>
             <ul className="flex flex-col gap-4">
               {visibleRows.map((row) => {
-              if (isJournalEventRow(row)) {
+                if (isJournalEventRow(row)) {
+                  return (
+                    <JournalEventCard
+                      key={row.id}
+                      row={row}
+                      formattedWhen={formatDateTime(row.eventDate)}
+                      showUserInMeta={isAdmin}
+                    />
+                  );
+                }
+                const canOpenDescription =
+                  !isAdmin &&
+                  (section === "borrowed" || section === "waiting") &&
+                  row.descriptionId != null;
                 return (
-                  <JournalEventCard
+                  <OrderListRow
                     key={row.id}
                     row={row}
-                    formattedWhen={formatDateTime(row.eventDate)}
-                    showUserInMeta={isAdmin}
+                    onClick={
+                      canOpenDescription
+                        ? () => openActiveLoanDescription(row)
+                        : undefined
+                    }
                   />
                 );
-              }
-              const canOpenDescription =
-                !isAdmin &&
-                (section === "borrowed" || section === "waiting") &&
-                row.descriptionId != null;
-              return (
-                <OrderListRow
-                  key={row.id}
-                  row={row}
-                  onClick={
-                    canOpenDescription
-                      ? () => openActiveLoanDescription(row)
-                      : undefined
-                  }
-                />
-              );
-            })}
+              })}
             </ul>
             <IncrementalListSentinel hasMore={hasMoreRows} />
           </>
@@ -928,7 +928,11 @@ const Account = () => {
             title={selectedDescription.title}
             author={selectedDescription.author}
             description={selectedDescription.description}
-            bookId={selectedInstanceId ?? selectedDescription.isbn ?? selectedDescription.seed}
+            bookId={
+              selectedInstanceId ??
+              selectedDescription.isbn ??
+              selectedDescription.seed
+            }
             tags={selectedDescription.tags ?? []}
             status={
               selectedInstanceId != null
@@ -944,7 +948,8 @@ const Account = () => {
                 : undefined
             }
             onPing={
-              selectedDescription.itemType === "book" && selectedInstanceId == null
+              selectedDescription.itemType === "book" &&
+              selectedInstanceId == null
                 ? () => void pingSelectedDescription()
                 : undefined
             }

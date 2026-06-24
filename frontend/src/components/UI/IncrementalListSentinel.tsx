@@ -10,10 +10,7 @@ export default function IncrementalListSentinel({
   if (!hasMore) return null;
 
   return (
-    <div
-      className="py-6 text-center text-sm text-[#6b7289]"
-      aria-live="polite"
-    >
+    <div className="py-6 text-center text-sm text-[#6b7289]" aria-live="polite">
       {label}
     </div>
   );
