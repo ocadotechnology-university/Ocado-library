@@ -60,14 +60,14 @@ class CatalogIntegrationTest {
                         .header("X-User-Email", "admin@example.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new AdminCreateItemRequest("OC-B-CAT-001", idA, ItemStatus.AVAILABLE))))
+                                new AdminCreateItemRequest("OC-B-WR-621", idA, ItemStatus.AVAILABLE))))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/api/admin/items/add")
                         .header("X-User-Email", "admin@example.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new AdminCreateItemRequest("OC-B-CAT-002", idB, ItemStatus.AVAILABLE))))
+                                new AdminCreateItemRequest("OC-B-WR-622", idB, ItemStatus.AVAILABLE))))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(get("/api/descriptions/Book/all")
@@ -77,7 +77,7 @@ class CatalogIntegrationTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].title").value("Domain-Driven Design"));
 
-        mockMvc.perform(post("/api/items/OC-B-CAT-001/borrow")
+        mockMvc.perform(post("/api/items/OC-B-WR-621/borrow")
                         .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk());
 

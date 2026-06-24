@@ -603,7 +603,7 @@ const Account = () => {
               <input
                 value={instanceFilter}
                 onChange={(e) => setInstanceFilter(e.target.value)}
-                placeholder="OC-WRO-B-..."
+                placeholder="OC-B-WR-..."
                 className="rounded-lg border border-[#b1b2b5] bg-white px-2.5 py-2 text-sm"
               />
               <SidebarSectionLabel>Period from</SidebarSectionLabel>

@@ -46,7 +46,7 @@ class AdminCrudIntegrationTest {
         Long descriptionId = objectMapper.readTree(descResponse).get("id").asLong();
 
         AdminCreateItemRequest createItemRequest = new AdminCreateItemRequest(
-                "OC-B-CR-001", descriptionId, ItemStatus.AVAILABLE);
+                "OC-B-WR-601", descriptionId, ItemStatus.AVAILABLE);
 
         mockMvc.perform(post("/api/admin/items/add")
                         .header("X-User-Email", "admin@example.com")
@@ -65,7 +65,7 @@ class AdminCrudIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Refactoring 2nd Ed"));
 
-        mockMvc.perform(patch("/api/admin/items/OC-B-CR-001/status")
+        mockMvc.perform(patch("/api/admin/items/OC-B-WR-601/status")
                         .header("X-User-Email", "admin@example.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"UNAVAILABLE\",\"reason\":\"maintenance\"}"))

@@ -38,7 +38,7 @@ class ItemPingIntegrationTest {
 
     @Test
     void pingBorrowerWhenBorrowedBySomeoneElseReturnsNoContent() throws Exception {
-        String internalId = "OC-B-PING-001";
+        String internalId = "OC-B-WR-501";
         long descriptionId = createBookAndItem(internalId);
 
         mockMvc.perform(post("/api/items/" + internalId + "/borrow")
@@ -60,7 +60,7 @@ class ItemPingIntegrationTest {
 
     @Test
     void pingSelfReturnsConflict() throws Exception {
-        String internalId = "OC-B-PING-002";
+        String internalId = "OC-B-WR-502";
         createBookAndItem(internalId);
 
         mockMvc.perform(post("/api/items/" + internalId + "/borrow")
@@ -74,7 +74,7 @@ class ItemPingIntegrationTest {
 
     @Test
     void pingWhenNotBorrowedReturnsConflict() throws Exception {
-        String internalId = "OC-B-PING-003";
+        String internalId = "OC-B-WR-503";
         createBookAndItem(internalId);
 
         mockMvc.perform(post("/api/items/" + internalId + "/ping")
@@ -84,15 +84,15 @@ class ItemPingIntegrationTest {
 
     @Test
     void pingUnknownItemReturnsNotFound() throws Exception {
-        mockMvc.perform(post("/api/items/OC-B-MISSING-PING/ping")
+        mockMvc.perform(post("/api/items/OC-B-WR-599/ping")
                         .header("X-User-Email", "pinger@example.com"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void pingDescriptionNotifiesAllBorrowedInstances() throws Exception {
-        String internalId1 = "OC-B-PING-MULTI-001";
-        String internalId2 = "OC-B-PING-MULTI-002";
+        String internalId1 = "OC-B-WR-511";
+        String internalId2 = "OC-B-WR-512";
         long descriptionId = createBookAndItem(internalId1);
         createItemForDescription(internalId2, descriptionId);
 

@@ -46,21 +46,21 @@ class BoardGameFlowIntegrationTest {
         Long descriptionId = objectMapper.readTree(descResponse).get("id").asLong();
 
         AdminCreateItemRequest createItemRequest = new AdminCreateItemRequest(
-                "OC-G-001", descriptionId, ItemStatus.AVAILABLE);
+                "OC-G-WR-001", descriptionId, ItemStatus.AVAILABLE);
 
         mockMvc.perform(post("/api/admin/items/add")
                         .header("X-User-Email", "admin@example.com")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createItemRequest)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.internalId").value("OC-G-001"));
+                .andExpect(jsonPath("$.internalId").value("OC-G-WR-001"));
 
         mockMvc.perform(get("/api/descriptions/BoardGame/all")
                         .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].descriptionStatus").value("AVAILABLE"));
 
-        mockMvc.perform(post("/api/items/OC-G-001/borrow")
+        mockMvc.perform(post("/api/items/OC-G-WR-001/borrow")
                         .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk());
 
@@ -69,7 +69,7 @@ class BoardGameFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].descriptionStatus").value("BORROWED_BY_ME"));
 
-        mockMvc.perform(post("/api/items/OC-G-001/return")
+        mockMvc.perform(post("/api/items/OC-G-WR-001/return")
                         .header("X-User-Email", "employee@example.com"))
                 .andExpect(status().isOk());
 

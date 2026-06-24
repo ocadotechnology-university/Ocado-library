@@ -30,7 +30,7 @@ export const previewVariants: BookRow[] = [
     newArrival: false,
     caption: "Free",
     seed: "ts-senior",
-    bookId: "OC-WRO-B-0101",
+    bookId: "OC-B-WR-101",
     tags: ["typescript", "types", "Popular", "web"],
   },
   {
@@ -43,7 +43,7 @@ export const previewVariants: BookRow[] = [
     newArrival: true,
     caption: "Free · New arrival",
     seed: "py-middle",
-    bookId: "OC-WRO-B-0102",
+    bookId: "OC-B-WR-102",
     tags: ["python", "idioms", "New", "Popular"],
   },
   {
@@ -56,7 +56,7 @@ export const previewVariants: BookRow[] = [
     newArrival: false,
     caption: "Borrowed",
     seed: "go-junior",
-    bookId: "OC-WRO-B-0103",
+    bookId: "OC-B-WR-103",
     tags: ["go", "systems", "reference"],
   },
   {
@@ -69,7 +69,7 @@ export const previewVariants: BookRow[] = [
     newArrival: true,
     caption: "Borrowed · New arrival",
     seed: "java-middle",
-    bookId: "OC-WRO-B-0104",
+    bookId: "OC-B-WR-104",
     tags: ["java", "patterns", "New", "Waitlist"],
   },
   {
@@ -82,7 +82,7 @@ export const previewVariants: BookRow[] = [
     newArrival: false,
     caption: "Borrowed by me",
     seed: "rust-senior",
-    bookId: "OC-WRO-B-0105",
+    bookId: "OC-B-WR-105",
     tags: ["rust", "ownership", "Due soon"],
   },
   {
@@ -95,7 +95,7 @@ export const previewVariants: BookRow[] = [
     newArrival: true,
     caption: "Borrowed by me · New arrival",
     seed: "js-junior",
-    bookId: "OC-WRO-B-0106",
+    bookId: "OC-B-WR-106",
     tags: ["javascript", "New", "Checked out", "Popular"],
   },
   {
@@ -108,7 +108,7 @@ export const previewVariants: BookRow[] = [
     newArrival: false,
     caption: "Free",
     seed: "ddia-senior",
-    bookId: "OC-WRO-B-0107",
+    bookId: "OC-B-WR-107",
     tags: ["distributed", "databases", "architecture"],
   },
   {
@@ -121,7 +121,7 @@ export const previewVariants: BookRow[] = [
     newArrival: false,
     caption: "Borrowed",
     seed: "c-junior",
-    bookId: "OC-WRO-B-0108",
+    bookId: "OC-B-WR-108",
     tags: ["c", "systems", "Non-fiction"],
   },
 ];
