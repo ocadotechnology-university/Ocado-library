@@ -8,7 +8,6 @@ import com.ocado.library.model.enums.ItemStatus;
 import com.ocado.library.model.enums.ItemType;
 import com.ocado.library.repository.DescriptionRepository;
 import com.ocado.library.repository.ItemRepository;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -17,7 +16,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@Slf4j
 @Service
 public class CatalogService {
     private final DescriptionRepository descriptionRepository;
@@ -60,9 +58,6 @@ public class CatalogService {
                 .collect(Collectors.toList());
         }
 
-        log.info("Browsed {} catalog: {} items by {}{}",
-                type, descriptions.size(), userEmail, formatFilters(search, tags));
-
         return descriptions.stream().map(d -> mapToDTO(d, userEmail)).collect(Collectors.toList());
     }
 
@@ -75,20 +70,6 @@ public class CatalogService {
             .distinct()
             .sorted(Comparator.naturalOrder())
             .collect(Collectors.toList());
-    }
-    
-    private static String formatFilters(String search, List<String> tags) {
-        StringBuilder filters = new StringBuilder();
-        if (search != null && !search.isBlank()) {
-            filters.append("search='").append(search).append("'");
-        }
-        if (tags != null && !tags.isEmpty()) {
-            if (!filters.isEmpty()) {
-                filters.append(", ");
-            }
-            filters.append("tags=").append(tags);
-        }
-        return filters.isEmpty() ? "" : " [" + filters + "]";
     }
 
     private Object mapToDTO(Description d, String userEmail) {
