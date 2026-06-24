@@ -24,19 +24,9 @@ public class ItemService {
     }
     
     public List<Item> getItemsByDescription(Long descriptionId, ItemStatus status, String userEmail) {
-        List<Item> items = status != null
+        return status != null
                 ? itemRepository.findByDescriptionIdAndStatus(descriptionId, status)
                 : itemRepository.findByDescriptionId(descriptionId);
-
-        String title = items.isEmpty() ? null : items.get(0).getDescription().getTitle();
-        if (title != null) {
-            log.info("Viewed copies of \"{}\" (id={}): {} items by {}{}",
-                    title, descriptionId, items.size(), userEmail, status != null ? " [status=" + status + "]" : "");
-        } else {
-            log.info("Viewed copies for description id={}: 0 items by {}", descriptionId, userEmail);
-        }
-
-        return items;
     }
     
     public void borrowItem(String internalId, String userEmail) {
