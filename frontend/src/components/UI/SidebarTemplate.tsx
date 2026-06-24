@@ -49,6 +49,23 @@ export type SidebarAccentTitleProps = {
   className?: string;
 };
 
+/** Plain sidebar page title — e.g. “Filters” (not styled as a button). */
+export function SidebarTitle({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <h2
+      className={`text-xl font-bold tracking-wide text-[#d4e157] ${className ?? ""}`.trim()}
+    >
+      {children}
+    </h2>
+  );
+}
+
 /** Section heading inside a scrolling sidebar (filters / sort groups). */
 export function SidebarSectionLabel({
   children,

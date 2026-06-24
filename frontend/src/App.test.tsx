@@ -101,7 +101,6 @@ describe("App", () => {
     renderAppAt("/");
 
     expect(await screen.findByText("Ocado Library")).toBeInTheDocument();
-    expect(screen.getByText("Filters")).toBeInTheDocument();
     expect(await screen.findByText("Books(1)")).toBeInTheDocument();
     expect(await screen.findByText("TypeScript Deep Dive")).toBeInTheDocument();
     expect(screen.getAllByText("typescript").length).toBeGreaterThan(0);

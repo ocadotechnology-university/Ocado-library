@@ -18,7 +18,6 @@ import { CatalogTagPoolButton } from "../components/UI/CatalogTagPoolButton";
 import CatalogAppTopBar from "../components/UI/CatalogAppTopBar";
 import LayoutRightStaticPanel from "../components/UI/LayoutRightStaticPanel";
 import {
-  SidebarAccentTitle,
   SidebarSectionLabel,
   SidebarTemplate,
 } from "../components/UI/SidebarTemplate";
@@ -40,6 +39,7 @@ import {
   fetchCatalogTags,
   fetchItemsByDescription,
   fetchJournalEntries,
+  fetchNextInternalId,
   fetchPSGameDescriptions,
   returnItem,
   updateBoardGameDescription,
@@ -62,6 +62,12 @@ const STATUS_OPTIONS: { status: BookStatus; label: string }[] = [
 ];
 const LANGUAGE_FILTER_OPTIONS = ["English", "Polish"] as const;
 
+function itemTypeFromTargetKey(key: string): "Book" | "BoardGame" | "PSGame" {
+  if (key.startsWith("ps-")) return "PSGame";
+  if (key.startsWith("board-")) return "BoardGame";
+  return "Book";
+}
+
 type AdminBook = {
   id: number;
   key: string;
@@ -77,7 +83,6 @@ type AdminBook = {
   bookId: string;
   description: string;
   tags: string[];
-  placeholderSeed: string;
   imageUrl?: string;
 };
 
@@ -133,14 +138,6 @@ function pillClass(active: boolean): string {
   ].join(" ");
 }
 
-function coverSrcFor(row: AdminBook): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/272/181`;
-}
-
-function coverSrcLargeFor(row: AdminBook): string {
-  return `https://picsum.photos/seed/${encodeURIComponent(row.placeholderSeed)}/640/960`;
-}
-
 function toUiStatus(status: BackendDescriptionStatus): BookStatus {
   if (status === "AVAILABLE") return "free";
   if (status === "BORROWED_BY_ME") return "borrowed-by-me";
@@ -176,13 +173,11 @@ function mapBook(row: BackendBookDescription, index: number): AdminBook {
     bookId: isbn,
     description: row.description ?? "",
     tags,
-    placeholderSeed: `book-${isbn}`,
     imageUrl: row.image ?? "",
   };
 }
 
 function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
-  const seed = `board-${row.id}`;
   const status = toUiStatus(
     (row.descriptionStatus ?? "AVAILABLE") as BackendDescriptionStatus,
   );
@@ -206,13 +201,11 @@ function mapBoardToAdminBook(row: BackendBoardGameDescription): AdminBook {
     bookId: `OC-WRO-G-${String(row.id).padStart(4, "0")}`,
     description: row.description || "",
     tags,
-    placeholderSeed: seed,
     imageUrl: undefined,
   };
 }
 
 function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
-  const seed = `ps-${row.id}`;
   const tags = row.tags || [];
   return {
     id: row.id,
@@ -229,7 +222,6 @@ function mapPSGameToAdminBook(row: BackendPSGameDescription): AdminBook {
     bookId: row.internalId ?? "",
     description: row.description || "",
     tags,
-    placeholderSeed: seed,
     imageUrl: undefined,
   };
 }
@@ -267,7 +259,7 @@ const Home = () => {
   const [instancesDialog, setInstancesDialog] =
     useState<InstancesDialogState | null>(null);
   const [section, setSection] = useState<MediaSection>("books");
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [activeCategory, setActiveCategory] = useState("");
   const [catalogView, setCatalogView] = useState<CatalogViewMode>("cards");
   const [adminMode, setAdminMode] = useState<"browse" | "add" | "edit">(
     "browse",
@@ -277,6 +269,7 @@ const Home = () => {
     null,
   );
   const [instanceInput, setInstanceInput] = useState("");
+  const [instanceInputLoading, setInstanceInputLoading] = useState(false);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
   const [selectedStatuses, setSelectedStatuses] = useState<BookStatus[]>([]);
@@ -312,6 +305,35 @@ const Home = () => {
       : undefined;
 
   const close = useCallback(() => setOpenKey(null), []);
+
+  useEffect(() => {
+    if (instanceTargetKey == null) {
+      setInstanceInput("");
+      setInstanceInputLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setInstanceInputLoading(true);
+
+    fetchNextInternalId(itemTypeFromTargetKey(instanceTargetKey))
+      .then(({ internalId }) => {
+        if (!cancelled) {
+          setInstanceInput(internalId);
+          setInstanceInputLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setInstanceInput("");
+          setInstanceInputLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [instanceTargetKey]);
 
   const openBook = useCallback(
     (key: string) => {
@@ -912,8 +934,6 @@ const Home = () => {
   const leftSidebar = useMemo(
     () => (
       <SidebarTemplate>
-        <SidebarAccentTitle>Filters</SidebarAccentTitle>
-
         <div className="flex flex-col gap-4 pt-1">
           {isAdmin && (
             <div>
@@ -955,7 +975,7 @@ const Home = () => {
                     setAdminMode("browse");
                     setShowCatalogImport(true);
                   }}
-                  className="rounded-lg border border-[#43485e]/35 bg-[#eeeef0] px-3 py-2 text-sm font-medium text-[#43485e] shadow-sm transition hover:bg-white"
+                  className="rounded-lg bg-[#43485e] px-3 py-2 text-sm font-medium text-[#eeeef0] shadow-sm transition hover:bg-[#363b4f]"
                 >
                   Import
                 </button>
@@ -1427,7 +1447,8 @@ const Home = () => {
                         >
                           <BookPreview
                             variant="card"
-                            coverSrc={coverSrcFor(row)}
+                            coverImageUrl={row.imageUrl}
+                            coverIsbn={row.isbn}
                             title={row.title}
                             author={row.author}
                             status={row.status}
@@ -1455,7 +1476,8 @@ const Home = () => {
                           >
                             <BookPreview
                               variant="list"
-                              coverSrc={coverSrcFor(row)}
+                              coverImageUrl={row.imageUrl}
+                              coverIsbn={row.isbn}
                               title={row.title}
                               author={row.author}
                               status={row.status}
@@ -1479,8 +1501,8 @@ const Home = () => {
         <BookClientWindow onBackdropClick={close}>
           <div className="relative w-full">
             <BookFullView
-              coverSrc={coverSrcFor(selected)}
-              coverSrcLarge={coverSrcLargeFor(selected)}
+              coverImageUrl={selected.imageUrl}
+              coverIsbn={selected.isbn}
               title={selected.title}
               author={selected.author}
               description={selected.description}
@@ -1759,18 +1781,20 @@ const Home = () => {
                 : instanceTargetKey?.startsWith("board-")
                   ? "Use format: OC-WRO-G-num"
                   : "Use format: OC-WRO-B-num"}
+              {instanceInputLoading ? " Loading suggestion…" : null}
             </p>
             <input
               value={instanceInput}
               onChange={(e) => setInstanceInput(e.target.value)}
               placeholder={
                 instanceTargetKey?.startsWith("ps-")
-                  ? "OC-WRO-PS-0001"
+                  ? "OC-WRO-PS-0300"
                   : instanceTargetKey?.startsWith("board-")
-                    ? "OC-WRO-G-0101"
-                    : "OC-WRO-B-0109"
+                    ? "OC-WRO-G-0300"
+                    : "OC-WRO-B-0300"
               }
-              className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm"
+              disabled={instanceInputLoading}
+              className="mt-3 w-full rounded-lg border border-[#b1b2b5] px-3 py-2 text-sm disabled:bg-[#f3f4f6]"
             />
             <div className="mt-3 flex justify-end gap-2">
               <button
@@ -1778,6 +1802,7 @@ const Home = () => {
                 onClick={() => {
                   setInstanceTargetKey(null);
                   setInstanceInput("");
+                  setInstanceInputLoading(false);
                 }}
                 className="rounded-md border border-[#43485e]/30 bg-[#eeeef0] px-3 py-1.5 text-sm text-[#43485e]"
               >

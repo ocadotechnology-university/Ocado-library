@@ -25,11 +25,17 @@ public class AdminService {
     private final DescriptionRepository descriptionRepository;
     private final ItemRepository itemRepository;
     private final JournalService journalService;
-    
-    public AdminService(DescriptionRepository descriptionRepository, ItemRepository itemRepository, JournalService journalService) {
+    private final ItemInternalIdService itemInternalIdService;
+
+    public AdminService(
+            DescriptionRepository descriptionRepository,
+            ItemRepository itemRepository,
+            JournalService journalService,
+            ItemInternalIdService itemInternalIdService) {
         this.descriptionRepository = descriptionRepository;
         this.itemRepository = itemRepository;
         this.journalService = journalService;
+        this.itemInternalIdService = itemInternalIdService;
     }
     
     public Description createDescription(ItemType type, Object requestBody, String userEmail) {
@@ -129,6 +135,7 @@ public class AdminService {
         return saved;
     }
 
+    @Transactional
     public Item addPhysicalCopy(AdminCreateItemRequest request, String userEmail) {
         Description description = descriptionRepository.findById(request.descriptionId())
                 .orElseThrow(() -> new NotFoundException("Description not found"));
@@ -146,11 +153,16 @@ public class AdminService {
         item.setStatus(request.status() != null ? request.status() : ItemStatus.AVAILABLE);
         
         itemRepository.save(item);
+        itemInternalIdService.advanceAfterItemAdded();
         journalService.logAction(OperationType.ADD, userEmail, item.getInternalId(), description.getId());
         log.info("Added copy {} for \"{}\" (id={}) by {}",
                 item.getInternalId(), description.getTitle(), description.getId(), userEmail);
 
         return item;
+    }
+
+    public String proposeNextInternalId(ItemType type) {
+        return itemInternalIdService.proposeNextInternalId(type);
     }
 
     public Item updatePhysicalCopyStatus(String internalId, ItemStatus status, String userEmail) {

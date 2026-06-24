@@ -17,6 +17,7 @@ import {
   BOOK_PREVIEW_TITLE_CLASS,
 } from "./bookPreviewCardLayout";
 import PreviewTagsRow from "./PreviewTagsRow";
+import CatalogCoverImage from "./CatalogCoverImage";
 import {
   BOOK_STATUS_COVER_LABEL,
   BOOK_STATUS_PREVIEW_COMPACT_CLASS,
@@ -43,7 +44,8 @@ const coverFilterByStatus: Record<BookStatus, string> = {
 };
 
 export type BookPreviewProps = {
-  coverSrc: string;
+  coverImageUrl?: string | null;
+  coverIsbn?: string | null;
   title: string;
   author: string;
   status: BookStatus;
@@ -61,7 +63,8 @@ export type BookPreviewProps = {
 };
 
 const BookPreview = ({
-  coverSrc,
+  coverImageUrl,
+  coverIsbn,
   title,
   author,
   status,
@@ -123,9 +126,10 @@ const BookPreview = ({
         <div className="relative flex w-full flex-row items-stretch gap-4 p-4 sm:gap-6 sm:p-5">
           <div className={`relative shrink-0 ${BOOK_LIST_COVER_FRAME_CLASS}`}>
             <div className={BOOK_FULL_COVER_INNER_WRAP_CLASS}>
-              <img
-                src={coverSrc}
-                alt=""
+              <CatalogCoverImage
+                imageUrl={coverImageUrl}
+                isbn={coverIsbn}
+                size="preview"
                 width={272}
                 height={181}
                 loading="lazy"
@@ -201,9 +205,10 @@ const BookPreview = ({
       className={`flex w-full overflow-hidden rounded-xl ${borderClass} ${shell} ${layoutClass} ${interactive ? "cursor-pointer transition hover:brightness-[1.02] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]" : ""} ${className ?? ""}`.trim()}
     >
       <div className={BOOK_PREVIEW_COVER_CLASS}>
-        <img
-          src={coverSrc}
-          alt=""
+        <CatalogCoverImage
+          imageUrl={coverImageUrl}
+          isbn={coverIsbn}
+          size="preview"
           width={272}
           height={181}
           loading="lazy"

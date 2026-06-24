@@ -11,6 +11,7 @@ import {
   BOOK_FULL_CARD_RADIAL_CLASS,
   BOOK_FULL_COVER_INNER_WRAP_CLASS,
 } from "./bookFullViewCardShell";
+import CatalogCoverImage from "./CatalogCoverImage";
 import {
   BOOK_STATUS_COVER_CLASS,
   BOOK_STATUS_COVER_LABEL,
@@ -22,9 +23,8 @@ import {
 const ANIM_MS = 300;
 
 export type BookFullViewProps = {
-  coverSrc: string;
-  /** Larger cover; defaults to `coverSrc` if omitted. */
-  coverSrcLarge?: string;
+  coverImageUrl?: string | null;
+  coverIsbn?: string | null;
   title: string;
   author: string;
   description: string;
@@ -53,8 +53,8 @@ const actionLabel: Record<BookStatus, string> = {
 };
 
 const BookFullView = ({
-  coverSrc,
-  coverSrcLarge,
+  coverImageUrl,
+  coverIsbn,
   title,
   author,
   description,
@@ -73,10 +73,7 @@ const BookFullView = ({
   primaryActionPending = false,
   className,
 }: BookFullViewProps) => {
-  const largeSrc = coverSrcLarge ?? coverSrc;
-  const [tagsMenuOpen, setTagsMenuOpen] = useState(false);
   const [panelIn, setPanelIn] = useState(false);
-  const tagsMenuRef = useRef<HTMLDivElement>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const menuId = useId();
 
@@ -110,30 +107,13 @@ const BookFullView = ({
   }, []);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        tagsMenuRef.current &&
-        !tagsMenuRef.current.contains(e.target as Node)
-      ) {
-        setTagsMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
-      if (tagsMenuOpen) {
-        setTagsMenuOpen(false);
-        return;
-      }
       requestClose();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [requestClose, tagsMenuOpen]);
+  }, [requestClose]);
 
   useEffect(
     () => () => {
@@ -168,9 +148,10 @@ const BookFullView = ({
       <div className="relative flex min-h-[min(72vh,36rem)] flex-col gap-5 p-4 sm:p-5 lg:flex-row lg:items-stretch lg:gap-8 lg:p-6">
         <div className="relative mx-auto w-full max-w-[min(92vw,260px)] shrink-0 sm:max-w-[min(88vw,300px)] lg:mx-0 lg:max-w-[min(44%,380px)]">
           <div className={BOOK_FULL_COVER_INNER_WRAP_CLASS}>
-            <img
-              src={largeSrc}
-              alt=""
+            <CatalogCoverImage
+              imageUrl={coverImageUrl}
+              isbn={coverIsbn}
+              size="large"
               width={640}
               height={960}
               loading="eager"
@@ -234,36 +215,16 @@ const BookFullView = ({
                 </span>
               ))}
             </div>
-            <div className="relative shrink-0" ref={tagsMenuRef}>
+            {onEditTags != null && (
               <button
                 type="button"
-                aria-expanded={tagsMenuOpen}
-                aria-haspopup="menu"
-                aria-label="Tag options"
-                onClick={() => setTagsMenuOpen((o) => !o)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#c5c9d6] bg-white/90 text-lg font-bold leading-none text-[#43485e] shadow-sm transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
+                aria-label="Edit tags"
+                onClick={() => onEditTags()}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#c5c9d6] bg-white/90 text-lg font-bold leading-none text-[#43485e] shadow-sm transition hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#43485e]"
               >
                 ⋮
               </button>
-              {tagsMenuOpen && (
-                <div
-                  role="menu"
-                  className="absolute right-0 z-20 mt-1.5 min-w-[11rem] overflow-hidden rounded-xl border border-[#e2e5ee] bg-white/95 py-1 shadow-[0_12px_30px_-8px_rgb(67_72_94_/0.25)] backdrop-blur-md"
-                >
-                  <button
-                    type="button"
-                    role="menuitem"
-                    className="w-full px-3 py-2.5 text-left text-sm text-[#43485e] transition hover:bg-[#43485e]/[0.06]"
-                    onClick={() => {
-                      setTagsMenuOpen(false);
-                      onEditTags?.();
-                    }}
-                  >
-                    Edit tags
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="mt-auto flex min-h-[7.5rem] flex-1 flex-col justify-center sm:min-h-[9rem]">
